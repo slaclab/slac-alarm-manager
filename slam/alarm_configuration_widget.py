@@ -165,6 +165,7 @@ class AlarmConfigurationWidget(QDialog):
         self.layout.addLayout(self.button_layout)
 
     def save_configuration(self):
+        """ Saves the input the user entered into the widget by sending it to the kafka config queue """
         guidance = []
         displays = []
         commands = []
