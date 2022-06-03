@@ -2,7 +2,7 @@ from collections import OrderedDict
 from qtpy.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt, QVariant
 from qtpy.QtGui import QBrush
 from typing import Optional
-from .alarm_item import AlarmItem
+from .alarm_item import AlarmItem, AlarmSeverity
 
 
 class AlarmItemsTableModel(QAbstractTableModel):
@@ -47,13 +47,13 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return self.getData(column_name, alarm_item)
         elif role == Qt.BackgroundRole:
-            if alarm_item.alarm_severity == 'OK':
+            if alarm_item.alarm_severity == AlarmSeverity.OK:
                 return QBrush(Qt.green)
-            elif alarm_item.alarm_severity == 'UNDEFINED':
+            elif alarm_item.alarm_severity == AlarmSeverity.UNDEFINED:
                 return QBrush(Qt.darkMagenta)
-            elif alarm_item.alarm_severity == 'MAJOR':
+            elif alarm_item.alarm_severity == AlarmSeverity.MAJOR:
                 return QBrush(Qt.red)
-            elif alarm_item.alarm_severity == 'MINOR':
+            elif alarm_item.alarm_severity == AlarmSeverity.MINOR:
                 return QBrush(Qt.yellow)
 
     def getData(self, column_name: str, alarm_item: AlarmItem):
@@ -61,7 +61,7 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if column_name == 'PV':
             return alarm_item.name
         elif column_name == 'Alarm Severity':
-            return alarm_item.alarm_severity
+            return alarm_item.alarm_severity.value
         elif column_name == 'Alarm Status':
             return alarm_item.alarm_status
         elif column_name == 'Time':
@@ -69,7 +69,7 @@ class AlarmItemsTableModel(QAbstractTableModel):
         elif column_name == 'Alarm Value':
             return alarm_item.alarm_value
         elif column_name == 'PV Severity':
-            return alarm_item.pv_severity
+            return alarm_item.pv_severity.value
         elif column_name == 'PV Status':
             return alarm_item.pv_status
 
@@ -81,7 +81,7 @@ class AlarmItemsTableModel(QAbstractTableModel):
 
     def append(self, alarm_item: AlarmItem) -> None:
         """ Appends a row to this table with data as given by the input alarm item """
-        if alarm_item.alarm_severity == 'OK':
+        if alarm_item.alarm_severity == AlarmSeverity.OK:
             return  # Don't want to add unnecessary items to the table
         if alarm_item.name in self.alarm_items:
             print(f'ERROR: Attempting to append a row to the alarm table which is already there: {alarm_item.name}')
@@ -126,8 +126,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
             sorted(self.alarm_items.items(), key=sort_key, reverse=order == Qt.DescendingOrder))
         self.layoutChanged.emit()
 
-    def update_row(self, name: str, path: str, severity: str, status: str, time,
-                   value: str, pv_severity: str, pv_status: str):
+    def update_row(self, name: str, path: str, severity: AlarmSeverity, status: str, time,
+                   value: str, pv_severity: AlarmSeverity, pv_status: str):
         """ Update a row in the alarm table based on the input name. If that name does not yet exist, a row will
             be created for it. If it does exist, update the values of the row accordingly. """
 

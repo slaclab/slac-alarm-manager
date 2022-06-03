@@ -4,6 +4,7 @@ from qtpy.QtCore import QModelIndex, Qt, Signal
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QAbstractItemView, QAction, QApplication, QMenu, QTreeView, QVBoxLayout, QWidget
 from .alarm_configuration_widget import AlarmConfigurationWidget
+from .alarm_item import AlarmSeverity
 from .alarm_tree_model import AlarmItemsTreeModel
 
 
@@ -76,9 +77,11 @@ class AlarmTreeViewWidget(QWidget):
             alarm_item = self.treeModel.getItem(index)
             if alarm_item.is_leaf():
                 menu = QMenu(self)
-                if alarm_item.alarm_severity in ('MINOR', 'MAJOR', 'INVALID', 'UNDEFINED'):
+                if alarm_item.alarm_severity in (AlarmSeverity.MINOR, AlarmSeverity.MAJOR,
+                                                 AlarmSeverity.INVALID, AlarmSeverity.UNDEFINED):
                     menu.addAction(self.acknowledge_action)
-                elif alarm_item.alarm_severity in ('MINOR_ACK', 'MAJOR_ACK', 'INVALID_ACK', 'UNDEFINED_ACK'):
+                elif alarm_item.alarm_severity in (AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
+                                                   AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK):
                     menu.addAction(self.unacknowledge_action)
                 menu.addAction(self.copy_action)
                 menu.addAction(self.plot_action)
@@ -88,12 +91,13 @@ class AlarmTreeViewWidget(QWidget):
                 add_unacknowledge_action = False
                 for leaf in leaf_nodes:
                     if leaf.alarm_severity is not None and leaf.alarm_severity in (
-                    'MINOR', 'MAJOR', 'INVALID', 'UNDEFINED'):
+                            AlarmSeverity.MINOR, AlarmSeverity.MAJOR, AlarmSeverity.INVALID, AlarmSeverity.UNDEFINED):
                         # As long as one item needs acknowledging we will display the acknowledge action
                         add_acknowledge_action = True
                         break
                     elif leaf.alarm_severity is not None and leaf.alarm_severity in (
-                    'MINOR_ACK', 'MAJOR_ACK', 'INVALID_ACK', 'UNDEFINED_ACK'):
+                            AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
+                            AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK):
                         add_unacknowledge_action = True
                 menu = QMenu(self)
                 if add_acknowledge_action:  # This always should take precedence over unacknowledge

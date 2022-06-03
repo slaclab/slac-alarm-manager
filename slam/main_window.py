@@ -7,6 +7,7 @@ from pydm.widgets import PyDMArchiverTimePlot
 from qtpy.QtCore import QThread, Signal, Slot
 from qtpy.QtWidgets import QAction, QApplication, QMainWindow, QTabWidget, QVBoxLayout, QWidget
 from typing import Optional
+from .alarm_item import AlarmSeverity
 from .alarm_table_view import AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
@@ -24,7 +25,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         The kafka topic to listen to (TODO: Convert to a list)
     """
 
-    alarm_update_signal = Signal(str, str, str, str, datetime, str, str, str)
+    alarm_update_signal = Signal(str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
 
     def __init__(self, topic: str):
         super().__init__()
@@ -105,8 +106,9 @@ class AlarmHandlerMainWindow(QMainWindow):
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
-            self.alarm_update_signal.emit(pv, message.key[6:], values['severity'], values['message'], time,
-                                          values['value'], values['current_severity'], values['current_message'])
+            self.alarm_update_signal.emit(pv, message.key[6:], AlarmSeverity(values['severity']), values['message'],
+                                          time, values['value'], AlarmSeverity(values['current_severity']),
+                                          values['current_message'])
 
     def display_alarm_table_widget(self):
         self.table_view_widget.show()

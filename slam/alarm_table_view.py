@@ -3,6 +3,7 @@ import socket
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import QAbstractItemView, QAction, QApplication, QHeaderView, QLabel, QMenu, QTableView, QVBoxLayout, QWidget
+from .alarm_item import AlarmSeverity
 from .alarm_table_model import AlarmItemsTableModel
 
 
@@ -163,18 +164,18 @@ class AlarmTableViewWidget(QWidget):
                                      key=f'command:{alarm_item.path}',
                                      value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
 
-
-    def update_tables(self, name: str, path: str, severity: str, status: str, time,
-                      value: str, pv_severity: str, pv_status: str) -> None:
+    def update_tables(self, name: str, path: str, severity: AlarmSeverity, status: str, time,
+                      value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:
         """ Update both the active and acknowledged alarm tables when a new alarm state message is received """
         if status == 'Disabled':
             self.alarmModel.remove_row(name)
             self.acknowledgedAlarmsModel.remove_row(name)
-        elif 'ACK' in severity:
+        elif severity in (AlarmSeverity.INVALID_ACK, AlarmSeverity.MAJOR_ACK,
+                          AlarmSeverity.MINOR_ACK, AlarmSeverity.UNDEFINED_ACK):
             if name in self.alarmModel.alarm_items:
                 self.alarmModel.remove_row(name)
             self.acknowledgedAlarmsModel.update_row(name, path, severity, status, time, value, pv_severity, pv_status)
-        elif severity == 'OK':
+        elif severity == AlarmSeverity.OK:
             self.alarmModel.remove_row(name)
             self.acknowledgedAlarmsModel.remove_row(name)  # TODO: Not sure if this logic is right
         else:
