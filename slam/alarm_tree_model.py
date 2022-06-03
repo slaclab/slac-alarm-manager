@@ -1,7 +1,7 @@
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from qtpy.QtGui import QBrush
 from typing import List, Optional
-from .alarm_item import AlarmItem
+from .alarm_item import AlarmItem, AlarmSeverity
 
 
 class AlarmItemsTreeModel(QAbstractItemModel):
@@ -43,30 +43,30 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         if role == Qt.DisplayRole:
             if not alarm_item.is_enabled():
                 return alarm_item.name + f' (disabled)'
-            elif alarm_item.alarm_severity != 'OK':
+            elif alarm_item.alarm_severity != AlarmSeverity.OK:
                 return alarm_item.name + f' - {alarm_item.alarm_severity}/{alarm_item.alarm_status}'
             return alarm_item.name
         elif role == Qt.TextColorRole:
             if alarm_item.is_leaf():
                 if not alarm_item.is_enabled():
                     return QBrush(Qt.gray)
-                elif alarm_item.alarm_severity == 'OK':
+                elif alarm_item.alarm_severity == AlarmSeverity.OK:
                     return QBrush(Qt.darkGreen)
-                elif alarm_item.alarm_severity == 'UNDEFINED':
+                elif alarm_item.alarm_severity == AlarmSeverity.UNDEFINED:
                     return QBrush(Qt.magenta)
-                elif alarm_item.alarm_severity == 'MAJOR':
+                elif alarm_item.alarm_severity == AlarmSeverity.MAJOR:
                     return QBrush(Qt.red)
-                elif alarm_item.alarm_severity == 'MINOR':
+                elif alarm_item.alarm_severity == AlarmSeverity.MINOR:
                     return QBrush(Qt.darkYellow)
-                elif alarm_item.alarm_severity == 'MAJOR_ACK':
+                elif alarm_item.alarm_severity == AlarmSeverity.MAJOR_ACK:
                     return QBrush(Qt.darkRed)
-                elif alarm_item.alarm_severity == 'MINOR_ACK':
+                elif alarm_item.alarm_severity == AlarmSeverity.MINOR_ACK:
                     return QBrush(Qt.darkGray)
-                elif alarm_item.alarm_severity == 'UNDEFINED_ACK':
+                elif alarm_item.alarm_severity == AlarmSeverity.UNDEFINED_ACK:
                     return QBrush(Qt.darkMagenta)
-                elif alarm_item.alarm_severity == 'INVALID':
+                elif alarm_item.alarm_severity == AlarmSeverity.INVALID:
                     return QBrush(Qt.magenta)
-                elif alarm_item.alarm_severity == 'INVALID_ACK':
+                elif alarm_item.alarm_severity == AlarmSeverity.INVALID_ACK:
                     return QBrush(Qt.darkMagenta)
             else:
                 all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
@@ -75,21 +75,21 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 for i in all_leaf_nodes:
                     # TODO Clean up and consolidate
                     if i.is_enabled():
-                        if i.alarm_severity == 'MINOR_ACK':
+                        if i.alarm_severity == AlarmSeverity.MINOR_ACK:
                             item_sevr = max(1, item_sevr)
-                        elif i.alarm_severity == 'MAJOR_ACK':
+                        elif i.alarm_severity == AlarmSeverity.MAJOR_ACK:
                             item_sevr = max(2, item_sevr)
-                        elif i.alarm_severity == 'INVALID_ACK':
+                        elif i.alarm_severity == AlarmSeverity.INVALID_ACK:
                             item_sevr = max(3, item_sevr)
-                        elif i.alarm_severity == 'UNDEFINED_ACK':
+                        elif i.alarm_severity == AlarmSeverity.UNDEFINED_ACK:
                             item_sevr = max(4, item_sevr)
-                        elif i.alarm_severity == 'MINOR':
+                        elif i.alarm_severity == AlarmSeverity.MINOR:
                             item_sevr = max(5, item_sevr)
-                        elif i.alarm_severity == 'MAJOR':
+                        elif i.alarm_severity == AlarmSeverity.MAJOR:
                             item_sevr = max(6, item_sevr)
-                        elif i.alarm_severity == 'INVALID':
+                        elif i.alarm_severity == AlarmSeverity.INVALID:
                             item_sevr = max(7, item_sevr)
-                        elif i.alarm_severity == 'UNDEFINED':
+                        elif i.alarm_severity == AlarmSeverity.UNDEFINED:
                             item_sevr = max(8, item_sevr)
                 if item_sevr == 0:
                     return QBrush(Qt.darkGreen)
@@ -170,8 +170,8 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 return index
         return -1
 
-    def update_item(self, name: str, path: str, severity: str, status: str, time,
-                    value: str, pv_severity: str, pv_status: str) -> None:
+    def update_item(self, name: str, path: str, severity: AlarmSeverity, status: str, time,
+                    value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:
         """ Updates the alarm item with the input name and path in this tree. """
         if path not in self.added_paths:
             # print(f'ERROR: Attempting update on a node that has not been added by config: {path}')
@@ -204,7 +204,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             All of the value associated with the alarm to add or update
         """
         item_name = item_path.split('/')[-1]
-        alarm_item = AlarmItem(name=item_name, path=item_path, alarm_severity='OK',
+        alarm_item = AlarmItem(name=item_name, path=item_path, alarm_severity=AlarmSeverity.OK,
                                description=values.get('description'), guidance=values.get('guidance'),
                                displays=values.get('displays'), commands=values.get('commands'),
                                enabled=values.get('enabled'),

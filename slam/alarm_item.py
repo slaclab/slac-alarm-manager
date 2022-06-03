@@ -1,5 +1,21 @@
 from __future__ import annotations
+from datetime import datetime
 from qtpy.QtCore import QObject
+from typing import Optional, Union
+import enum
+
+
+class AlarmSeverity(str, enum.Enum):
+    """ An enum for the values that an alarm severity can take on. """
+    OK = 'OK'
+    UNDEFINED = 'UNDEFINED'
+    MAJOR = 'MAJOR'
+    MINOR = 'MINOR'
+    MAJOR_ACK = 'MAJOR_ACK'
+    MINOR_ACK = 'MINOR_ACK'
+    UNDEFINED_ACK = 'UNDEFINED_ACK'
+    INVALID = 'INVALID'
+    INVALID_ACK = 'INVALID_ACK'
 
 
 class AlarmItem(QObject):
@@ -10,41 +26,58 @@ class AlarmItem(QObject):
     ----------
     name : str
         The name of the PV this alarm is associated with.
-    path : str
+    path : str, optional
         The path to the alarm within its configured hierarchy. For example: Accelerator/Line 1/Voltage 2
-    alarm_severity : str
+    alarm_severity : AlarmSeverity, optional
         The current severity level of the alarm itself. May be higher than the PV if latching is enabled.
-    alarm_status : str
+    alarm_status : str, optional
         The current status of the alarm itself.
-    alarm_time : datetime
+    alarm_time : datetime, optional
         The date and time this alarm was raised.
-    alarm_value : str
+    alarm_value : str, optional
         The current value of this alarm
-    pv_severity : str
+    pv_severity : AlarmSeverity, optional
         The current severity level of the PV this alarm is associated with.
-    pv_status : str
+    pv_status : str, optional
         The current status of the PV this alarm is associated with.
-    description : str
+    description : str, optional
         Additional description of this alarm specified by an end-user in a configuration file
-    guidance : str
+    guidance : str, optional
         Any guidance on how to handle this alarm that would be helpful to a user viewing this alarm.
-    displays : str
+    displays : str, optional
         Any displays this alarm is associated with
-    commands : str
+    commands : str, optional
         Any commands that should be run in response to this alarm
-    enabled : object
+    enabled : Union[bool, str], optional
         Whether or not this alarm is enabled. A bool in the simple case, a str here will also mean
         disabled, with the str being the date-time it should automatically re-enable.
-    delay : int
+    latching : bool, optional
+        If set to true, this alarm will remain at the highest severity level it attains even if the PV it is monitoring
+        returns to a lower severity level. If false, it will stay in sync with its associated PV.
+    delay : int, optional
         The amount of time in seconds a PV must be in an alarm state before raising the alarm
         If not set, alarm is raised immediately.
-    alarm_filter : str
+    alarm_filter : str, optional
         An expression that allows an alarm to enable based on a different PV
     """
-    def __init__(self, name, path=None, alarm_severity=None, alarm_status=None, alarm_time=None,
-                 alarm_value=None, pv_severity=None, pv_status=None, description=None,
-                 guidance=None, displays=None, commands=None, enabled=True, latching=False, annunciating=False,
-                 delay=None, alarm_filter=None):
+    def __init__(self,
+                 name: str,
+                 path: Optional[str] = None,
+                 alarm_severity: Optional[AlarmSeverity] = None,
+                 alarm_status: Optional[str] = None,
+                 alarm_time: Optional[datetime] = None,
+                 alarm_value: Optional[str] = None,
+                 pv_severity: Optional[AlarmSeverity] = None,
+                 pv_status: Optional[str] = None,
+                 description: Optional[str] = None,
+                 guidance: Optional[str] = None,
+                 displays: Optional[str] = None,
+                 commands: Optional[str] = None,
+                 enabled: Optional[Union[bool, str]] = True,
+                 latching: Optional[bool] = False,
+                 annunciating: Optional[bool] = False,
+                 delay: Optional[int] = None,
+                 alarm_filter: Optional[str] = None):
         super().__init__()
         self.name = name
         self.path = path
@@ -116,12 +149,8 @@ class AlarmItem(QObject):
         """ Return the column count of this item """
         return 1
 
-    def parent_item(self) -> AlarmItem:
-        """ Return the parent of this item, or None if one doesn't exist """
-        return self.parent_item
-
-    def __str__(self) -> str:
-        return f'PV: {self.name} Alarm Severity: {self.alarm_severity} Alarm States: {self.alarm_status} ' \
-               f'Alarm Time: {self.alarm_time} Alarm Value: {self.alarm_value} PV Severity: {self.pv_severity} ' \
-               f'PV Status: {self.pv_status} Guidance: {self.guidance} Displays: {self.displays} Commands: {self.commands}' \
-               f'Enabled: {self.enabled}'
+    def __repr__(self) -> str:
+        return f'AlarmItem("{self.name}", {repr(self.path)}, {str(self.alarm_severity)}, {repr(self.alarm_status)}, '\
+               f'{repr(self.alarm_time)}, {repr(self.alarm_value)}, {str(self.pv_severity)}, {repr(self.pv_status)}, '\
+               f'{repr(self.description)}, {repr(self.guidance)}, {repr(self.displays)}, {repr(self.commands)}, '\
+               f'{self.enabled}, {self.latching}, {self.annunciating}, {self.delay}, {repr(self.alarm_filter)})'
