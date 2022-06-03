@@ -1,5 +1,7 @@
 import getpass
 import socket
+from .alarm_item import AlarmItem
+from kafka.producer import KafkaProducer
 from qtpy.QtCore import QDateTime, QObject
 from qtpy.QtWidgets import (QCheckBox, QDateTimeEdit, QDialog, QHBoxLayout, QHeaderView, QLabel,
                             QLineEdit, QPushButton, QSpinBox, QTableWidget, QVBoxLayout)
@@ -8,7 +10,7 @@ from typing import Optional
 
 class AlarmConfigurationWidget(QDialog):
     """
-    The AlarmConigurationWidgets is a pop-up dialog allowing the user to specify various configuration options
+    The AlarmConfigurationWidget is a pop-up dialog allowing the user to specify various configuration options
     for each alarm. Double clicking on an alarm item in either the tree or table model will create this dialog.
 
     Parameters
@@ -21,9 +23,12 @@ class AlarmConfigurationWidget(QDialog):
         The producer for sending state and command updates to the kafka cluster
     topic : str
         The kafka topic to send update messages to
+    parent : QObject, optional
+        The parent of this widget
     """
 
-    def __init__(self, alarm_item, kafka_producer, topic, parent: Optional[QObject] = None):
+    def __init__(self, alarm_item: AlarmItem, kafka_producer: KafkaProducer,
+                 topic: str, parent: Optional[QObject] = None):
         super().__init__(parent=parent)
         self.alarm_item = alarm_item
         self.kafka_producer = kafka_producer
@@ -111,12 +116,6 @@ class AlarmConfigurationWidget(QDialog):
             self.description_layout.addWidget(self.description_box)
             self.layout.addLayout(self.description_layout)
             self.behavior_layout = QHBoxLayout()
-            #            self.behavior_label.resize(20, self.behavior_label.height())
-            #            self.enabled_checkbox.resize(20, self.enabled_checkbox.height())
-            #            self.behavior_label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-            #            self.enabled_checkbox.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
-            #            self.behavior_layout.setSpacing(20)
-            #            print(self.behavior_layout.spacing())
             self.behavior_layout.addWidget(self.behavior_label)
             if type(self.alarm_item.enabled) is bool:
                 self.enabled_checkbox.setChecked(self.alarm_item.enabled)
@@ -165,9 +164,8 @@ class AlarmConfigurationWidget(QDialog):
         self.setLayout(self.layout)
         self.layout.addLayout(self.button_layout)
 
-    ##Processing CONFIG message with key: config:/CRYO/CRYO/Global/Auxilaries and Utilities/CP2 Secondary Cooling Water/CPT:CP28:6036:ALM and values: {'user': 'jesseb', 'host': 'aird-b50-srv01', 'description': 'CPT:CP28:6036:ALM', 'latching': False, 'annunciating': False, 'guidance[{'title': "It's", 'details': 'Very noisy'}, {'title': 'Call', 'details': 'Someone'}], 'displays': [{'title': 'Cool Display', 'details': \
-    # 'Yep'}], 'commands': [{'title': 'Command ', 'details': 'One'}, {'title': 'Command', 'details': 'Two'}]}
     def save_configuration(self):
+        """ Saves the input the user entered into the widget by sending it to the kafka config queue """
         guidance = []
         displays = []
         commands = []
@@ -196,7 +194,7 @@ class AlarmConfigurationWidget(QDialog):
             values_to_send = {'user': username, 'host': hostname, 'description': self.description_box.text(),
                               'enabled': self.alarm_item.enabled, 'latching': self.alarm_item.latching,
                               'annunciating': self.alarm_item.annunciating, 'guidance': guidance, 'displays': displays,
-                              'commands': commands}  # TODO Remove defaults if they are just going to be taken from below anyway
+                              'commands': commands}
             if self.datetime_widget.dateTime() != self.minimum_datetime and not self.enabled_checkbox.isChecked():
                 values_to_send['enabled'] = self.datetime_widget.dateTime().toString('yyyy-MM-ddThh:mm:ss')
             elif self.alarm_item.enabled != self.enabled_checkbox.isChecked():
