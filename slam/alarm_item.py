@@ -1,21 +1,34 @@
 from __future__ import annotations
 from datetime import datetime
-from qtpy.QtCore import QObject
+from functools import total_ordering
+from qtpy.QtCore import QObject, Qt
+from qtpy.QtGui import QBrush
 from typing import Optional, Union
 import enum
 
 
-class AlarmSeverity(str, enum.Enum):
-    """ An enum for the values that an alarm severity can take on. """
+@total_ordering  # Fills in other ordering methods for us
+class AlarmSeverity(enum.Enum):
+    """
+    An enum for the values that an alarm severity can take on. Not inheriting from str so we can do alarm logic
+    based comparisons rather than string ones.
+    """
     OK = 'OK'
-    UNDEFINED = 'UNDEFINED'
-    MAJOR = 'MAJOR'
-    MINOR = 'MINOR'
-    MAJOR_ACK = 'MAJOR_ACK'
     MINOR_ACK = 'MINOR_ACK'
-    UNDEFINED_ACK = 'UNDEFINED_ACK'
-    INVALID = 'INVALID'
+    MAJOR_ACK = 'MAJOR_ACK'
     INVALID_ACK = 'INVALID_ACK'
+    UNDEFINED_ACK = 'UNDEFINED_ACK'
+    MINOR = 'MINOR'
+    MAJOR = 'MAJOR'
+    INVALID = 'INVALID'
+    UNDEFINED = 'UNDEFINED'
+
+    def __lt__(self, other):
+        """ The order in which they are defined is in order of increasing severity for display """
+        if self.__class__ is other.__class__:
+            values = [e for e in AlarmSeverity]
+            return values.index(self) < values.index(other)
+        return NotImplemented
 
 
 class AlarmItem(QObject):
@@ -120,6 +133,29 @@ class AlarmItem(QObject):
                 return True
         else:
             print('ERROR: Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
+
+    def display_color(self) -> QBrush:
+        """ Return a QBrush with the appropriate color for drawing this alarm based on its severity """
+        if not self.is_enabled():
+            return QBrush(Qt.gray)
+        elif self.alarm_severity == AlarmSeverity.OK:
+            return QBrush(Qt.darkGreen)
+        elif self.alarm_severity == AlarmSeverity.UNDEFINED:
+            return QBrush(Qt.magenta)
+        elif self.alarm_severity == AlarmSeverity.MAJOR:
+            return QBrush(Qt.red)
+        elif self.alarm_severity == AlarmSeverity.MINOR:
+            return QBrush(Qt.darkYellow)
+        elif self.alarm_severity == AlarmSeverity.MAJOR_ACK:
+            return QBrush(Qt.darkRed)
+        elif self.alarm_severity == AlarmSeverity.MINOR_ACK:
+            return QBrush(Qt.darkGray)
+        elif self.alarm_severity == AlarmSeverity.UNDEFINED_ACK:
+            return QBrush(Qt.darkMagenta)
+        elif self.alarm_severity == AlarmSeverity.INVALID:
+            return QBrush(Qt.magenta)
+        elif self.alarm_severity == AlarmSeverity.INVALID_ACK:
+            return QBrush(Qt.darkMagenta)
 
     def append_child(self, item: AlarmItem) -> None:
         """ Add the input item as a child node for this alarm item """
