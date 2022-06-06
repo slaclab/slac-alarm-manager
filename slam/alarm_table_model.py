@@ -46,15 +46,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
 
         if role == Qt.DisplayRole:
             return self.getData(column_name, alarm_item)
-        elif role == Qt.BackgroundRole:
-            if alarm_item.alarm_severity == AlarmSeverity.OK:
-                return QBrush(Qt.green)
-            elif alarm_item.alarm_severity == AlarmSeverity.UNDEFINED:
-                return QBrush(Qt.darkMagenta)
-            elif alarm_item.alarm_severity == AlarmSeverity.MAJOR:
-                return QBrush(Qt.red)
-            elif alarm_item.alarm_severity == AlarmSeverity.MINOR:
-                return QBrush(Qt.yellow)
+        elif role == Qt.TextColorRole:
+            return alarm_item.display_color()
 
     def getData(self, column_name: str, alarm_item: AlarmItem):
         """ Get the data from the input alarm item based on the column name """

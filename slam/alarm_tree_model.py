@@ -1,3 +1,4 @@
+from operator import attrgetter
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from qtpy.QtGui import QBrush
 from typing import List, Optional
@@ -48,67 +49,11 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             return alarm_item.name
         elif role == Qt.TextColorRole:
             if alarm_item.is_leaf():
-                if not alarm_item.is_enabled():
-                    return QBrush(Qt.gray)
-                elif alarm_item.alarm_severity == AlarmSeverity.OK:
-                    return QBrush(Qt.darkGreen)
-                elif alarm_item.alarm_severity == AlarmSeverity.UNDEFINED:
-                    return QBrush(Qt.magenta)
-                elif alarm_item.alarm_severity == AlarmSeverity.MAJOR:
-                    return QBrush(Qt.red)
-                elif alarm_item.alarm_severity == AlarmSeverity.MINOR:
-                    return QBrush(Qt.darkYellow)
-                elif alarm_item.alarm_severity == AlarmSeverity.MAJOR_ACK:
-                    return QBrush(Qt.darkRed)
-                elif alarm_item.alarm_severity == AlarmSeverity.MINOR_ACK:
-                    return QBrush(Qt.darkGray)
-                elif alarm_item.alarm_severity == AlarmSeverity.UNDEFINED_ACK:
-                    return QBrush(Qt.darkMagenta)
-                elif alarm_item.alarm_severity == AlarmSeverity.INVALID:
-                    return QBrush(Qt.magenta)
-                elif alarm_item.alarm_severity == AlarmSeverity.INVALID_ACK:
-                    return QBrush(Qt.darkMagenta)
+                return alarm_item.display_color()
             else:
                 all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
-                item_sevr = 0
-
-                for i in all_leaf_nodes:
-                    # TODO Clean up and consolidate
-                    if i.is_enabled():
-                        if i.alarm_severity == AlarmSeverity.MINOR_ACK:
-                            item_sevr = max(1, item_sevr)
-                        elif i.alarm_severity == AlarmSeverity.MAJOR_ACK:
-                            item_sevr = max(2, item_sevr)
-                        elif i.alarm_severity == AlarmSeverity.INVALID_ACK:
-                            item_sevr = max(3, item_sevr)
-                        elif i.alarm_severity == AlarmSeverity.UNDEFINED_ACK:
-                            item_sevr = max(4, item_sevr)
-                        elif i.alarm_severity == AlarmSeverity.MINOR:
-                            item_sevr = max(5, item_sevr)
-                        elif i.alarm_severity == AlarmSeverity.MAJOR:
-                            item_sevr = max(6, item_sevr)
-                        elif i.alarm_severity == AlarmSeverity.INVALID:
-                            item_sevr = max(7, item_sevr)
-                        elif i.alarm_severity == AlarmSeverity.UNDEFINED:
-                            item_sevr = max(8, item_sevr)
-                if item_sevr == 0:
-                    return QBrush(Qt.darkGreen)
-                elif item_sevr == 1:
-                    return QBrush(Qt.darkGray)
-                elif item_sevr == 2:
-                    return QBrush(Qt.darkRed)
-                elif item_sevr == 3:
-                    return QBrush(Qt.darkMagenta)
-                elif item_sevr == 4:
-                    return QBrush(Qt.darkMagenta)
-                elif item_sevr == 5:
-                    return QBrush(Qt.darkYellow)
-                elif item_sevr == 6:
-                    return QBrush(Qt.red)
-                elif item_sevr == 7:
-                    return QBrush(Qt.magenta)
-                elif item_sevr == 8:
-                    return QBrush(Qt.magenta)
+                highest_severity_alarm = max(all_leaf_nodes, key=attrgetter('alarm_severity'))
+                return highest_severity_alarm.display_color()
 
     def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
         if not self.hasIndex(row, column, parent):
