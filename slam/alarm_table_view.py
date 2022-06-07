@@ -1,10 +1,14 @@
 import getpass
 import socket
-from qtpy.QtCore import Signal
+from kafka.producer import KafkaProducer
+from qtpy.QtCore import QEvent, Signal
 from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import QAbstractItemView, QAction, QApplication, QHeaderView, QLabel, QMenu, QTableView, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication, QHeaderView,
+                            QLabel, QMenu, QTableView, QVBoxLayout, QWidget)
+from typing import Callable
 from .alarm_item import AlarmSeverity
 from .alarm_table_model import AlarmItemsTableModel
+from .alarm_tree_model import AlarmItemsTreeModel
 
 
 class AlarmTableViewWidget(QWidget):
@@ -24,7 +28,7 @@ class AlarmTableViewWidget(QWidget):
     """
     plot_signal = Signal(str)
 
-    def __init__(self, tree_model, kafka_producer, topic, plot_slot):
+    def __init__(self, tree_model: AlarmItemsTreeModel, kafka_producer: KafkaProducer, topic: str, plot_slot: Callable):
         super().__init__()
         self.resize(1035, 600)
 
@@ -99,22 +103,20 @@ class AlarmTableViewWidget(QWidget):
         self.acknowledgedAlarmsModel.rowsInserted.connect(self.update_counter_label)
         self.acknowledgedAlarmsModel.rowsRemoved.connect(self.update_counter_label)
 
-    def update_counter_label(self):
+    def update_counter_label(self) -> None:
         """ Update the labels displaying the count of active and acknowledged alarms """
         self.active_alarms_label.setText(f'Active Alarms: {len(self.alarmModel.alarm_items)}')
         self.acknowledged_alarms_label.setText(f'Acknowledged Alarms: {len(self.acknowledgedAlarmsModel.alarm_items)}')
 
-    def active_alarm_context_menu_event(self, ev):
+    def active_alarm_context_menu_event(self, ev: QEvent) -> None:
         """ Display the right-click context menu for items in the active alarms table """
         self.active_context_menu.popup(QCursor.pos())
-        #self.context_menu.exec_(self.mapToGlobal(ev.pos()))
 
-    def acknowledged_alarm_context_menu_event(self, ev):
+    def acknowledged_alarm_context_menu_event(self, ev: QEvent) -> None:
         """ Display the right-click context menu for items in the acknowledged alarms table """
         self.acknowledged_context_menu.popup(QCursor.pos())
-        #self.context_menu.exec_(self.mapToGlobal(ev.pos()))
 
-    def plot_pv(self):
+    def plot_pv(self) -> None:
         """ Send off the signal for plotting a PV """
         indices = self.alarmView.selectedIndexes()
         if len(indices) > 0:
@@ -122,7 +124,7 @@ class AlarmTableViewWidget(QWidget):
             alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
             self.plot_signal.emit(alarm_item.name)
 
-    def copy_active_alarm_to_clipboard(self):
+    def copy_active_alarm_to_clipboard(self) -> None:
         """ Copy the selected PV to the user's clipboard """
         indices = self.alarmView.selectedIndexes()
         if len(indices) > 0:
@@ -131,7 +133,7 @@ class AlarmTableViewWidget(QWidget):
             self.clipboard.setText(alarm_item.name, mode=self.clipboard.Selection)
             self.clipboard.setText(alarm_item.name, mode=self.clipboard.Clipboard)
 
-    def copy_acknowledged_alarm_to_clipboard(self):
+    def copy_acknowledged_alarm_to_clipboard(self) -> None:
         """ Copy the selected PV to the user's clipboard """
         indices = self.acknowledgedAlarmsView.selectedIndexes()
         if len(indices) > 0:
@@ -140,7 +142,7 @@ class AlarmTableViewWidget(QWidget):
             self.clipboard.setText(alarm_item.name, mode=self.clipboard.Selection)
             self.clipboard.setText(alarm_item.name, mode=self.clipboard.Clipboard)
 
-    def send_acknowledgement(self):
+    def send_acknowledgement(self) -> None:
         """ Send the acknowledge action by sending it to the command topic in the kafka cluster """
         indices = self.alarmView.selectedIndexes()
         if len(indices) > 0:
@@ -152,7 +154,7 @@ class AlarmTableViewWidget(QWidget):
                                      key=f'command:{alarm_item.path}',
                                      value={'user': username, 'host': hostname, 'command': 'acknowledge'})
 
-    def send_unacknowledgement(self):
+    def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
         indices = self.acknowledgedAlarmsView.selectedIndexes()
         if len(indices) > 0:
