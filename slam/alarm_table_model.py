@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from qtpy.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt, QVariant
-from qtpy.QtGui import QBrush
 from typing import Optional
 from .alarm_item import AlarmItem, AlarmSeverity
 
@@ -20,6 +19,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
         super(QAbstractTableModel, self).__init__(parent=parent)
         self.alarm_items = OrderedDict()  # Key (str) to data
         self.column_names = ('PV', 'Alarm Severity', 'Alarm Status', 'Time', 'Alarm Value', 'PV Severity', 'PV Status')
+        self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'alarm_status', 3: 'alarm_time', 4: 'alarm_value',
+                               5: 'pv_severity', 6: 'pv_status'}
 
     def rowCount(self, parent) -> int:
         """ Return the row count of the table """
@@ -38,7 +39,7 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if not index.isValid():
             return QVariant()
 
-        if role != Qt.DisplayRole and role != Qt.BackgroundRole:
+        if role != Qt.DisplayRole and role != Qt.TextColorRole:
             return QVariant()
 
         column_name = self.column_names[index.column()]
@@ -47,7 +48,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return self.getData(column_name, alarm_item)
         elif role == Qt.TextColorRole:
-            return alarm_item.display_color()
+            if column_name == 'Alarm Severity':
+                return alarm_item.display_color()
 
     def getData(self, column_name: str, alarm_item: AlarmItem):
         """ Get the data from the input alarm item based on the column name """
@@ -87,7 +89,6 @@ class AlarmItemsTableModel(QAbstractTableModel):
     def remove_row(self, alarm_name: str):
         """ Removes the row associated with the input name from this table """
         if alarm_name not in self.alarm_items:
-            # print(f'ERROR: Attempting to remove a row from the alarm table when that PV is not present: {alarm_name}')
             return
         index_to_remove = list(self.alarm_items.keys()).index(alarm_name)
         self.beginRemoveRows(QModelIndex(), index_to_remove, index_to_remove)
@@ -98,25 +99,9 @@ class AlarmItemsTableModel(QAbstractTableModel):
     def sort(self, col: int, order=Qt.AscendingOrder):
         """ Sort the table by the input column """
         self.layoutAboutToBeChanged.emit()
-        # TODO: Clean this up
-        if col == 0:
-            sort_key = lambda x: x[1].name
-        elif col == 1:
-            sort_key = lambda x: x[1].alarm_severity
-        elif col == 2:
-            sort_key = lambda x: x[1].alarm_status
-        elif col == 3:
-            sort_key = lambda x: x[1].alarm_time
-        elif col == 4:
-            sort_key = lambda x: x[1].alarm_value
-        elif col == 5:
-            sort_key = lambda x: x[1].pv_severity
-        elif col == 6:
-            sort_key = lambda x: x[1].pv_status
-        else:
-            print(f'ERROR: Cannot sort by column: {col}')
-        self.alarm_items = OrderedDict(
-            sorted(self.alarm_items.items(), key=sort_key, reverse=order == Qt.DescendingOrder))
+        self.alarm_items = OrderedDict(sorted(self.alarm_items.items(),
+                                              key=lambda alarm_item: getattr(alarm_item[1], self.column_to_attr[col]),
+                                              reverse=order == Qt.DescendingOrder))
         self.layoutChanged.emit()
 
     def update_row(self, name: str, path: str, severity: AlarmSeverity, status: str, time,

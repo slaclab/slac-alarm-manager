@@ -19,7 +19,7 @@ class MockKafkaProducer:
         self.values = value
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def alarm_item():
     return AlarmItem('TEST:PV:ONE', path='/ROOT/SECTOR_ONE/TEST:PV:ONE')
 
