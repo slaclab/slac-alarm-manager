@@ -1,6 +1,5 @@
 from operator import attrgetter
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
-from qtpy.QtGui import QBrush
 from typing import List, Optional
 from .alarm_item import AlarmItem, AlarmSeverity
 
