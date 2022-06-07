@@ -21,9 +21,10 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         self.added_paths = set()
 
     def clear(self) -> None:
-        """ Clear out all the nodes in this tree and set the root to None """
+        """ Clear out all the nodes in this tree and set the root to an empty item """
         self.nodes.clear()
-        self.root_item = None
+        self.added_paths.clear()
+        self.root_item = AlarmItem('')
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
         """ Return the column count """
