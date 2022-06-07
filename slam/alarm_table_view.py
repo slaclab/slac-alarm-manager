@@ -179,7 +179,7 @@ class AlarmTableViewWidget(QWidget):
             self.acknowledgedAlarmsModel.update_row(name, path, severity, status, time, value, pv_severity, pv_status)
         elif severity == AlarmSeverity.OK:
             self.alarmModel.remove_row(name)
-            self.acknowledgedAlarmsModel.remove_row(name)  # TODO: Not sure if this logic is right
+            self.acknowledgedAlarmsModel.remove_row(name)
         else:
             if name in self.acknowledgedAlarmsModel.alarm_items:
                 self.acknowledgedAlarmsModel.remove_row(name)
