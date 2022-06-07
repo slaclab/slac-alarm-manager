@@ -1,5 +1,6 @@
 import pytest
 from ..alarm_item import AlarmItem
+from ..alarm_tree_model import AlarmItemsTreeModel
 from typing import Dict
 
 """ Various fixtures that can be used for any unit test """
@@ -22,6 +23,12 @@ class MockKafkaProducer:
 @pytest.fixture(scope='function')
 def alarm_item():
     return AlarmItem('TEST:PV:ONE', path='/ROOT/SECTOR_ONE/TEST:PV:ONE')
+
+
+@pytest.fixture(scope='function')
+def tree_model():
+    """ Return an empty tree model for testing """
+    return AlarmItemsTreeModel()
 
 
 @pytest.fixture(scope='function')
