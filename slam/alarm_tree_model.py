@@ -19,9 +19,8 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         self.root_item = AlarmItem('')
         self.nodes = []
         self.added_paths = set()
-        # self.nodes_by_name = {}
 
-    def clear(self):
+    def clear(self) -> None:
         """ Clear out all the nodes in this tree and set the root to None """
         self.nodes.clear()
         self.root_item = None
@@ -55,10 +54,10 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 return highest_severity_alarm.display_color()
 
     def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+        """ Create an index for the input row and column based on the parent item. """
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
-        parent_item = None
         if not parent.isValid():
             parent_item = self.root_item
         else:
@@ -70,6 +69,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
 
         return QModelIndex()
 
+    @staticmethod
     def get_all_leaf_nodes(self, alarm_item) -> List[AlarmItem]:
         """ Returns all leaf nodes for the input item. """
         leaves = []
@@ -87,6 +87,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         return leaves
 
     def parent(self, index) -> QModelIndex:
+        """ Create and return an index for the parent node given the index of the child. """
         if not index.isValid():
             return QModelIndex()
 
@@ -108,7 +109,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             return self.root_item
 
     def getItemIndex(self, path: str) -> int:
-        """ Returns an the list index of the item based on its path, or -1 if no item exists at that path """
+        """ Returns the list index of the item based on its path, or -1 if no item exists at that path """
         for index, alarm_item in enumerate(self.nodes):
             if path == alarm_item.path:
                 return index
@@ -122,7 +123,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             return
 
         item_to_update = self.nodes[self.getItemIndex(path)]
-        #        print(f'Updating SEVR for item: {item_to_update.name} to: {severity}')  # TODO: Make a scrolling display out of this?
+        # print(f'Updating SEVR for item: {item_to_update.name} to: {severity}')  # TODO: Make a scrolling display out of this?
         item_to_update.alarm_severity = severity
         item_to_update.alarm_status = status
         item_to_update.alarm_time = time
@@ -145,7 +146,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         item_path : str
             The path of the alarm item to add or update
         values : dict
-            All of the value associated with the alarm to add or update
+            All of the values associated with the alarm to add or update
         """
         item_name = item_path.split('/')[-1]
         alarm_item = AlarmItem(name=item_name, path=item_path, alarm_severity=AlarmSeverity.OK,
@@ -175,7 +176,6 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 self.update_model(parent_path, {})
                 parent_item_index = self.getItemIndex(parent_path)
             alarm_item.assign_parent(self.nodes[parent_item_index])
-            # print(f'Adding node: {item_path} with parent: {self.nodes[parent_item_index].path}')
             self.nodes[parent_item_index].append_child(alarm_item)
             self.endInsertRows()
 
@@ -194,7 +194,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             if 'annunciating' in values:
                 self.nodes[item_index].annunciating = values['annunciating']
 
-    def remove_an_item(self, item_path: str):
+    def remove_an_item(self, item_path: str) -> None:
         """ Removes the alarm item at the input path from this tree """
         if item_path not in self.added_paths:
             # print(f'ERROR: Trying to delete item that does not exist: {item_path}')
