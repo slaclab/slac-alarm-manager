@@ -59,7 +59,7 @@ def test_send_acknowledgement(qtbot, monkeypatch, alarm_table_view, mock_kafka_p
 
     # Send the acknowledgement, and verify the message we are sending to kafka looks the way we want it to
     alarm_table_view.send_acknowledgement()
-    # Setting the correct topic, path, and acknoledgement command is all we need to acknowledge an alarm
+    # Setting the correct topic, path, and acknowledgement command is all we need to acknowledge an alarm
     assert mock_kafka_producer.topic == 'TEST_TOPICCommand'
     assert mock_kafka_producer.key == 'command:/path/to/TEST:PV'
     assert 'command' in mock_kafka_producer.values
