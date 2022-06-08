@@ -1,8 +1,10 @@
 import getpass
 import socket
-from qtpy.QtCore import QModelIndex, Qt, Signal
+from kafka.producer import KafkaProducer
+from qtpy.QtCore import QModelIndex, QPoint, Qt, Signal
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QAbstractItemView, QAction, QApplication, QMenu, QTreeView, QVBoxLayout, QWidget
+from typing import Callable
 from .alarm_configuration_widget import AlarmConfigurationWidget
 from .alarm_item import AlarmSeverity
 from .alarm_tree_model import AlarmItemsTreeModel
@@ -26,7 +28,7 @@ class AlarmTreeViewWidget(QWidget):
 
     plot_signal = Signal(str)
 
-    def __init__(self, kafka_producer, topic, plot_slot):
+    def __init__(self, kafka_producer: KafkaProducer, topic: str, plot_slot: Callable):
         super().__init__()
 
         self.kafka_producer = kafka_producer
@@ -69,7 +71,7 @@ class AlarmTreeViewWidget(QWidget):
 
         self.layout.addWidget(self.tree_view)
 
-    def tree_menu(self, pos) -> None:
+    def tree_menu(self, pos: QPoint) -> None:
         """ Creates and displays the context menu to be displayed upon right clicking on an alarm item """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
@@ -108,14 +110,14 @@ class AlarmTreeViewWidget(QWidget):
             menu.addAction(self.disable_action)
             menu.exec_(self.mapToGlobal(pos))
 
-    def create_alarm_configuration_widget(self, index: QModelIndex):
+    def create_alarm_configuration_widget(self, index: QModelIndex) -> None:
         """ Create and display the alarm configuration widget for the alarm item with the input index """
         alarm_item = self.treeModel.getItem(index)
         alarm_config_window = AlarmConfigurationWidget(alarm_item=alarm_item, kafka_producer=self.kafka_producer,
                                                        topic=self.topic, parent=self)
         alarm_config_window.show()
 
-    def copy_to_clipboard(self):
+    def copy_to_clipboard(self) -> None:
         """ Copy the selected PV to the user's clipboard """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
@@ -124,7 +126,7 @@ class AlarmTreeViewWidget(QWidget):
             self.clipboard.setText(alarm_item.name, mode=self.clipboard.Selection)
             self.clipboard.setText(alarm_item.name, mode=self.clipboard.Clipboard)
 
-    def plot_pv(self):
+    def plot_pv(self) -> None:
         """ Send off the signal for plotting a PV """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
@@ -132,7 +134,7 @@ class AlarmTreeViewWidget(QWidget):
             alarm_item = self.treeModel.getItem(index)
             self.plot_signal.emit(alarm_item.name)
 
-    def send_acknowledgement(self):
+    def send_acknowledgement(self) -> None:
         """ Send the acknowledge action by sending it to the command topic in the kafka cluster """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
@@ -144,7 +146,7 @@ class AlarmTreeViewWidget(QWidget):
                                      key=f'command:{alarm_item.path}',
                                      value={'user': username, 'host': hostname, 'command': 'acknowledge'})
 
-    def send_unacknowledgement(self):
+    def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
@@ -156,8 +158,7 @@ class AlarmTreeViewWidget(QWidget):
                                      key=f'command:{alarm_item.path}',
                                      value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
 
-    # Processing CONFIG message with key: config:/CRYO/CRYO/Global/Auxilaries and Utilities/CP2 Secondary Cooling Water/CPD:CP22:3420:ALM and values: {'user': 'root', 'host': 'b4f2a0844c4e', 'description': 'CPD:CP22:3420:ALM', 'enabled': False, 'latching': False, 'annunciating': False}
-    def enable_alarm(self):
+    def enable_alarm(self) -> None:
         """ Enable the selected alarm. If the selected item is a parent node, enable all its children """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
@@ -182,7 +183,7 @@ class AlarmTreeViewWidget(QWidget):
                                                         'description': leaf.description, 'enabled': True,
                                                         'latching': leaf.latching, 'annunciating': leaf.annunciating})
 
-    def disable_alarm(self):
+    def disable_alarm(self) -> None:
         """ Disable the selected alarm. If the selected item is a parent node, disable all its children """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
