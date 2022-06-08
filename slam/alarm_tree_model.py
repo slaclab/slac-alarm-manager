@@ -71,7 +71,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         return QModelIndex()
 
     @staticmethod
-    def get_all_leaf_nodes(self, alarm_item) -> List[AlarmItem]:
+    def get_all_leaf_nodes(alarm_item) -> List[AlarmItem]:
         """ Returns all leaf nodes for the input item. """
         leaves = []
         items_to_add = []
@@ -161,7 +161,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             self.beginInsertRows(QModelIndex(), len(self.nodes), len(self.nodes))
 
             if len(self.added_paths) == 0:
-                print(f'setting root to: {item_path}')
+                #print(f'setting root to: {item_path}')
                 self.root_item = alarm_item
                 self.nodes.append(self.root_item)
                 self.added_paths.add(item_path)
@@ -195,7 +195,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             if 'annunciating' in values:
                 self.nodes[item_index].annunciating = values['annunciating']
 
-    def remove_an_item(self, item_path: str) -> None:
+    def remove_item(self, item_path: str) -> None:
         """ Removes the alarm item at the input path from this tree """
         if item_path not in self.added_paths:
             # print(f'ERROR: Trying to delete item that does not exist: {item_path}')
