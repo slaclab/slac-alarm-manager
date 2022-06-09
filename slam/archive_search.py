@@ -7,7 +7,15 @@ from typing import List, Optional
 
 
 class ArchiveResultsTableModel(QAbstractTableModel):
-    """ This table model holds the results of an archiver appliance PV search """
+    """
+    This table model holds the results of an archiver appliance PV search. This search is for names matching
+    the input search words, and the results are a list of PV names that match that search.
+
+    Parameters
+    ----------
+    parent : QObject, optional
+        The parent item of this table
+    """
 
     def __init__(self, parent: Optional[QObject] = None):
         super(QAbstractTableModel, self).__init__(parent=parent)
@@ -26,7 +34,7 @@ class ArchiveResultsTableModel(QAbstractTableModel):
             return 0
         return len(self.column_names)
 
-    def data(self, index: QModelIndex, role: int):
+    def data(self, index: QModelIndex, role: int) -> QVariant:
         """ Return the data for the associated role. Currently only supporting DisplayRole. """
         if not index.isValid():
             return QVariant()
@@ -36,40 +44,56 @@ class ArchiveResultsTableModel(QAbstractTableModel):
 
         return self.results_list[index.row()]
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
+    def headerData(self, section, orientation, role=Qt.DisplayRole) -> QVariant:
+        """ Return data associated with the header """
         if role != Qt.DisplayRole:
             return super().headerData(section, orientation, role)
 
         return str(self.column_names[section])
 
-    def flags(self, index: QModelIndex):
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+        """ Return flags that determine how users can interact with the items in the table """
         if index.isValid():
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsDragEnabled
 
     def append(self, pv: str) -> None:
+        """ Appends a row to this table given the PV name as input """
         self.beginInsertRows(QModelIndex(), len(self.results_list), len(self.results_list))
         self.results_list.append(pv)
         self.endInsertRows()
         self.layoutChanged.emit()
 
-    def append_rows(self, pvs: List[str]) -> None:
+    def replace_rows(self, pvs: List[str]) -> None:
+        """ Overwrites any existing rows in the table with the input list of PV names """
         self.beginInsertRows(QModelIndex(), 0, len(pvs) - 1)
-        self.results_list = pvs  # This append is obviously a misnomer
+        self.results_list = pvs
         self.endInsertRows()
         self.layoutChanged.emit()
 
     def clear(self) -> None:
+        """ Clear out all data stored in this table """
         self.beginRemoveRows(QModelIndex(), 0, len(self.results_list))
         self.results_list = []
         self.endRemoveRows()
         self.layoutChanged.emit()
 
     def sort(self, col: int, order=Qt.AscendingOrder) -> None:
+        """ Sort the table by PV name """
         self.results_list.sort(reverse=order == Qt.DescendingOrder)
         self.layoutChanged.emit()
 
 
 class ArchiveSearchWidget(QWidget):
+    """
+    The ArchiveSearchWidget is a display widget for showing the results of a PV search using an instance of the
+    EPICS archiver appliance. Currently the only type of search supported is for PV names matching an input search
+    string, though this can be extended in the future.
+
+    Parameters
+    ----------
+    parent : QObject, optional
+        The parent item of this widget
+    """
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent=parent)
 
@@ -106,7 +130,7 @@ class ArchiveSearchWidget(QWidget):
         self.results_view.setSortingEnabled(True)
         self.results_view.verticalHeader().setVisible(False)
         self.results_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.results_view.startDrag = self.startDrag2
+        self.results_view.startDrag = self.startDragAction
 
         self.archive_url_layout = QHBoxLayout()
         self.archive_url_layout.addWidget(self.archive_title_label)
@@ -121,7 +145,12 @@ class ArchiveSearchWidget(QWidget):
         self.layout.addWidget(self.results_view)
         self.setLayout(self.layout)
 
-    def startDrag2(self, supported_actions):
+    def startDragAction(self, supported_actions):
+        """
+        The method to be called when a user initiates a drag action for one of the results in the table. The current
+        reason for this functionality is the ability to drag a PV name onto a plot to automatically start drawing
+        data for that PV
+        """
         indices = self.results_view.selectedIndexes()
         if len(indices) > 0:
             index = indices[0]
@@ -130,22 +159,23 @@ class ArchiveSearchWidget(QWidget):
             mime_data = QMimeData()
             mime_data.setText(pv_name)
             drag.setMimeData(mime_data)
-#            print(f'Creating drag action: {pv_name}')
-            dropAction = drag.exec()
+            drag.exec()
 
     def request_archiver_info(self) -> None:
-        url_string = f'http://lcls-archapp.slac.stanford.edu/retrieval/bpl/searchForPVsRegex?regex=.*{self.search_box.text()}.*'
+        """ Send the search request to the archiver appliance based on the search string typed into the text box """
+        url_string = f'http://{self.archive_url_textedit.text()}/retrieval/bpl/searchForPVsRegex?regex=.*{self.search_box.text()}.*'
         request = QNetworkRequest(QUrl(url_string))
-        #        print(f'About to fire off a request to this url: {url_string}')
         self.network_manager.get(request)
         self.loading_label.show()
 
     def populate_results_list(self, reply: QNetworkReply) -> None:
+        """ Slot called when the archiver appliance returns search results. Will populate the table with the results """
         self.loading_label.hide()
         if reply.error() == QNetworkReply.NoError:
             self.results_table_model.clear()
             bytes_str = reply.readAll()
             pv_list = str(bytes_str, 'utf-8').split()
-            self.results_table_model.append_rows(pv_list)
+            self.results_table_model.replace_rows(pv_list)
         else:
             print(f'ERROR: Could not retrieve archiver results: {reply.error()}')
+        reply.deleteLater()
