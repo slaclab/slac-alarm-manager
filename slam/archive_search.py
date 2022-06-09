@@ -178,3 +178,4 @@ class ArchiveSearchWidget(QWidget):
             self.results_table_model.replace_rows(pv_list)
         else:
             print(f'ERROR: Could not retrieve archiver results: {reply.error()}')
+        reply.deleteLater()
