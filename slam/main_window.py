@@ -64,8 +64,6 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_update_signal.connect(self.table_view_widget.update_tables)
         self.alarm_update_signal.connect(self.tree_view_widget.treeModel.update_item)
 
-        self.plots = []
-
         self.kafka_reader = KafkaReader(topic, self.process_message)
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
@@ -127,17 +125,18 @@ class AlarmHandlerMainWindow(QMainWindow):
             The name of the pv to plot. If not specified, then the plot will start out empty.
         """
         plot = PyDMArchiverTimePlot()
-        plot.removeAxis('left')
         plot.setTimeSpan(300)
         if pv:
             plot.addYChannel(y_channel=f'ca://{pv}', name=pv, yAxisName=f'Axis {self.axis_count}', useArchiveData=True)
             self.axis_count += 1
 
-        plot.setAcceptDrops(True)
-        plot.dragEnterEvent = self.drag_enter_event
-        plot.dragMoveEvent = self.drag_move_event
+        def drag_enter_event(ev):
+            ev.accept()
 
-        def dropper(ev):
+        def drag_move_event(ev):
+            ev.accept()
+
+        def drop_event(ev):
             ev.accept()
             if ev.mimeData().text():
                 pv = ev.mimeData().text()
@@ -145,26 +144,15 @@ class AlarmHandlerMainWindow(QMainWindow):
                                  useArchiveData=True)
                 self.axis_count += 1
 
-        plot.dropEvent = dropper
+        plot.setAcceptDrops(True)
+        plot.dragEnterEvent = drag_enter_event
+        plot.dragMoveEvent = drag_move_event
+        plot.dropEvent = drop_event
         plot.axis_count = 0
-        self.plots.append(plot)
         plot.show()
 
     def exit_application(self):
         self.close()
-
-    def drag_enter_event(self, ev):  # TODO: Move this
-        ev.accept()
-
-    def drag_move_event(self, ev):
-        ev.accept()
-
-    def drop_event(self, ev):  # TODO: Move this
-        ev.accept()
-        if ev.mimeData().text():
-            pv = ev.mimeData().text()
-            self.addYChannel(y_channel=f'ca://{pv}', name=pv, yAxisName=f'Axis {self.axis_count}', useArchiveData=True)
-            self.axis_count += 1
 
     @Slot(str)
     def plot_pv(self, pv: Optional[str] = None):
