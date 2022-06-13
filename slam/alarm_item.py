@@ -5,6 +5,9 @@ from qtpy.QtCore import QObject, Qt
 from qtpy.QtGui import QBrush
 from typing import Optional, Union
 import enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @total_ordering  # Fills in other ordering methods for us
@@ -132,7 +135,7 @@ class AlarmItem(QObject):
             else:
                 return True
         else:
-            print('ERROR: Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
+            logger.error(f'Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
 
     def display_color(self) -> QBrush:
         """ Return a QBrush with the appropriate color for drawing this alarm based on its severity """

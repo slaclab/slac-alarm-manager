@@ -4,6 +4,9 @@ from qtpy.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from qtpy.QtWidgets import (QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
                             QPushButton, QTableView, QVBoxLayout, QWidget)
 from typing import List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ArchiveResultsTableModel(QAbstractTableModel):
@@ -177,5 +180,5 @@ class ArchiveSearchWidget(QWidget):
             pv_list = str(bytes_str, 'utf-8').split()
             self.results_table_model.replace_rows(pv_list)
         else:
-            print(f'ERROR: Could not retrieve archiver results: {reply.error()}')
+            logger.error(f'Could not retrieve archiver results due to: {reply.error()}')
         reply.deleteLater()

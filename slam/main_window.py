@@ -1,5 +1,5 @@
 import json
-import sys
+import logging
 from datetime import datetime
 from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
@@ -12,6 +12,8 @@ from .alarm_table_view import AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
 from .kafka_reader import KafkaReader
+
+logger = logging.getLogger(__name__)
 
 
 class AlarmHandlerMainWindow(QMainWindow):
@@ -85,7 +87,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         key = message.key
         values = message.value
         if key.startswith('config'):  # [7:] because config:
-            #            print(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
+            logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
                 self.tree_view_widget.treeModel.update_model(message.key[7:], values)
@@ -97,7 +99,7 @@ class AlarmHandlerMainWindow(QMainWindow):
             pass
         elif key.startswith('state') and values is not None:
             pv = message.key.split('/')[-1]
-            # print(f'STATE message key is: {message.key} and our slice is: {message.key[6:]}')
+            logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.key[6:]}')
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
@@ -151,20 +153,11 @@ class AlarmHandlerMainWindow(QMainWindow):
         plot.axis_count = 0
         plot.show()
 
-    def exit_application(self):
-        self.close()
-
     @Slot(str)
     def plot_pv(self, pv: Optional[str] = None):
+        """ Create a plot and associate it with the input PV if present """
         self.create_plot_widget(pv)
 
-
-if __name__ == "__main__":
-    app = QApplication([])
-
-    widget = AlarmHandlerMainWindow()
-    widget.resize(1035, 600)
-    widget.setWindowTitle('SLAC Alarm Manager')
-    widget.show()
-
-    sys.exit(app.exec())
+    def exit_application(self):
+        """ Close out the entire application """
+        self.close()
