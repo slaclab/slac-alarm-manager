@@ -2,6 +2,9 @@ from collections import OrderedDict
 from qtpy.QtCore import QAbstractTableModel, QModelIndex, QObject, Qt, QVariant
 from typing import Optional
 from .alarm_item import AlarmItem, AlarmSeverity
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AlarmItemsTableModel(QAbstractTableModel):
@@ -79,7 +82,7 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if alarm_item.alarm_severity == AlarmSeverity.OK:
             return  # Don't want to add unnecessary items to the table
         if alarm_item.name in self.alarm_items:
-            print(f'ERROR: Attempting to append a row to the alarm table which is already there: {alarm_item.name}')
+            logger.warning(f'Attempting to append a row to the alarm table which is already there: {alarm_item.name}')
             return
         self.beginInsertRows(QModelIndex(), len(self.alarm_items), len(self.alarm_items))
         self.alarm_items[alarm_item.name] = alarm_item

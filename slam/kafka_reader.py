@@ -39,6 +39,5 @@ class KafkaReader(QObject):
         return None
 
     def run(self):
-        print('Processing messages...')
         for message in self.main_consumer:
             self.new_message_signal.emit(message)

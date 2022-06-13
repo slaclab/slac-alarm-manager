@@ -1,5 +1,5 @@
 import json
-import sys
+import logging
 from datetime import datetime
 from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
@@ -12,6 +12,8 @@ from .alarm_table_view import AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
 from .kafka_reader import KafkaReader
+
+logger = logging.getLogger(__name__)
 
 
 class AlarmHandlerMainWindow(QMainWindow):
@@ -64,8 +66,6 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_update_signal.connect(self.table_view_widget.update_tables)
         self.alarm_update_signal.connect(self.tree_view_widget.treeModel.update_item)
 
-        self.plots = []
-
         self.kafka_reader = KafkaReader(topic, self.process_message)
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
@@ -87,7 +87,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         key = message.key
         values = message.value
         if key.startswith('config'):  # [7:] because config:
-            #            print(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
+            logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
                 self.tree_view_widget.treeModel.update_model(message.key[7:], values)
@@ -99,7 +99,7 @@ class AlarmHandlerMainWindow(QMainWindow):
             pass
         elif key.startswith('state') and values is not None:
             pv = message.key.split('/')[-1]
-            # print(f'STATE message key is: {message.key} and our slice is: {message.key[6:]}')
+            logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.key[6:]}')
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
@@ -127,17 +127,18 @@ class AlarmHandlerMainWindow(QMainWindow):
             The name of the pv to plot. If not specified, then the plot will start out empty.
         """
         plot = PyDMArchiverTimePlot()
-        plot.removeAxis('left')
         plot.setTimeSpan(300)
         if pv:
             plot.addYChannel(y_channel=f'ca://{pv}', name=pv, yAxisName=f'Axis {self.axis_count}', useArchiveData=True)
             self.axis_count += 1
 
-        plot.setAcceptDrops(True)
-        plot.dragEnterEvent = self.drag_enter_event
-        plot.dragMoveEvent = self.drag_move_event
+        def drag_enter_event(ev):
+            ev.accept()
 
-        def dropper(ev):
+        def drag_move_event(ev):
+            ev.accept()
+
+        def drop_event(ev):
             ev.accept()
             if ev.mimeData().text():
                 pv = ev.mimeData().text()
@@ -145,38 +146,18 @@ class AlarmHandlerMainWindow(QMainWindow):
                                  useArchiveData=True)
                 self.axis_count += 1
 
-        plot.dropEvent = dropper
+        plot.setAcceptDrops(True)
+        plot.dragEnterEvent = drag_enter_event
+        plot.dragMoveEvent = drag_move_event
+        plot.dropEvent = drop_event
         plot.axis_count = 0
-        self.plots.append(plot)
         plot.show()
-
-    def exit_application(self):
-        self.close()
-
-    def drag_enter_event(self, ev):  # TODO: Move this
-        ev.accept()
-
-    def drag_move_event(self, ev):
-        ev.accept()
-
-    def drop_event(self, ev):  # TODO: Move this
-        ev.accept()
-        if ev.mimeData().text():
-            pv = ev.mimeData().text()
-            self.addYChannel(y_channel=f'ca://{pv}', name=pv, yAxisName=f'Axis {self.axis_count}', useArchiveData=True)
-            self.axis_count += 1
 
     @Slot(str)
     def plot_pv(self, pv: Optional[str] = None):
+        """ Create a plot and associate it with the input PV if present """
         self.create_plot_widget(pv)
 
-
-if __name__ == "__main__":
-    app = QApplication([])
-
-    widget = AlarmHandlerMainWindow()
-    widget.resize(1035, 600)
-    widget.setWindowTitle('SLAC Alarm Manager')
-    widget.show()
-
-    sys.exit(app.exec())
+    def exit_application(self):
+        """ Close out the entire application """
+        self.close()

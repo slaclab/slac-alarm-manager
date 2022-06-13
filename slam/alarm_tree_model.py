@@ -2,7 +2,9 @@ from operator import attrgetter
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from typing import List, Optional
 from .alarm_item import AlarmItem, AlarmSeverity
+import logging
 
+logger = logging.getLogger(__name__)
 
 class AlarmItemsTreeModel(QAbstractItemModel):
     """
@@ -120,11 +122,10 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                     value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:
         """ Updates the alarm item with the input name and path in this tree. """
         if path not in self.added_paths:
-            # print(f'ERROR: Attempting update on a node that has not been added by config: {path}')
+            logger.warning(f'ERROR: Attempting update on a node that has not been added by config: {path}')
             return
 
         item_to_update = self.nodes[self.getItemIndex(path)]
-        # print(f'Updating SEVR for item: {item_to_update.name} to: {severity}')  # TODO: Make a scrolling display out of this?
         item_to_update.alarm_severity = severity
         item_to_update.alarm_status = status
         item_to_update.alarm_time = time
@@ -161,7 +162,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             self.beginInsertRows(QModelIndex(), len(self.nodes), len(self.nodes))
 
             if len(self.added_paths) == 0:
-                #print(f'setting root to: {item_path}')
+                logger.debug(f'Setting root of alarm tree to: {item_path}')
                 self.root_item = alarm_item
                 self.nodes.append(self.root_item)
                 self.added_paths.add(item_path)
@@ -198,7 +199,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
     def remove_item(self, item_path: str) -> None:
         """ Removes the alarm item at the input path from this tree """
         if item_path not in self.added_paths:
-            # print(f'ERROR: Trying to delete item that does not exist: {item_path}')
+            logger.warning(f'Attempting to remove item that does not exist: {item_path}')
             return
 
         self.added_paths.remove(item_path)
