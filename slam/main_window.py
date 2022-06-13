@@ -22,7 +22,7 @@ class AlarmHandlerMainWindow(QMainWindow):
     ----------
 
     topic : str
-        The kafka topic to listen to (TODO: Convert to a list)
+        The kafka topic to listen to
     """
 
     alarm_update_signal = Signal(str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
@@ -35,11 +35,6 @@ class AlarmHandlerMainWindow(QMainWindow):
                                             key_serializer=lambda x: x.encode('utf-8'))
         self.topic = topic
         self.clipboard = QApplication.clipboard()
-
-        self.layout = QVBoxLayout(self)
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        main_widget.setLayout(self.layout)
 
         self.main_menu = self.menuBar()
         self.file_menu = self.main_menu.addMenu('File')
@@ -58,17 +53,13 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.applications_menu.addAction(self.empty_plot_action)
 
         self.tab_widget = QTabWidget()
-        # self.setCentralWidget(self.tab_widget)
-        self.layout.addWidget(self.tab_widget)
 
         self.tree_view_widget = AlarmTreeViewWidget(self.kafka_producer, self.topic, self.plot_pv)
-        #        self.layout.addWidget(self.tree_view_widget)
         self.tab_widget.addTab(self.tree_view_widget, 'Alarm Tree')
 
         self.table_view_widget = AlarmTableViewWidget(self.tree_view_widget.treeModel, self.kafka_producer,
                                                       self.topic, self.plot_pv)
         self.table_view_widget.hide()
-        # self.tab_widget.addTab(self.table_view_widget, 'Alarm Table')
 
         self.alarm_update_signal.connect(self.table_view_widget.update_tables)
         self.alarm_update_signal.connect(self.tree_view_widget.treeModel.update_item)
@@ -82,27 +73,33 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.processing_thread.start()
 
         self.axis_count = 0
+        self.setCentralWidget(self.tab_widget)
 
-    # Processing CONFIG message with key: config:/CRYO/CRYO/Global/Auxilaries and Utilities/Analyzers/CANL:CP12:3801:ALM and values: {'user': 'r\oot', 'host': 'b4f2a0844c4e', 'description': 'CANL:CP12:3801:ALM', 'enabled': False, 'latching': False, 'annunciating': False, 'guidance': \[{'title': 'Super', 'details': 'Quiet'}]}
-    # Processing STATE message with key: state:/CRYO/CRYO/Global/Auxilaries and Utilities/Analyzers/CANL:CP12:3801:ALM and values: {'severity': \'OK', 'message': 'Disabled', 'value': '', 'time': {'seconds': 1646335579, 'nano': 701864000}, 'current_severity': 'OK', 'current_message': \'OK'}
     def process_message(self, message: ConsumerRecord):
-        """ Process a message received from kafka """
+        """
+        Process a message received from kafka and update the display widgets accordingly
+
+        Parameters
+        ----------
+        message : ConsumerRecord
+            A message received from the kafka queue indicating a change made to the topic we are listening to
+        """
         key = message.key
         values = message.value
         if key.startswith('config'):  # [7:] because config:
             #            print(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
             if values is not None:
+                # Start from 7: to read past the 'config:' part of the key
                 self.tree_view_widget.treeModel.update_model(message.key[7:], values)
             else:  # A null message indicates this item should be removed from the tree
                 self.tree_view_widget.treeModel.remove_item(message.key[7:])
         elif key.startswith('command'):
-            pass  # Nothing to do
+            pass  # Nothing for us to do
         elif values is not None and (len(values) <= 2):
             pass
         elif key.startswith('state') and values is not None:
             pv = message.key.split('/')[-1]
             # print(f'STATE message key is: {message.key} and our slice is: {message.key[6:]}')
-            # [6:] because state:
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
@@ -111,14 +108,24 @@ class AlarmHandlerMainWindow(QMainWindow):
                                           values['current_message'])
 
     def display_alarm_table_widget(self):
+        """ Show the alarm table """
         self.table_view_widget.show()
 
     def create_archiver_search_widget(self):
+        """ Create and show the widget for sending search requests to archiver appliance """
         if not hasattr(self, 'search_widget'):
             self.search_widget = ArchiveSearchWidget()
         self.search_widget.show()
 
     def create_plot_widget(self, pv: Optional[str] = None):
+        """
+        Create a widget for display a PyDMArchiverTimePlot of a PV
+
+        Parameters
+        ----------
+        pv : str, optional
+            The name of the pv to plot. If not specified, then the plot will start out empty.
+        """
         plot = PyDMArchiverTimePlot()
         plot.removeAxis('left')
         plot.setTimeSpan(300)

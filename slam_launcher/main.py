@@ -7,7 +7,6 @@ from slam import AlarmHandlerMainWindow
 
 def main():
     parser = argparse.ArgumentParser(description="SLAC Alarm Manager")
-    # TODO: Take a list of topics (not currently supported by the applicaiton)
     parser.add_argument('--topic', help='Kafka alarm topic to listen to')
     
     app_args = parser.parse_args()
