@@ -34,4 +34,3 @@ def tree_model():
 @pytest.fixture(scope='function')
 def mock_kafka_producer():
     return MockKafkaProducer()
-

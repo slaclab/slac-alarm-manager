@@ -3,6 +3,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush
 import pytest
 
+
 def test_is_leaf():
     """ Check that an alarm item with no children is considered a leaf """
     alarm_root = AlarmItem('PV:GROUP')
