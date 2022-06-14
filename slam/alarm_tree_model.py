@@ -200,7 +200,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
     def remove_item(self, item_path: str) -> None:
         """ Removes the alarm item at the input path from this tree """
         if item_path not in self.added_paths:
-            logger.warning(f'Attempting to remove item that does not exist: {item_path}')
+            logger.debug(f'Attempting to remove item not in the tree: {item_path}')
             return
 
         self.added_paths.remove(item_path)
