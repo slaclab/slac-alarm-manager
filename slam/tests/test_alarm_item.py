@@ -1,5 +1,7 @@
-from ..alarm_item import AlarmItem
-
+from ..alarm_item import AlarmItem, AlarmSeverity
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QBrush
+import pytest
 
 def test_is_leaf():
     """ Check that an alarm item with no children is considered a leaf """
@@ -48,3 +50,22 @@ def test_child():
     assert alarm_item.child(0).name == 'CHILD:PV:ONE'
     assert alarm_item.child(1).name == 'CHILD:PV:TWO'
     assert alarm_item.child(2) is None
+
+
+@pytest.mark.parametrize('enabled, severity, expected_color',
+                         [(False, AlarmSeverity.MAJOR, QBrush(Qt.gray)),
+                          (True, AlarmSeverity.OK, QBrush(Qt.darkGreen)),
+                          (True, AlarmSeverity.UNDEFINED, QBrush(Qt.magenta)),
+                          (True, AlarmSeverity.MAJOR, QBrush(Qt.red)),
+                          (True, AlarmSeverity.MINOR, QBrush(Qt.darkYellow)),
+                          (True, AlarmSeverity.MAJOR_ACK, QBrush(Qt.darkRed)),
+                          (True, AlarmSeverity.MINOR_ACK, QBrush(Qt.darkGray)),
+                          (True, AlarmSeverity.UNDEFINED_ACK, QBrush(Qt.darkMagenta)),
+                          (True, AlarmSeverity.INVALID, QBrush(Qt.magenta)),
+                          (True, AlarmSeverity.INVALID_ACK, QBrush(Qt.darkMagenta))])
+def test_display_color(enabled, severity, expected_color):
+    """ Verify that the color the alarm is to be drawn in is returned correctly """
+    alarm_item = AlarmItem('TEST:PV')
+    alarm_item.enabled = enabled
+    alarm_item.alarm_severity = severity
+    assert alarm_item.display_color() == expected_color

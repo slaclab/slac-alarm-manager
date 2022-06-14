@@ -1,7 +1,7 @@
 from ..alarm_item import AlarmItem, AlarmSeverity
 from ..alarm_tree_view import AlarmTreeViewWidget
-from qtpy.QtCore import QEvent, QModelIndex, QPoint
-from qtpy.QtWidgets import QTableView
+from qtpy.QtCore import QModelIndex, QPoint
+from qtpy.QtWidgets import QTreeView
 import pytest
 
 
@@ -27,10 +27,13 @@ def test_tree_menu(qtbot, monkeypatch, alarm_tree_view):
     model_index = QModelIndex()
     indices = [model_index]
     leaf_item = AlarmItem('PV:NAME', '/path/to/PV:NAME', AlarmSeverity.OK)
-    monkeypatch.setattr(QTableView, 'selectedIndexes', lambda x: indices)
+    monkeypatch.setattr(QTreeView, 'selectedIndexes', lambda x: indices)
     monkeypatch.setattr(alarm_tree_view.treeModel, 'getItem', lambda x: leaf_item)
 
+    qtbot.addWidget(alarm_tree_view.context_menu)
     alarm_tree_view.tree_menu(QPoint())
+    with qtbot.waitExposed(alarm_tree_view.context_menu):
+        alarm_tree_view.context_menu.show()
 
     # Check that creating a menu from a non-leaf node works too
     parent_item = AlarmItem('PV:GROUP:NAME', '/path/to/PV:GROUP:NAME', AlarmSeverity.OK)
@@ -38,6 +41,8 @@ def test_tree_menu(qtbot, monkeypatch, alarm_tree_view):
     monkeypatch.setattr(alarm_tree_view.treeModel, 'getItem', lambda x: parent_item)
 
     alarm_tree_view.tree_menu(QPoint())
+    with qtbot.waitExposed(alarm_tree_view.context_menu):
+        alarm_tree_view.context_menu.show()
 
 
 def test_send_acknowledgement(qtbot, monkeypatch, alarm_tree_view, mock_kafka_producer):

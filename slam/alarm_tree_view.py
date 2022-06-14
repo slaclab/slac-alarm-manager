@@ -53,6 +53,7 @@ class AlarmTreeViewWidget(QWidget):
 
         self.tree_view.doubleClicked.connect(self.create_alarm_configuration_widget)
 
+        self.context_menu = QMenu(self)
         self.acknowledge_action = QAction('Acknowledge')
         self.unacknowledge_action = QAction('Unacknowledge')
         self.copy_action = QAction('Copy PV To Clipboard')
@@ -78,15 +79,15 @@ class AlarmTreeViewWidget(QWidget):
             index = indices[0]
             alarm_item = self.treeModel.getItem(index)
             if alarm_item.is_leaf():
-                menu = QMenu(self)
+                self.context_menu = QMenu(self)
                 if alarm_item.alarm_severity in (AlarmSeverity.MINOR, AlarmSeverity.MAJOR,
                                                  AlarmSeverity.INVALID, AlarmSeverity.UNDEFINED):
-                    menu.addAction(self.acknowledge_action)
+                    self.context_menu.addAction(self.acknowledge_action)
                 elif alarm_item.alarm_severity in (AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
                                                    AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK):
-                    menu.addAction(self.unacknowledge_action)
-                menu.addAction(self.copy_action)
-                menu.addAction(self.plot_action)
+                    self.context_menu.addAction(self.unacknowledge_action)
+                self.context_menu.addAction(self.copy_action)
+                self.context_menu.addAction(self.plot_action)
             else:  # Parent Node
                 leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
                 add_acknowledge_action = False
@@ -101,14 +102,14 @@ class AlarmTreeViewWidget(QWidget):
                             AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
                             AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK):
                         add_unacknowledge_action = True
-                menu = QMenu(self)
+                self.context_menu = QMenu(self)
                 if add_acknowledge_action:  # This always should take precedence over unacknowledge
-                    menu.addAction(self.acknowledge_action)
+                    self.context_menu.addAction(self.acknowledge_action)
                 elif add_unacknowledge_action:
-                    menu.addAction(self.unacknowledge_action)
-            menu.addAction(self.enable_action)
-            menu.addAction(self.disable_action)
-            menu.exec_(self.mapToGlobal(pos))
+                    self.context_menu.addAction(self.unacknowledge_action)
+            self.context_menu.addAction(self.enable_action)
+            self.context_menu.addAction(self.disable_action)
+            self.context_menu.popup(self.mapToGlobal(pos))
 
     def create_alarm_configuration_widget(self, index: QModelIndex) -> None:
         """ Create and display the alarm configuration widget for the alarm item with the input index """
