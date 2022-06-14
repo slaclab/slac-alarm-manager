@@ -41,8 +41,3 @@ def load_test_data(topic_name: str):
         message = message.strip()
         print(f'Trying to send value: {message.split("++++")[1]} which has type {type(message.split("++++")[1])}')
         kafka_producer.send(topic_name, key=message.split('++++')[0], value=message.split('++++')[1])
-
-
-delete_topics('ExampleTopic')
-create_topics('ExampleTopic')
-load_test_data('ExampleTopic')
