@@ -6,6 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AlarmItemsTreeModel(QAbstractItemModel):
     """
     The AlarmItemsTreeModel is a tree-based model for organizing alarm data based on the QAbstractItemModel
@@ -44,7 +45,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         alarm_item = self.getItem(index)
         if role == Qt.DisplayRole:
             if not alarm_item.is_enabled():
-                return alarm_item.name + f' (disabled)'
+                return alarm_item.name + ' (disabled)'
             elif alarm_item.alarm_severity != AlarmSeverity.OK:
                 return alarm_item.name + f' - {alarm_item.alarm_severity}/{alarm_item.alarm_status}'
             return alarm_item.name

@@ -5,7 +5,7 @@ from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
 from pydm.widgets import PyDMArchiverTimePlot
 from qtpy.QtCore import QThread, Signal, Slot
-from qtpy.QtWidgets import QAction, QApplication, QMainWindow, QTabWidget, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QAction, QApplication, QMainWindow, QTabWidget
 from typing import Optional
 from .alarm_item import AlarmSeverity
 from .alarm_table_view import AlarmTableViewWidget
@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class AlarmHandlerMainWindow(QMainWindow):
-    """ 
-    The AlarmHandlerMainWindow is the main top-level widget for displaying and interacting with alarms. 
-    
+    """
+    The AlarmHandlerMainWindow is the main top-level widget for displaying and interacting with alarms.
+
     Parameters
     ----------
 
