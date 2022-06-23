@@ -6,7 +6,7 @@ from kafka import KafkaProducer
 from pydm.widgets import PyDMArchiverTimePlot
 from qtpy.QtCore import QThread, Signal, Slot
 from qtpy.QtWidgets import QAction, QApplication, QMainWindow, QTabWidget
-from typing import Optional
+from typing import List, Optional
 from .alarm_item import AlarmSeverity
 from .alarm_table_view import AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
@@ -25,14 +25,16 @@ class AlarmHandlerMainWindow(QMainWindow):
 
     topic : str
         The kafka topic to listen to
+    bootstrap_servers : List[str]
+        A list containing one or more urls for kafka bootstrap servers
     """
 
     alarm_update_signal = Signal(str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
 
-    def __init__(self, topic: str):
+    def __init__(self, topic: str, bootstrap_servers: List[str]):
         super().__init__()
 
-        self.kafka_producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
+        self.kafka_producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                                             value_serializer=lambda x: json.dumps(x).encode('utf-8'),
                                             key_serializer=lambda x: x.encode('utf-8'))
         self.topic = topic
