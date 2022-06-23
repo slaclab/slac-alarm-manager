@@ -13,7 +13,7 @@ def main_window(monkeypatch, mock_kafka_producer):
     monkeypatch.setattr(KafkaReader, 'moveToThread', lambda *args: None)
     monkeypatch.setattr(QThread, 'start', lambda *args: None)
 
-    main_window = AlarmHandlerMainWindow('TEST_TOPIC')
+    main_window = AlarmHandlerMainWindow('TEST_TOPIC', ['localhost:9092'])
     return main_window
 
 
