@@ -68,7 +68,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_update_signal.connect(self.table_view_widget.update_tables)
         self.alarm_update_signal.connect(self.tree_view_widget.treeModel.update_item)
 
-        self.kafka_reader = KafkaReader(topic, self.process_message)
+        self.kafka_reader = KafkaReader(topic, bootstrap_servers, self.process_message)
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
         self.processing_thread.started.connect(self.kafka_reader.run)
