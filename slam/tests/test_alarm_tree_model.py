@@ -92,17 +92,23 @@ def test_update_model(tree_model):
     tree_model.update_model('/path/to/PV:ONE', {})
     tree_model.update_model('/path/to/PV:TWO', {'description': 'A Test PV', 'enabled': False, 'delay': 10})
 
+    print(tree_model.nodes)
+
     assert tree_model.nodes[0].name == 'PV:ONE'
     assert tree_model.nodes[0].enabled
 
-    assert tree_model.nodes[1].name == 'PV:TWO'
-    assert tree_model.nodes[1].description == 'A Test PV'
-    assert not tree_model.nodes[1].enabled
-    assert tree_model.nodes[1].delay == 10
+    # The two parent nodes of PV:ONE and PV:TWO
+    assert tree_model.nodes[1].name == 'to'
+    assert tree_model.nodes[2].name == 'path'
+
+    assert tree_model.nodes[3].name == 'PV:TWO'
+    assert tree_model.nodes[3].description == 'A Test PV'
+    assert not tree_model.nodes[3].enabled
+    assert tree_model.nodes[3].delay == 10
 
     # Now do an update to an existing node
     tree_model.update_model('/path/to/PV:TWO', {'enabled': True})
-    assert tree_model.nodes[1].enabled
+    assert tree_model.nodes[3].enabled
 
 
 def test_remove_item(tree_model):
