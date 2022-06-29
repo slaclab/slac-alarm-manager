@@ -47,7 +47,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             if not alarm_item.is_enabled():
                 return alarm_item.name + ' (disabled)'
             elif alarm_item.alarm_severity != AlarmSeverity.OK:
-                return alarm_item.name + f' - {alarm_item.alarm_severity}/{alarm_item.alarm_status}'
+                return alarm_item.name + f' - {alarm_item.alarm_severity.value}/{alarm_item.alarm_status}'
             return alarm_item.name
         elif role == Qt.TextColorRole:
             if alarm_item.is_leaf():
@@ -123,7 +123,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                     value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:
         """ Updates the alarm item with the input name and path in this tree. """
         if path not in self.added_paths:
-            logger.warning(f'ERROR: Attempting update on a node that has not been added by config: {path}')
+            logger.debug(f'Attempting update on a node that has not been added by config: {path}')
             return
 
         item_to_update = self.nodes[self.getItemIndex(path)]
@@ -162,18 +162,16 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         if item_path not in self.added_paths:  # This means this is a brand new item we are adding
             self.beginInsertRows(QModelIndex(), len(self.nodes), len(self.nodes))
 
-            if len(self.added_paths) == 0:
-                logger.debug(f'Setting root of alarm tree to: {item_path}')
-                self.root_item = alarm_item
-                self.nodes.append(self.root_item)
-                self.added_paths.add(item_path)
-                return
-
             path_as_list = item_path.split('/')
             self.nodes.append(alarm_item)
             self.added_paths.add(item_path)
 
             parent_path = '/'.join(path_as_list[0:-1])
+            if parent_path == '':  # If the node has no parent, it must be the root of the tree
+                logger.debug(f'Setting root of alarm tree to: {item_path}')
+                self.root_item = alarm_item
+                return
+
             parent_item_index = self.getItemIndex(parent_path)
             if parent_item_index == -1:
                 self.update_model(parent_path, {})
