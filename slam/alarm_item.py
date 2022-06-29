@@ -3,7 +3,7 @@ from datetime import datetime
 from functools import total_ordering
 from qtpy.QtCore import QObject, Qt
 from qtpy.QtGui import QBrush
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 import enum
 import logging
 
@@ -58,11 +58,11 @@ class AlarmItem(QObject):
         The current status of the PV this alarm is associated with.
     description : str, optional
         Additional description of this alarm specified by an end-user in a configuration file
-    guidance : str, optional
+    guidance : list, optional
         Any guidance on how to handle this alarm that would be helpful to a user viewing this alarm.
-    displays : str, optional
+    displays : list, optional
         Any displays this alarm is associated with
-    commands : str, optional
+    commands : list, optional
         Any commands that should be run in response to this alarm
     enabled : Union[bool, str], optional
         Whether or not this alarm is enabled. A bool in the simple case, a str here will also mean
@@ -86,9 +86,9 @@ class AlarmItem(QObject):
                  pv_severity: Optional[AlarmSeverity] = None,
                  pv_status: Optional[str] = None,
                  description: Optional[str] = None,
-                 guidance: Optional[str] = None,
-                 displays: Optional[str] = None,
-                 commands: Optional[str] = None,
+                 guidance: Optional[List[Dict]] = None,
+                 displays: Optional[List[Dict]] = None,
+                 commands: Optional[List[Dict]] = None,
                  enabled: Optional[Union[bool, str]] = True,
                  latching: Optional[bool] = False,
                  annunciating: Optional[bool] = False,
