@@ -92,8 +92,6 @@ def test_update_model(tree_model):
     tree_model.update_model('/path/to/PV:ONE', {})
     tree_model.update_model('/path/to/PV:TWO', {'description': 'A Test PV', 'enabled': False, 'delay': 10})
 
-    print(tree_model.nodes)
-
     assert tree_model.nodes[0].name == 'PV:ONE'
     assert tree_model.nodes[0].enabled
 
