@@ -1,6 +1,8 @@
 import getpass
 import socket
+from functools import partial
 from kafka.producer import KafkaProducer
+from pydm.display import load_file
 from qtpy.QtCore import QModelIndex, QPoint, Qt, Signal
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QAbstractItemView, QAction, QApplication, QMenu, QTreeView, QVBoxLayout, QWidget
@@ -109,6 +111,11 @@ class AlarmTreeViewWidget(QWidget):
                     self.context_menu.addAction(self.unacknowledge_action)
             self.context_menu.addAction(self.enable_action)
             self.context_menu.addAction(self.disable_action)
+            if alarm_item.displays:
+                for display in alarm_item.displays:
+                    display_action = QAction(display['title'])
+                    display_action.triggered.connect(partial(self.launch_pydm_display, display['details']))
+                    self.context_menu.addAction(display_action)
             self.context_menu.popup(self.mapToGlobal(pos))
 
     def create_alarm_configuration_widget(self, index: QModelIndex) -> None:
@@ -134,6 +141,18 @@ class AlarmTreeViewWidget(QWidget):
             index = indices[0]
             alarm_item = self.treeModel.getItem(index)
             self.plot_signal.emit(alarm_item.name)
+
+    @staticmethod
+    def launch_pydm_display(file_path: str) -> None:
+        """
+        Launch a PyDM display associated with an alarm
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the pydm file to display
+        """
+        load_file(file_path)
 
     def send_acknowledgement(self) -> None:
         """ Send the acknowledge action by sending it to the command topic in the kafka cluster """
