@@ -51,7 +51,7 @@ class AlarmPlugin(PyDMPlugin):
     Manages the data flow between the kafka queue for alarm data and the PyDM display widgets. Currently this is
     read-only as no write actions can be taken from PyDM widgets for now.
     """
-    protocol = "alarm"
+    protocol = "nalms"
     connection_class = Connection
 
     def __init__(self, *args, **kwargs):
