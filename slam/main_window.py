@@ -101,7 +101,7 @@ class AlarmHandlerMainWindow(QMainWindow):
             pass
         elif key.startswith('state') and values is not None:
             pv = message.key.split('/')[-1]
-            logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.key[6:]}')
+            logger.debug(f'Processing STATE message with key: {message.key} and values: {message.value}')
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
