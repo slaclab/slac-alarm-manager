@@ -125,9 +125,7 @@ def test_remove_item(tree_model):
     assert len(tree_model.nodes) == 2
 
     tree_model.remove_item('/to/be/removed/TEST:PV')
-    assert len(tree_model.nodes) == 1
-    assert len(tree_model.added_paths) == 1
-
     tree_model.remove_item('/other/pv/OTHER:PV')
+
     assert len(tree_model.nodes) == 0
     assert len(tree_model.added_paths) == 0

@@ -201,6 +201,14 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             logger.debug(f'Attempting to remove item not in the tree: {item_path}')
             return
 
-        self.added_paths.remove(item_path)
         item_index = self.getItemIndex(item_path)
+        self.beginRemoveRows(QModelIndex(), item_index, item_index)
+        self.added_paths.remove(item_path)
         del self.nodes[item_index]
+        self.endRemoveRows()
+
+        if len(self.nodes) == 1:
+            # All nodes should be removed at this point, as it is a complete replacement
+            self.beginRemoveRows(QModelIndex(), 0, 0)
+            self.clear()
+            self.endRemoveRows()

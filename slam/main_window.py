@@ -95,6 +95,8 @@ class AlarmHandlerMainWindow(QMainWindow):
                 self.tree_view_widget.treeModel.update_model(message.key[7:], values)
             else:  # A null message indicates this item should be removed from the tree
                 self.tree_view_widget.treeModel.remove_item(message.key[7:])
+                self.table_view_widget.alarmModel.remove_row(message.key[7:].split('/')[-1])
+                self.table_view_widget.acknowledgedAlarmsModel.remove_row(message.key[7:].split('/')[-1])
         elif key.startswith('command'):
             pass  # Nothing for us to do
         elif values is not None and (len(values) <= 2):
