@@ -21,7 +21,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
     def __init__(self, parent: Optional[QObject] = None):
         super(QAbstractTableModel, self).__init__(parent=parent)
         self.alarm_items = OrderedDict()  # Key (str) to data
-        self.column_names = ('PV', 'Alarm Severity', 'Alarm Status', 'Time', 'Alarm Value', 'PV Severity', 'PV Status')
+        self.column_names = ('PV', 'Latched Severity', 'Latched Status', 'Time', 'Alarm Value',
+                             'Current Severity', 'Current Status')
         self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'alarm_status', 3: 'alarm_time', 4: 'alarm_value',
                                5: 'pv_severity', 6: 'pv_status'}
 
@@ -51,24 +52,26 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return self.getData(column_name, alarm_item)
         elif role == Qt.TextColorRole:
-            if column_name == 'Alarm Severity':
-                return alarm_item.display_color()
+            if column_name == 'Latched Severity':
+                return alarm_item.display_color(alarm_item.alarm_severity)
+            if column_name == 'Current Severity':
+                return alarm_item.display_color(alarm_item.pv_severity)
 
     def getData(self, column_name: str, alarm_item: AlarmItem):
         """ Get the data from the input alarm item based on the column name """
         if column_name == 'PV':
             return alarm_item.name
-        elif column_name == 'Alarm Severity':
+        elif column_name == 'Latched Severity':
             return alarm_item.alarm_severity.value
-        elif column_name == 'Alarm Status':
+        elif column_name == 'Latched Status':
             return alarm_item.alarm_status
         elif column_name == 'Time':
             return str(alarm_item.alarm_time)
         elif column_name == 'Alarm Value':
             return alarm_item.alarm_value
-        elif column_name == 'PV Severity':
+        elif column_name == 'Current Severity':
             return alarm_item.pv_severity.value
-        elif column_name == 'PV Status':
+        elif column_name == 'Current Status':
             return alarm_item.pv_status
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -119,6 +122,7 @@ class AlarmItemsTableModel(QAbstractTableModel):
             return
 
         # Otherwise update the row with the newly received data
+        self.layoutAboutToBeChanged.emit()
         item_to_update = self.alarm_items[name]
         item_to_update.alarm_severity = severity
         item_to_update.alarm_status = status

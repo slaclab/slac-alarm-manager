@@ -51,11 +51,11 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             return alarm_item.name
         elif role == Qt.TextColorRole:
             if alarm_item.is_leaf():
-                return alarm_item.display_color()
+                return alarm_item.display_color(alarm_item.alarm_severity)
             else:
                 all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
                 highest_severity_alarm = max(all_leaf_nodes, key=attrgetter('alarm_severity'))
-                return highest_severity_alarm.display_color()
+                return highest_severity_alarm.display_color(highest_severity_alarm.alarm_severity)
 
     def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
         """ Create an index for the input row and column based on the parent item. """

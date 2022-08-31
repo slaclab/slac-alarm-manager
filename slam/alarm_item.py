@@ -137,27 +137,34 @@ class AlarmItem(QObject):
         else:
             logger.error(f'Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
 
-    def display_color(self) -> QBrush:
-        """ Return a QBrush with the appropriate color for drawing this alarm based on its severity """
+    def display_color(self, severity) -> QBrush:
+        """
+        Return a QBrush with the appropriate color for drawing this alarm based on severity
+
+        Parameters
+        ----------
+        severity : AlarmSeverity
+            The severity to base the display color on
+        """
         if not self.is_enabled():
             return QBrush(Qt.gray)
-        elif self.alarm_severity == AlarmSeverity.OK:
+        elif severity == AlarmSeverity.OK:
             return QBrush(Qt.darkGreen)
-        elif self.alarm_severity == AlarmSeverity.UNDEFINED:
+        elif severity == AlarmSeverity.UNDEFINED:
             return QBrush(Qt.magenta)
-        elif self.alarm_severity == AlarmSeverity.MAJOR:
+        elif severity == AlarmSeverity.MAJOR:
             return QBrush(Qt.red)
-        elif self.alarm_severity == AlarmSeverity.MINOR:
+        elif severity == AlarmSeverity.MINOR:
             return QBrush(Qt.darkYellow)
-        elif self.alarm_severity == AlarmSeverity.MAJOR_ACK:
+        elif severity == AlarmSeverity.MAJOR_ACK:
             return QBrush(Qt.darkRed)
-        elif self.alarm_severity == AlarmSeverity.MINOR_ACK:
+        elif severity == AlarmSeverity.MINOR_ACK:
             return QBrush(Qt.darkGray)
-        elif self.alarm_severity == AlarmSeverity.UNDEFINED_ACK:
+        elif severity == AlarmSeverity.UNDEFINED_ACK:
             return QBrush(Qt.darkMagenta)
-        elif self.alarm_severity == AlarmSeverity.INVALID:
+        elif severity == AlarmSeverity.INVALID:
             return QBrush(Qt.magenta)
-        elif self.alarm_severity == AlarmSeverity.INVALID_ACK:
+        elif severity == AlarmSeverity.INVALID_ACK:
             return QBrush(Qt.darkMagenta)
 
     def append_child(self, item: AlarmItem) -> None:

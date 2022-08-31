@@ -31,12 +31,12 @@ def test_get_data(alarm_table):
                            pv_severity=AlarmSeverity.MINOR, pv_status='enabled')
 
     assert alarm_table.getData('PV', alarm_item) == 'PV:NAME'
-    assert alarm_table.getData('Alarm Severity', alarm_item) == 'MAJOR'
-    assert alarm_table.getData('Alarm Status', alarm_item) == 'enabled'
+    assert alarm_table.getData('Latched Severity', alarm_item) == 'MAJOR'
+    assert alarm_table.getData('Latched Status', alarm_item) == 'enabled'
     assert alarm_table.getData('Time', alarm_item) == '2022-01-02 00:10:00'
     assert alarm_table.getData('Alarm Value', alarm_item) == 'FAULT'
-    assert alarm_table.getData('PV Severity', alarm_item) == 'MINOR'
-    assert alarm_table.getData('PV Status', alarm_item) == 'enabled'
+    assert alarm_table.getData('Current Severity', alarm_item) == 'MINOR'
+    assert alarm_table.getData('Current Status', alarm_item) == 'enabled'
 
 
 def test_append(alarm_table):
