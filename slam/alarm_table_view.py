@@ -1,10 +1,11 @@
+import functools
 import getpass
 import socket
 from kafka.producer import KafkaProducer
-from qtpy.QtCore import QEvent, Signal
+from qtpy.QtCore import QEvent, QSortFilterProxyModel, Signal
 from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication, QHeaderView,
-                            QLabel, QMenu, QTableView, QVBoxLayout, QWidget)
+from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication, QHBoxLayout, QHeaderView, QLabel,
+                            QLineEdit, QMenu, QPushButton, QTableView, QVBoxLayout, QWidget)
 from typing import Callable
 from .alarm_item import AlarmSeverity
 from .alarm_table_model import AlarmItemsTableModel
@@ -46,12 +47,17 @@ class AlarmTableViewWidget(QWidget):
         self.acknowledgedAlarmsView = QTableView(self)
 
         self.alarmModel = AlarmItemsTableModel()
-
         self.acknowledgedAlarmsModel = AlarmItemsTableModel()
 
-        self.alarmView.setModel(self.alarmModel)
+        # Using a proxy model allows for filtering based on a search bar
+        self.alarm_proxy_model = QSortFilterProxyModel()
+        self.alarm_proxy_model.setFilterKeyColumn(-1)
+        self.alarm_proxy_model.setSourceModel(self.alarmModel)
+
+        self.alarmView.setModel(self.alarm_proxy_model)
         self.acknowledgedAlarmsView.setModel(self.acknowledgedAlarmsModel)
 
+        # The table for alarms which are currently active
         self.alarmView.setProperty("showDropIndicator", False)
         self.alarmView.setDragDropOverwriteMode(False)
         self.alarmView.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -61,6 +67,7 @@ class AlarmTableViewWidget(QWidget):
         self.alarmView.verticalHeader().setVisible(False)
         self.alarmView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
+        # The table for alarms which have been acknowledged
         self.acknowledgedAlarmsView.setProperty("showDropIndicator", False)
         self.acknowledgedAlarmsView.setDragDropOverwriteMode(False)
         self.acknowledgedAlarmsView.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -70,6 +77,7 @@ class AlarmTableViewWidget(QWidget):
         self.acknowledgedAlarmsView.verticalHeader().setVisible(False)
         self.acknowledgedAlarmsView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
+        # The actions which may be taken on an alarm
         self.active_context_menu = QMenu(self)
         self.acknowledged_context_menu = QMenu(self)
         self.acknowledge_action = QAction('Acknowledge')
@@ -93,7 +101,20 @@ class AlarmTableViewWidget(QWidget):
         self.alarmView.contextMenuEvent = self.active_alarm_context_menu_event
         self.acknowledgedAlarmsView.contextMenuEvent = self.acknowledged_alarm_context_menu_event
 
+        # For filtering the alarm table
+        self.active_alarm_search_bar = QLineEdit()
+        self.filter_button = QPushButton('Filter')
+        self.filter_button.pressed.connect(self.filter_table)
+        self.filter_active_label = QLabel('Filter Active: ')
+        self.filter_active_label.setStyleSheet('background-color: orange')
+        self.filter_active_label.hide()
+
         self.layout.addWidget(self.active_alarms_label)
+        self.search_layout = QHBoxLayout()
+        self.search_layout.addWidget(self.active_alarm_search_bar)
+        self.search_layout.addWidget(self.filter_button)
+        self.layout.addLayout(self.search_layout)
+        self.layout.addWidget(self.filter_active_label)
         self.layout.addWidget(self.alarmView)
         self.layout.addWidget(self.acknowledged_alarms_label)
         self.layout.addWidget(self.acknowledgedAlarmsView)
@@ -102,6 +123,15 @@ class AlarmTableViewWidget(QWidget):
         self.alarmModel.rowsRemoved.connect(self.update_counter_label)
         self.acknowledgedAlarmsModel.rowsInserted.connect(self.update_counter_label)
         self.acknowledgedAlarmsModel.rowsRemoved.connect(self.update_counter_label)
+
+    def filter_table(self) -> None:
+        """ Filter the table based on the text typed into the filter bar """
+        self.alarm_proxy_model.setFilterFixedString(self.active_alarm_search_bar.text())
+        if self.active_alarm_search_bar.text():
+            self.filter_active_label.setText(f'Filter Active: {self.active_alarm_search_bar.text()}')
+            self.filter_active_label.show()
+        else:
+            self.filter_active_label.hide()
 
     def update_counter_label(self) -> None:
         """ Update the labels displaying the count of active and acknowledged alarms """

@@ -69,4 +69,4 @@ def test_display_color(enabled, severity, expected_color):
     alarm_item = AlarmItem('TEST:PV')
     alarm_item.enabled = enabled
     alarm_item.alarm_severity = severity
-    assert alarm_item.display_color() == expected_color
+    assert alarm_item.display_color(severity) == expected_color
