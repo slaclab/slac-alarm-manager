@@ -5,7 +5,7 @@ from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
 from pydm.widgets import PyDMArchiverTimePlot
 from qtpy.QtCore import QThread, Signal, Slot
-from qtpy.QtWidgets import QAction, QApplication, QMainWindow, QTabWidget
+from qtpy.QtWidgets import QAction, QApplication, QComboBox, QHBoxLayout, QMainWindow, QTabWidget, QVBoxLayout, QWidget
 from typing import List, Optional
 from .alarm_item import AlarmSeverity
 from .alarm_table_view import AlarmTableViewWidget
@@ -23,21 +23,21 @@ class AlarmHandlerMainWindow(QMainWindow):
     Parameters
     ----------
 
-    topic : str
-        The kafka topic to listen to
+    topics : List[str]
+        The kafka topics to listen to
     bootstrap_servers : List[str]
         A list containing one or more urls for kafka bootstrap servers
     """
 
-    alarm_update_signal = Signal(str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
+    alarm_update_signal = Signal(str, str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
 
-    def __init__(self, topic: str, bootstrap_servers: List[str]):
+    def __init__(self, topics: List[str], bootstrap_servers: List[str]):
         super().__init__()
 
         self.kafka_producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
                                             value_serializer=lambda x: json.dumps(x).encode('utf-8'),
                                             key_serializer=lambda x: x.encode('utf-8'))
-        self.topic = topic
+        self.topics = topics
         self.clipboard = QApplication.clipboard()
 
         self.main_menu = self.menuBar()
@@ -56,26 +56,80 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.applications_menu.addAction(self.archiver_search_action)
         self.applications_menu.addAction(self.empty_plot_action)
 
+        # A combo box for choosing which alarm tree/table to display
+        self.alarm_select_combo_box = QComboBox(self)
+        self.alarm_select_combo_box.setFixedSize(120, 30)
+        self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
+        self.current_alarm_config = topics[0]
         self.tab_widget = QTabWidget()
 
-        self.tree_view_widget = AlarmTreeViewWidget(self.kafka_producer, self.topic, self.plot_pv)
-        self.tab_widget.addTab(self.tree_view_widget, 'Alarm Tree')
+        self.alarm_trees = dict()
+        self.alarm_tables = dict()
 
-        self.table_view_widget = AlarmTableViewWidget(self.tree_view_widget.treeModel, self.kafka_producer,
-                                                      self.topic, self.plot_pv)
-        self.table_view_widget.hide()
+        # Create a separate tree and table widget for each alarm configuration we are monitoring
+        for topic in topics:
+            self.alarm_select_combo_box.addItem(topic)
+            self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv)
+            self.alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel, self.kafka_producer,
+                                                            topic, self.plot_pv)
 
-        self.alarm_update_signal.connect(self.table_view_widget.update_tables)
-        self.alarm_update_signal.connect(self.tree_view_widget.treeModel.update_item)
+        self.tab_widget.addTab(self.alarm_trees[topics[0]], 'Alarm Tree')
 
-        self.kafka_reader = KafkaReader(topic, bootstrap_servers, self.process_message)
+        self.alarm_tables[topics[0]].hide()
+
+        self.alarm_update_signal.connect(self.update_tree)
+        self.alarm_update_signal.connect(self.update_table)
+
+        self.kafka_reader = KafkaReader(topics, bootstrap_servers, self.process_message)
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
         self.processing_thread.started.connect(self.kafka_reader.run)
         self.processing_thread.start()
 
         self.axis_count = 0
-        self.setCentralWidget(self.tab_widget)
+        self.widget = QWidget()
+        self.setCentralWidget(self.widget)
+        self.alarm_selector_layout = QVBoxLayout()
+        self.widget.setLayout(self.alarm_selector_layout)
+        self.alarm_selector_layout.addWidget(self.alarm_select_combo_box)
+        self.alarm_selector_layout.addWidget(self.tab_widget)
+
+    def update_tree(self, alarm_config_name: str, *args) -> None:
+        """
+         A slot for updating an alarm tree
+
+        Parameters
+        ----------
+        alarm_config_name : str
+            The name associated with the tree to update
+        """
+        self.alarm_trees[alarm_config_name].treeModel.update_item(*args)
+
+    def update_table(self, alarm_config_name: str, *args) -> None:
+        """
+        A slot for updating an alarm table
+
+        Parameters
+        ----------
+        alarm_config_name : str
+            The name associated with the table to update
+        """
+        self.alarm_tables[alarm_config_name].update_tables(*args)
+
+    def change_display(self, alarm_config_name: str) -> None:
+        """
+        Changes the current tree/table being displayed in the UI
+
+        Parameters
+        ----------
+        alarm_config_name : str
+            The name associated with the tree and table to be displayed
+        """
+        if alarm_config_name not in self.alarm_trees:
+            return
+        self.tab_widget.removeTab(0)
+        self.tab_widget.addTab(self.alarm_trees[alarm_config_name], 'Alarm Tree')
+        self.current_alarm_config = alarm_config_name
 
     def process_message(self, message: ConsumerRecord):
         """
@@ -90,30 +144,32 @@ class AlarmHandlerMainWindow(QMainWindow):
         values = message.value
         if key.startswith('config'):  # [7:] because config:
             logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
+            alarm_config_name = key.split('/')[1]
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
-                self.tree_view_widget.treeModel.update_model(message.key[7:], values)
+                self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
             else:  # A null message indicates this item should be removed from the tree
-                self.tree_view_widget.treeModel.remove_item(message.key[7:])
-                self.table_view_widget.alarmModel.remove_row(message.key[7:].split('/')[-1])
-                self.table_view_widget.acknowledgedAlarmsModel.remove_row(message.key[7:].split('/')[-1])
+                self.alarm_trees[alarm_config_name].treeModel.remove_item(message.key[7:])
+                self.alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
+                self.alarm_tables[alarm_config_name].acknowledgedAlarmsModel.remove_row(message.key[7:].split('/')[-1])
         elif key.startswith('command'):
             pass  # Nothing for us to do
         elif values is not None and (len(values) <= 2):
             pass
         elif key.startswith('state') and values is not None:
             pv = message.key.split('/')[-1]
+            alarm_config_name = key.split('/')[1]
             logger.debug(f'Processing STATE message with key: {message.key} and values: {message.value}')
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
-            self.alarm_update_signal.emit(pv, message.key[6:], AlarmSeverity(values['severity']), values['message'],
-                                          time, values['value'], AlarmSeverity(values['current_severity']),
-                                          values['current_message'])
+            self.alarm_update_signal.emit(alarm_config_name, pv, message.key[6:], AlarmSeverity(values['severity']),
+                                          values['message'], time, values['value'],
+                                          AlarmSeverity(values['current_severity']), values['current_message'])
 
     def display_alarm_table_widget(self):
         """ Show the alarm table """
-        self.table_view_widget.show()
+        self.alarm_tables[self.current_alarm_config].show()
 
     def create_archiver_search_widget(self):
         """ Create and show the widget for sending search requests to archiver appliance """

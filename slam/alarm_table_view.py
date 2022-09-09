@@ -54,7 +54,7 @@ class AlarmTableViewWidget(QWidget):
         self.alarm_proxy_model.setFilterKeyColumn(-1)
         self.alarm_proxy_model.setSourceModel(self.alarmModel)
 
-        self.alarmView.setModel(self.alarm_proxy_model)
+        self.alarmView.setModel(self.alarmModel)
         self.acknowledgedAlarmsView.setModel(self.acknowledgedAlarmsModel)
 
         # The table for alarms which are currently active
@@ -108,6 +108,7 @@ class AlarmTableViewWidget(QWidget):
         self.filter_active_label = QLabel('Filter Active: ')
         self.filter_active_label.setStyleSheet('background-color: orange')
         self.filter_active_label.hide()
+        self.first_filter = True
 
         self.layout.addWidget(self.active_alarms_label)
         self.search_layout = QHBoxLayout()
@@ -126,6 +127,11 @@ class AlarmTableViewWidget(QWidget):
 
     def filter_table(self) -> None:
         """ Filter the table based on the text typed into the filter bar """
+        if self.first_filter:
+            # By delaying setting the proxy model until an actual filter request, performance is improved by a lot
+            # when first loading data into the table
+            self.first_filter = False
+            self.alarmView.setModel(self.alarm_proxy_model)
         self.alarm_proxy_model.setFilterFixedString(self.active_alarm_search_bar.text())
         if self.active_alarm_search_bar.text():
             self.filter_active_label.setText(f'Filter Active: {self.active_alarm_search_bar.text()}')
