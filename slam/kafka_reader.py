@@ -11,8 +11,8 @@ class KafkaReader(QObject):
 
     Parameters
     ----------
-    topic_name : str
-        The name of the topic to subscribe to. Will also subscribe to the command topic as well
+    topics : List[str]
+        A list of topics representing the alarm configs to listen to
     bootstrap_servers : List[str]
         A list containing one or more urls for kafka bootstrap servers
     new_message_slot : Callable
@@ -21,10 +21,9 @@ class KafkaReader(QObject):
 
     new_message_signal = Signal(ConsumerRecord)  # Emitted for every new message received
 
-    def __init__(self, topic_name: str, bootstrap_servers: List[str], new_message_slot: Callable):
-        self.topic_name = topic_name
-        self.main_consumer = KafkaConsumer(topic_name,
-                                           f'{topic_name}Command',
+    def __init__(self, topics: List[str], bootstrap_servers: List[str], new_message_slot: Callable):
+        self.topics = topics
+        self.main_consumer = KafkaConsumer(*topics,
                                            bootstrap_servers=bootstrap_servers,
                                            auto_offset_reset='earliest',
                                            enable_auto_commit=False,
