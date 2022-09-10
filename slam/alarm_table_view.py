@@ -60,22 +60,24 @@ class AlarmTableViewWidget(QWidget):
         # The table for alarms which are currently active
         self.alarmView.setProperty("showDropIndicator", False)
         self.alarmView.setDragDropOverwriteMode(False)
-        self.alarmView.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.alarmView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.alarmView.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.alarmView.setCornerButtonEnabled(False)
         self.alarmView.setSortingEnabled(True)
         self.alarmView.verticalHeader().setVisible(False)
         self.alarmView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.alarmView.horizontalHeader().setSectionsMovable(True)
 
         # The table for alarms which have been acknowledged
         self.acknowledgedAlarmsView.setProperty("showDropIndicator", False)
         self.acknowledgedAlarmsView.setDragDropOverwriteMode(False)
-        self.acknowledgedAlarmsView.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.acknowledgedAlarmsView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.acknowledgedAlarmsView.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.acknowledgedAlarmsView.setCornerButtonEnabled(False)
         self.acknowledgedAlarmsView.setSortingEnabled(True)
         self.acknowledgedAlarmsView.verticalHeader().setVisible(False)
         self.acknowledgedAlarmsView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.acknowledgedAlarmsView.horizontalHeader().setSectionsMovable(True)
 
         # The actions which may be taken on an alarm
         self.active_context_menu = QMenu(self)
@@ -162,45 +164,49 @@ class AlarmTableViewWidget(QWidget):
 
     def copy_active_alarm_to_clipboard(self) -> None:
         """ Copy the selected PV to the user's clipboard """
-        indices = self.alarmView.selectedIndexes()
+        indices = self.alarmView.selectionModel().selectedRows()
         if len(indices) > 0:
-            index = indices[0]
-            alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
-            self.clipboard.setText(alarm_item.name, mode=self.clipboard.Selection)
-            self.clipboard.setText(alarm_item.name, mode=self.clipboard.Clipboard)
+            copy_text = ''
+            for index in indices:
+                alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
+                copy_text += alarm_item.name + ' '
+            self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Selection)
+            self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Clipboard)
 
     def copy_acknowledged_alarm_to_clipboard(self) -> None:
         """ Copy the selected PV to the user's clipboard """
-        indices = self.acknowledgedAlarmsView.selectedIndexes()
+        indices = self.acknowledgedAlarmsView.selectionModel().selectedRows()
         if len(indices) > 0:
-            index = indices[0]
-            alarm_item = list(self.acknowledgedAlarmsModel.alarm_items.items())[index.row()][1]
-            self.clipboard.setText(alarm_item.name, mode=self.clipboard.Selection)
-            self.clipboard.setText(alarm_item.name, mode=self.clipboard.Clipboard)
+            copy_text = ''
+            for index in indices:
+                alarm_item = list(self.acknowledgedAlarmsModel.alarm_items.items())[index.row()][1]
+                copy_text += alarm_item.name + ' '
+            self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Selection)
+            self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Clipboard)
 
     def send_acknowledgement(self) -> None:
         """ Send the acknowledge action by sending it to the command topic in the kafka cluster """
-        indices = self.alarmView.selectedIndexes()
+        indices = self.alarmView.selectionModel().selectedRows()
         if len(indices) > 0:
-            index = indices[0]
-            alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
-            username = getpass.getuser()
-            hostname = socket.gethostname()
-            self.kafka_producer.send(self.topic + 'Command',
-                                     key=f'command:{alarm_item.path}',
-                                     value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+            for index in indices:
+                alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
+                username = getpass.getuser()
+                hostname = socket.gethostname()
+                self.kafka_producer.send(self.topic + 'Command',
+                                         key=f'command:{alarm_item.path}',
+                                         value={'user': username, 'host': hostname, 'command': 'acknowledge'})
 
     def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
         indices = self.acknowledgedAlarmsView.selectedIndexes()
         if len(indices) > 0:
-            index = indices[0]
-            alarm_item = list(self.acknowledgedAlarmsModel.alarm_items.items())[index.row()][1]
-            username = getpass.getuser()
-            hostname = socket.gethostname()
-            self.kafka_producer.send(self.topic + 'Command',
-                                     key=f'command:{alarm_item.path}',
-                                     value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
+            for index in indices:
+                alarm_item = list(self.acknowledgedAlarmsModel.alarm_items.items())[index.row()][1]
+                username = getpass.getuser()
+                hostname = socket.gethostname()
+                self.kafka_producer.send(self.topic + 'Command',
+                                         key=f'command:{alarm_item.path}',
+                                         value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
 
     def update_tables(self, name: str, path: str, severity: AlarmSeverity, status: str, time,
                       value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:

@@ -1,6 +1,6 @@
 from ..alarm_item import AlarmItem, AlarmSeverity
 from ..alarm_table_view import AlarmTableViewWidget
-from qtpy.QtCore import QEvent, QModelIndex
+from qtpy.QtCore import QEvent, QItemSelectionModel, QModelIndex
 from qtpy.QtWidgets import QTableView
 import pytest
 
@@ -54,7 +54,7 @@ def test_send_acknowledgement(qtbot, monkeypatch, alarm_table_view, mock_kafka_p
     # Monkeypatch some qt methods to return our alarm as the selected index
     model_index = QModelIndex()
     indices = [model_index]
-    monkeypatch.setattr(QTableView, 'selectedIndexes', lambda x: indices)
+    monkeypatch.setattr(QItemSelectionModel, 'selectedRows', lambda x: indices)
     monkeypatch.setattr(model_index, 'row', lambda: 0)
 
     # Send the acknowledgement, and verify the message we are sending to kafka looks the way we want it to
