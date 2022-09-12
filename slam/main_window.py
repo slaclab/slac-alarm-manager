@@ -4,8 +4,8 @@ from datetime import datetime
 from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
 from pydm.widgets import PyDMArchiverTimePlot
-from qtpy.QtCore import QThread, Signal, Slot
-from qtpy.QtWidgets import QAction, QApplication, QComboBox, QHBoxLayout, QMainWindow, QTabWidget, QVBoxLayout, QWidget
+from qtpy.QtCore import Qt, QThread, Signal, Slot
+from qtpy.QtWidgets import QAction, QApplication, QComboBox, QMainWindow, QSplitter, QTabWidget, QVBoxLayout, QWidget
 from typing import List, Optional
 from .alarm_item import AlarmSeverity
 from .alarm_table_view import AlarmTableViewWidget
@@ -46,13 +46,10 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.exit_action = QAction('Exit')
         self.exit_action.triggered.connect(self.exit_application)
         self.file_menu.addAction(self.exit_action)
-        self.show_alarm_table_action = QAction('Alarm Table')
-        self.show_alarm_table_action.triggered.connect(self.display_alarm_table_widget)
         self.archiver_search_action = QAction('Archiver Search')
         self.archiver_search_action.triggered.connect(self.create_archiver_search_widget)
         self.empty_plot_action = QAction('Time Plot')
         self.empty_plot_action.triggered.connect(self.create_plot_widget)
-        self.applications_menu.addAction(self.show_alarm_table_action)
         self.applications_menu.addAction(self.archiver_search_action)
         self.applications_menu.addAction(self.empty_plot_action)
 
@@ -61,7 +58,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_select_combo_box.setFixedSize(120, 30)
         self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
         self.current_alarm_config = topics[0]
-        self.tab_widget = QTabWidget()
+        self.horizontal_splitter = QSplitter(self)
 
         self.alarm_trees = dict()
         self.alarm_tables = dict()
@@ -72,10 +69,6 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv)
             self.alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel, self.kafka_producer,
                                                             topic, self.plot_pv)
-
-        self.tab_widget.addTab(self.alarm_trees[topics[0]], 'Alarm Tree')
-
-        self.alarm_tables[topics[0]].hide()
 
         self.alarm_update_signal.connect(self.update_tree)
         self.alarm_update_signal.connect(self.update_table)
@@ -89,10 +82,12 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.axis_count = 0
         self.widget = QWidget()
         self.setCentralWidget(self.widget)
+        self.horizontal_splitter.addWidget(self.alarm_trees[topics[0]])
+        self.horizontal_splitter.addWidget(self.alarm_tables[topics[0]])
         self.alarm_selector_layout = QVBoxLayout()
         self.widget.setLayout(self.alarm_selector_layout)
         self.alarm_selector_layout.addWidget(self.alarm_select_combo_box)
-        self.alarm_selector_layout.addWidget(self.tab_widget)
+        self.alarm_selector_layout.addWidget(self.horizontal_splitter)
 
     def update_tree(self, alarm_config_name: str, *args) -> None:
         """
@@ -127,8 +122,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         if alarm_config_name not in self.alarm_trees:
             return
-        self.tab_widget.removeTab(0)
-        self.tab_widget.addTab(self.alarm_trees[alarm_config_name], 'Alarm Tree')
+        self.horizontal_splitter.replaceWidget(0, self.alarm_trees[alarm_config_name])
+        self.horizontal_splitter.replaceWidget(1, self.alarm_tables[alarm_config_name])
         self.current_alarm_config = alarm_config_name
 
     def process_message(self, message: ConsumerRecord):
@@ -166,10 +161,6 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.alarm_update_signal.emit(alarm_config_name, pv, message.key[6:], AlarmSeverity(values['severity']),
                                           values['message'], time, values['value'],
                                           AlarmSeverity(values['current_severity']), values['current_message'])
-
-    def display_alarm_table_widget(self):
-        """ Show the alarm table """
-        self.alarm_tables[self.current_alarm_config].show()
 
     def create_archiver_search_widget(self):
         """ Create and show the widget for sending search requests to archiver appliance """

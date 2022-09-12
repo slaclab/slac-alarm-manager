@@ -65,7 +65,10 @@ class AlarmTableViewWidget(QWidget):
         self.alarmView.setCornerButtonEnabled(False)
         self.alarmView.setSortingEnabled(True)
         self.alarmView.verticalHeader().setVisible(False)
-        self.alarmView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.alarmView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        for i in range(len(self.alarmModel.column_names)):
+            self.alarmView.horizontalHeader().resizeSection(i, 150)
+        self.alarmView.horizontalHeader().setStretchLastSection(True)
         self.alarmView.horizontalHeader().setSectionsMovable(True)
 
         # The table for alarms which have been acknowledged
@@ -76,7 +79,10 @@ class AlarmTableViewWidget(QWidget):
         self.acknowledgedAlarmsView.setCornerButtonEnabled(False)
         self.acknowledgedAlarmsView.setSortingEnabled(True)
         self.acknowledgedAlarmsView.verticalHeader().setVisible(False)
-        self.acknowledgedAlarmsView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.acknowledgedAlarmsView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        for i in range(len(self.acknowledgedAlarmsModel.column_names)):
+            self.acknowledgedAlarmsView.horizontalHeader().resizeSection(i, 150)
+        self.acknowledgedAlarmsView.horizontalHeader().setStretchLastSection(True)
         self.acknowledgedAlarmsView.horizontalHeader().setSectionsMovable(True)
 
         # The actions which may be taken on an alarm
