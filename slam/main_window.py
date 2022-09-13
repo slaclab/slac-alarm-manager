@@ -5,10 +5,10 @@ from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
 from pydm.widgets import PyDMArchiverTimePlot
 from qtpy.QtCore import Qt, QThread, Signal, Slot
-from qtpy.QtWidgets import QAction, QApplication, QComboBox, QMainWindow, QSplitter, QTabWidget, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QAction, QApplication, QComboBox, QMainWindow, QSplitter, QVBoxLayout, QWidget
 from typing import List, Optional
 from .alarm_item import AlarmSeverity
-from .alarm_table_view import AlarmTableViewWidget
+from .alarm_table_view import AlarmTableType, AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
 from .kafka_reader import KafkaReader
@@ -58,17 +58,25 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_select_combo_box.setFixedSize(120, 30)
         self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
         self.current_alarm_config = topics[0]
-        self.horizontal_splitter = QSplitter(self)
 
         self.alarm_trees = dict()
-        self.alarm_tables = dict()
+        self.active_alarm_tables = dict()
+        self.acknowledged_alarm_tables = dict()
 
         # Create a separate tree and table widget for each alarm configuration we are monitoring
         for topic in topics:
             self.alarm_select_combo_box.addItem(topic)
             self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv)
-            self.alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel, self.kafka_producer,
-                                                            topic, self.plot_pv)
+            self.active_alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel,
+                                                                   self.kafka_producer,
+                                                                   topic,
+                                                                   AlarmTableType.ACTIVE,
+                                                                   self.plot_pv)
+            self.acknowledged_alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel,
+                                                                         self.kafka_producer,
+                                                                         topic,
+                                                                         AlarmTableType.ACKNOWLEDGED,
+                                                                         self.plot_pv)
 
         self.alarm_update_signal.connect(self.update_tree)
         self.alarm_update_signal.connect(self.update_table)
@@ -82,8 +90,23 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.axis_count = 0
         self.widget = QWidget()
         self.setCentralWidget(self.widget)
+        self.horizontal_splitter = QSplitter(self)
+
+        # The active and acknolwedged alarm tables will appear in their own right-hand vertical split
+        self.vertical_splitter = QSplitter(self)
+        self.vertical_splitter.setOrientation(Qt.Orientation.Vertical)
+        self.vertical_splitter.addWidget(self.active_alarm_tables[topics[0]])
+        self.vertical_splitter.addWidget(self.acknowledged_alarm_tables[topics[0]])
+
         self.horizontal_splitter.addWidget(self.alarm_trees[topics[0]])
-        self.horizontal_splitter.addWidget(self.alarm_tables[topics[0]])
+        self.horizontal_splitter.addWidget(self.vertical_splitter)
+
+        # Adjust the relative sizes between widgets
+        self.horizontal_splitter.setStretchFactor(0, 2)
+        self.horizontal_splitter.setStretchFactor(1, 5)
+        self.vertical_splitter.setStretchFactor(0, 3)
+        self.vertical_splitter.setStretchFactor(1, 2)
+
         self.alarm_selector_layout = QVBoxLayout()
         self.widget.setLayout(self.alarm_selector_layout)
         self.alarm_selector_layout.addWidget(self.alarm_select_combo_box)
@@ -100,16 +123,27 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         self.alarm_trees[alarm_config_name].treeModel.update_item(*args)
 
-    def update_table(self, alarm_config_name: str, *args) -> None:
+    def update_table(self, alarm_config_name: str, name: str, path: str, severity: AlarmSeverity, status: str, time,
+                     value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:
         """
         A slot for updating an alarm table
-
-        Parameters
-        ----------
-        alarm_config_name : str
-            The name associated with the table to update
         """
-        self.alarm_tables[alarm_config_name].update_tables(*args)
+        if status == 'Disabled':
+            self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+            self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+        elif severity in (AlarmSeverity.INVALID_ACK, AlarmSeverity.MAJOR_ACK,
+                          AlarmSeverity.MINOR_ACK, AlarmSeverity.UNDEFINED_ACK):
+            self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+            self.acknowledged_alarm_tables[alarm_config_name].alarmModel.update_row(name, path, severity, status, time,
+                                                                                    value, pv_severity, pv_status)
+        elif severity == AlarmSeverity.OK:
+            self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+            self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+        else:
+            if name in self.acknowledged_alarm_tables[alarm_config_name].alarmModel.alarm_items:
+                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+            self.active_alarm_tables[alarm_config_name].alarmModel.update_row(name, path, severity, status, time, value,
+                                                                              pv_severity, pv_status)
 
     def change_display(self, alarm_config_name: str) -> None:
         """
@@ -123,7 +157,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         if alarm_config_name not in self.alarm_trees:
             return
         self.horizontal_splitter.replaceWidget(0, self.alarm_trees[alarm_config_name])
-        self.horizontal_splitter.replaceWidget(1, self.alarm_tables[alarm_config_name])
+        self.vertical_splitter.replaceWidget(0, self.active_alarm_tables[alarm_config_name])
+        self.vertical_splitter.replaceWidget(1, self.acknowledged_alarm_tables[alarm_config_name])
         self.current_alarm_config = alarm_config_name
 
     def process_message(self, message: ConsumerRecord):
@@ -145,8 +180,8 @@ class AlarmHandlerMainWindow(QMainWindow):
                 self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
             else:  # A null message indicates this item should be removed from the tree
                 self.alarm_trees[alarm_config_name].treeModel.remove_item(message.key[7:])
-                self.alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
-                self.alarm_tables[alarm_config_name].acknowledgedAlarmsModel.remove_row(message.key[7:].split('/')[-1])
+                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
+                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
         elif key.startswith('command'):
             pass  # Nothing for us to do
         elif values is not None and (len(values) <= 2):

@@ -1,3 +1,5 @@
+from ..alarm_item import AlarmItem, AlarmSeverity
+from ..alarm_table_view import AlarmTableType, AlarmTableViewWidget
 from ..kafka_reader import KafkaReader
 from ..main_window import AlarmHandlerMainWindow
 from kafka.producer import KafkaProducer
@@ -29,3 +31,50 @@ def test_create_and_show_plot(qtbot, main_window):
     main_window.create_plot_widget()
     with qtbot.waitExposed(main_window):
         main_window.show()
+
+
+def test_update_tables(qtbot, main_window, tree_model, mock_kafka_producer):
+    """ Test the various updates that can happen to the alarm table view """
+    qtbot.addWidget(main_window)
+    main_window.active_alarm_tables['TEST'] = AlarmTableViewWidget(tree_model, mock_kafka_producer, 'TEST_TOPIC',
+                                                                   AlarmTableType.ACTIVE, lambda x: x)
+
+    main_window.acknowledged_alarm_tables['TEST'] = AlarmTableViewWidget(tree_model, mock_kafka_producer, 'TEST_TOPIC',
+                                                                         AlarmTableType.ACKNOWLEDGED, lambda x: x)
+
+    # First let's add both an active and an acknowledge alarm so we have some test data to work with
+    active_alarm = AlarmItem('ACTIVE:ALARM', path='/path/to/ACTIVE:ALARM', alarm_severity=AlarmSeverity.MAJOR)
+    acknowledged_alarm = AlarmItem('ACK:ALARM', path='/path/to/ACK:ALARM', alarm_severity=AlarmSeverity.MINOR_ACK)
+    main_window.active_alarm_tables['TEST'].alarmModel.append(active_alarm)
+    main_window.acknowledged_alarm_tables['TEST'].alarmModel.append(acknowledged_alarm)
+
+    # Start with sending a "disabled" update for the active alarm. This means the user has disabled this
+    # alarm and it should no longer be monitored.
+    main_window.update_table('TEST', 'ACTIVE:ALARM', '', AlarmSeverity.MAJOR, 'Disabled',
+                             None, '', AlarmSeverity.MAJOR, '')
+
+    assert len(main_window.active_alarm_tables['TEST'].alarmModel.alarm_items) == 0  # Remove as expected
+    assert len(main_window.acknowledged_alarm_tables['TEST'].alarmModel.alarm_items) == 1  # Unaffected
+
+    # Now put it back, and simulate a user acknowledging the alarm
+    main_window.active_alarm_tables['TEST'].alarmModel.append(active_alarm)
+    # The MAJOR_ACK indicates an acknowledgment action
+    main_window.update_table('TEST', 'ACTIVE:ALARM', '', AlarmSeverity.MAJOR_ACK, '', None, '', AlarmSeverity.MAJOR, '')
+    # Again the active alarm was removed
+    assert len(main_window.active_alarm_tables['TEST'].alarmModel.alarm_items) == 0
+    # But this time added to acknowledged alarms
+    assert len(main_window.acknowledged_alarm_tables['TEST'].alarmModel.alarm_items) == 2
+
+    # Now simulate the alarm returning to an OK state, this should clear the alarm since it is both acknowledged and OK
+    main_window.update_table('TEST', 'ACTIVE:ALARM', '', AlarmSeverity.OK, '', None, '', AlarmSeverity.OK, '')
+    # This should not have changed
+    assert len(main_window.active_alarm_tables['TEST'].alarmModel.alarm_items) == 0
+    # But this should have cleared one alarm now
+    assert len(main_window.acknowledged_alarm_tables['TEST'].alarmModel.alarm_items) == 1
+
+    # And finally update the severity of the acknowledged alarm. This change of state will set it back to being active
+    main_window.update_table('TEST', 'ACK:ALARM', '', AlarmSeverity.MAJOR, '', None, '', AlarmSeverity.MAJOR, '')
+    # This alarm is now activate again
+    assert len(main_window.active_alarm_tables['TEST'].alarmModel.alarm_items) == 1
+    # And it was moved out of this table
+    assert len(main_window.acknowledged_alarm_tables['TEST'].alarmModel.alarm_items) == 0
