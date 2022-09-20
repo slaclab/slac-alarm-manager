@@ -38,6 +38,8 @@ class AlarmHandlerMainWindow(QMainWindow):
                                             value_serializer=lambda x: json.dumps(x).encode('utf-8'),
                                             key_serializer=lambda x: x.encode('utf-8'))
         self.topics = topics
+        self.descriptions = dict()  # Map from alarm path to description
+
         self.clipboard = QApplication.clipboard()
 
         self.main_menu = self.menuBar()
@@ -135,7 +137,8 @@ class AlarmHandlerMainWindow(QMainWindow):
                           AlarmSeverity.MINOR_ACK, AlarmSeverity.UNDEFINED_ACK):
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.update_row(name, path, severity, status, time,
-                                                                                    value, pv_severity, pv_status)
+                                                                                    value, pv_severity, pv_status,
+                                                                                    self.descriptions.get(path, ''))
         elif severity == AlarmSeverity.OK:
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
@@ -143,7 +146,8 @@ class AlarmHandlerMainWindow(QMainWindow):
             if name in self.acknowledged_alarm_tables[alarm_config_name].alarmModel.alarm_items:
                 self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.active_alarm_tables[alarm_config_name].alarmModel.update_row(name, path, severity, status, time, value,
-                                                                              pv_severity, pv_status)
+                                                                              pv_severity, pv_status,
+                                                                              self.descriptions.get(path, ''))
 
     def change_display(self, alarm_config_name: str) -> None:
         """
@@ -178,6 +182,8 @@ class AlarmHandlerMainWindow(QMainWindow):
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
                 self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
+                if 'description' in values:
+                    self.descriptions[message.key[7:]] = values.get('description')
             else:  # A null message indicates this item should be removed from the tree
                 self.alarm_trees[alarm_config_name].treeModel.remove_item(message.key[7:])
                 self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
