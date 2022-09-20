@@ -21,10 +21,10 @@ class AlarmItemsTableModel(QAbstractTableModel):
     def __init__(self, parent: Optional[QObject] = None):
         super(QAbstractTableModel, self).__init__(parent=parent)
         self.alarm_items = OrderedDict()  # Key (str) to data
-        self.column_names = ('PV', 'Latched Severity', 'Latched Status', 'Time', 'Alarm Value',
+        self.column_names = ('PV', 'Latched Severity', 'Latched Status', 'Description', 'Time', 'Alarm Value',
                              'Current Severity', 'Current Status')
-        self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'alarm_status', 3: 'alarm_time', 4: 'alarm_value',
-                               5: 'pv_severity', 6: 'pv_status'}
+        self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'alarm_status', 3: 'description', 4: 'alarm_time',
+                               5: 'alarm_value', 6: 'pv_severity', 7: 'pv_status'}
 
     def rowCount(self, parent) -> int:
         """ Return the row count of the table """
@@ -65,6 +65,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
             return alarm_item.alarm_severity.value
         elif column_name == 'Latched Status':
             return alarm_item.alarm_status
+        elif column_name == 'Description':
+            return alarm_item.description
         elif column_name == 'Time':
             return str(alarm_item.alarm_time)
         elif column_name == 'Alarm Value':
@@ -111,14 +113,15 @@ class AlarmItemsTableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     def update_row(self, name: str, path: str, severity: AlarmSeverity, status: str, time,
-                   value: str, pv_severity: AlarmSeverity, pv_status: str):
+                   value: str, pv_severity: AlarmSeverity, pv_status: str, description: str):
         """ Update a row in the alarm table based on the input name. If that name does not yet exist, a row will
             be created for it. If it does exist, update the values of the row accordingly. """
 
         if name not in self.alarm_items:
             # This item does not yet exist in the table, so create it and return
-            self.append(AlarmItem(name=name, path=path, alarm_severity=severity, alarm_status=status, alarm_time=time,
-                                  alarm_value=value, pv_severity=pv_severity, pv_status=pv_status))
+            self.append(AlarmItem(name=name, path=path, alarm_severity=severity, alarm_status=status,
+                                  alarm_time=time, alarm_value=value, pv_severity=pv_severity,
+                                  pv_status=pv_status, description=description))
             return
 
         # Otherwise update the row with the newly received data

@@ -80,21 +80,22 @@ def test_remove_row(alarm_table):
 @pytest.mark.parametrize('column, expected_order', [(0, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED')),
                                                     (1, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
                                                     (2, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED')),
-                                                    (3, ('PV:UNDEFINED', 'PV:MINOR', 'PV:MAJOR')),
-                                                    (4, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
+                                                    (3, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED')),
+                                                    (4, ('PV:UNDEFINED', 'PV:MINOR', 'PV:MAJOR')),
                                                     (5, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
-                                                    (6, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED'))])
+                                                    (6, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
+                                                    (7, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED'))])
 def test_sort(alarm_table, column, expected_order):
     """ Test that the order of alarm items in the table is correct when sorting on every column """
     alarm_item_major = AlarmItem('PV:MAJOR', alarm_severity=AlarmSeverity.MAJOR, alarm_status='enabled',
                                  alarm_time=datetime.fromisoformat('2022-01-05 00:10:00'), alarm_value='FAULT',
-                                 pv_severity=AlarmSeverity.MAJOR, pv_status='enabled')
+                                 description='', pv_severity=AlarmSeverity.MAJOR, pv_status='enabled')
     alarm_item_minor = AlarmItem('PV:MINOR', alarm_severity=AlarmSeverity.MINOR, alarm_status='enabled',
                                  alarm_time=datetime.fromisoformat('2022-01-04 00:10:00'), alarm_value='1.0',
-                                 pv_severity=AlarmSeverity.MINOR, pv_status='enabled')
+                                 description='', pv_severity=AlarmSeverity.MINOR, pv_status='enabled')
     alarm_item_undefined = AlarmItem('PV:UNDEFINED', alarm_severity=AlarmSeverity.UNDEFINED, alarm_status='unknown',
                                      alarm_time=datetime.fromisoformat('2022-01-03 00:10:00'), alarm_value='UNK',
-                                     pv_severity=AlarmSeverity.UNDEFINED, pv_status='unknown')
+                                     description='', pv_severity=AlarmSeverity.UNDEFINED, pv_status='unknown')
 
     alarm_table.append(alarm_item_major)
     alarm_table.append(alarm_item_minor)
@@ -110,16 +111,16 @@ def test_sort(alarm_table, column, expected_order):
 def test_update_row(alarm_table):
     """ Verify updating a row that doesn't exist adds it, and updating an existing row modified it as expected """
     # Updates to alarm items that don't yet exist will result in them being added
-    alarm_table.update_row('PV ONE', '/path/to/PV:ONE', AlarmSeverity.MINOR,
-                           'enabled', datetime.now, 'MINOR FAULT', AlarmSeverity.MINOR, 'enabled')
+    alarm_table.update_row('PV ONE', '/path/to/PV:ONE', AlarmSeverity.MINOR, 'enabled',
+                           datetime.now, 'MINOR FAULT', AlarmSeverity.MINOR, 'enabled', 'First PV')
     assert len(alarm_table.alarm_items) == 1
-    alarm_table.update_row('PV TWO', '/path/to/PV:TWO', AlarmSeverity.UNDEFINED,
-                           'enabled', datetime.now, 'UND', AlarmSeverity.UNDEFINED, 'enabled')
+    alarm_table.update_row('PV TWO', '/path/to/PV:TWO', AlarmSeverity.UNDEFINED, 'enabled',
+                           datetime.now, 'UND', AlarmSeverity.UNDEFINED, 'enabled', 'Seconds PV')
     assert len(alarm_table.alarm_items) == 2
 
     # Now modify the first alarm we added. Verify that no new row was added, and the update happened as expected
-    alarm_table.update_row('PV ONE', '/path/to/PV:ONE', AlarmSeverity.MAJOR,
-                           'enabled', datetime.now, 'MAJOR FAULT', AlarmSeverity.MAJOR, 'enabled')
+    alarm_table.update_row('PV ONE', '/path/to/PV:ONE', AlarmSeverity.MAJOR, 'enabled',
+                           datetime.now, 'MAJOR FAULT', AlarmSeverity.MAJOR, 'enabled', 'Third PV')
     assert len(alarm_table.alarm_items) == 2
 
     updated_item = alarm_table.alarm_items['PV ONE']
