@@ -44,11 +44,19 @@ class AlarmItemsTreeModel(QAbstractItemModel):
 
         alarm_item = self.getItem(index)
         if role == Qt.DisplayRole:
+            bypass_indicator = ''
+            if not alarm_item.is_leaf():
+                # Set an indication there is a bypassed alarm somewhere underneath this top level summary
+                all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
+                for node in all_leaf_nodes:
+                    if not node.enabled:
+                        bypass_indicator = ' *'
+                        break
             if not alarm_item.is_enabled():
                 return alarm_item.name + ' (disabled)'
             elif alarm_item.alarm_severity != AlarmSeverity.OK:
-                return alarm_item.name + f' - {alarm_item.alarm_severity.value}/{alarm_item.alarm_status}'
-            return alarm_item.name
+                return alarm_item.name + f'{bypass_indicator} - {alarm_item.alarm_severity.value}/{alarm_item.alarm_status}'
+            return alarm_item.name + bypass_indicator
         elif role == Qt.TextColorRole:
             if alarm_item.is_leaf():
                 return alarm_item.display_color(alarm_item.alarm_severity)
