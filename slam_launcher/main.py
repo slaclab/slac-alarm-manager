@@ -23,7 +23,7 @@ def main():
 
     app = QApplication([])
     main_window = AlarmHandlerMainWindow(topics, kafka_boostrap_servers)
-    main_window.resize(1920, 1080)
+    main_window.resize(1536, 864)
     main_window.setWindowTitle('SLAC Alarm Manager')
     main_window.show()
 
