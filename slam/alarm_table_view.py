@@ -2,7 +2,7 @@ import enum
 import getpass
 import socket
 from kafka.producer import KafkaProducer
-from qtpy.QtCore import QEvent, QSortFilterProxyModel, Signal
+from qtpy.QtCore import QEvent, QSortFilterProxyModel, Qt, Signal
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication, QHBoxLayout, QHeaderView, QLabel,
                             QLineEdit, QMenu, QPushButton, QTableView, QVBoxLayout, QWidget)
@@ -101,7 +101,9 @@ class AlarmTableViewWidget(QWidget):
 
         # For filtering the alarm table
         self.alarm_filter_bar = QLineEdit()
+        self.alarm_filter_bar.setMaximumSize(415, 30)
         self.filter_button = QPushButton('Filter')
+        self.filter_button.setMaximumSize(120, 30)
         self.filter_button.pressed.connect(self.filter_table)
         self.filter_active_label = QLabel('Filter Active: ')
         self.filter_active_label.setStyleSheet('background-color: orange')
@@ -112,6 +114,7 @@ class AlarmTableViewWidget(QWidget):
         self.search_layout = QHBoxLayout()
         self.search_layout.addWidget(self.alarm_filter_bar)
         self.search_layout.addWidget(self.filter_button)
+        self.search_layout.setAlignment(Qt.AlignLeft)
         self.layout.addLayout(self.search_layout)
         self.layout.addWidget(self.filter_active_label)
         self.layout.addWidget(self.alarmView)
