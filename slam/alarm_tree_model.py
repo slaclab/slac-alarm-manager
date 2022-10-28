@@ -21,7 +21,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         super().__init__(parent)
         self.root_item = AlarmItem('')
         self.nodes = []
-        self.added_paths = set()
+        self.added_paths = dict()  # Mapping from PV name to all associated paths in the tree (will be just 1 for most)
 
     def clear(self) -> None:
         """ Clear out all the nodes in this tree and set the root to an empty item """
@@ -130,22 +130,23 @@ class AlarmItemsTreeModel(QAbstractItemModel):
     def update_item(self, name: str, path: str, severity: AlarmSeverity, status: str, time,
                     value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:
         """ Updates the alarm item with the input name and path in this tree. """
-        if path not in self.added_paths:
+        if name not in self.added_paths:
             logger.debug(f'Attempting update on a node that has not been added by config: {path}')
             return
 
-        item_to_update = self.nodes[self.getItemIndex(path)]
-        item_to_update.alarm_severity = severity
-        item_to_update.alarm_status = status
-        item_to_update.alarm_time = time
-        item_to_update.alarm_value = value
-        item_to_update.pv_severity = pv_severity
-        item_to_update.pv_status = pv_status
-        if status == 'Disabled':
-            if item_to_update.enabled and type(item_to_update.enabled) is not str:
-                item_to_update.enabled = False
-        elif status == 'OK':
-            item_to_update.enabled = True
+        for alarm_path in self.added_paths[name]:
+            item_to_update = self.nodes[self.getItemIndex(alarm_path)]
+            item_to_update.alarm_severity = severity
+            item_to_update.alarm_status = status
+            item_to_update.alarm_time = time
+            item_to_update.alarm_value = value
+            item_to_update.pv_severity = pv_severity
+            item_to_update.pv_status = pv_status
+            if status == 'Disabled':
+                if item_to_update.enabled and type(item_to_update.enabled) is not str:
+                    item_to_update.enabled = False
+            elif status == 'OK':
+                item_to_update.enabled = True
         self.layoutChanged.emit()
 
     def update_model(self, item_path: str, values: dict) -> None:
@@ -167,12 +168,15 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                                latching=values.get('latching'), annunciating=values.get('annunciating'),
                                delay=values.get('delay'), alarm_filter=values.get('filter'))
 
-        if item_path not in self.added_paths:  # This means this is a brand new item we are adding
+        if item_name not in self.added_paths or item_path not in self.added_paths[item_name]:  # This means this is a brand new item we are adding
             self.beginInsertRows(QModelIndex(), len(self.nodes), len(self.nodes))
 
             path_as_list = item_path.split('/')
             self.nodes.append(alarm_item)
-            self.added_paths.add(item_path)
+
+            if item_name not in self.added_paths:
+                self.added_paths[item_name] = []
+            self.added_paths[item_name].append(item_path)
 
             parent_path = '/'.join(path_as_list[0:-1])
             if parent_path == '':  # If the node has no parent, it must be the root of the tree
@@ -189,29 +193,31 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             self.endInsertRows()
 
         else:  # Otherwise it is an update to an existing item
-            item_index = self.getItemIndex(item_path)
-            self.nodes[item_index].description = values.get('description')
-            self.nodes[item_index].guidance = values.get('guidance')
-            self.nodes[item_index].displays = values.get('displays')
-            self.nodes[item_index].commands = values.get('commands')
-            self.nodes[item_index].delay = values.get('delay')
-            self.nodes[item_index].alarm_filter = values.get('filter')
-            if 'enabled' in values:
-                self.nodes[item_index].enabled = values['enabled']
-            if 'latching' in values:
-                self.nodes[item_index].latching = values['latching']
-            if 'annunciating' in values:
-                self.nodes[item_index].annunciating = values['annunciating']
+            for alarm_path in self.added_paths[item_name]:
+                item_index = self.getItemIndex(alarm_path)
+                self.nodes[item_index].description = values.get('description')
+                self.nodes[item_index].guidance = values.get('guidance')
+                self.nodes[item_index].displays = values.get('displays')
+                self.nodes[item_index].commands = values.get('commands')
+                self.nodes[item_index].delay = values.get('delay')
+                self.nodes[item_index].alarm_filter = values.get('filter')
+                if 'enabled' in values:
+                    self.nodes[item_index].enabled = values['enabled']
+                if 'latching' in values:
+                    self.nodes[item_index].latching = values['latching']
+                if 'annunciating' in values:
+                    self.nodes[item_index].annunciating = values['annunciating']
 
     def remove_item(self, item_path: str) -> None:
         """ Removes the alarm item at the input path from this tree """
-        if item_path not in self.added_paths:
+        item_index = self.getItemIndex(item_path)
+        if item_index == -1:
             logger.debug(f'Attempting to remove item not in the tree: {item_path}')
             return
 
-        item_index = self.getItemIndex(item_path)
+        item_name = item_path.split('/')[-1]
         self.beginRemoveRows(QModelIndex(), item_index, item_index)
-        self.added_paths.remove(item_path)
+        self.added_paths[item_name].remove(item_path)
         del self.nodes[item_index]
         self.endRemoveRows()
 

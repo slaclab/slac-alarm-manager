@@ -75,7 +75,7 @@ def test_send_unacknowledgement(qtbot, monkeypatch, acknowledged_alarm_table_vie
     # Monkeypatch some qt methods to return our alarm as the selected index
     model_index = QModelIndex()
     indices = [model_index]
-    monkeypatch.setattr(QTableView, 'selectedIndexes', lambda x: indices)
+    monkeypatch.setattr(QItemSelectionModel, 'selectedRows', lambda x: indices)
     monkeypatch.setattr(model_index, 'row', lambda: 0)
 
     # Send the unacknowledgement, and verify the message we are sending to kafka looks the way we want it to
