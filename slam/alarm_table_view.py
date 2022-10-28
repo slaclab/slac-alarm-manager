@@ -180,7 +180,7 @@ class AlarmTableViewWidget(QWidget):
 
     def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
-        indices = self.alarmView.selectedIndexes()
+        indices = self.alarmView.selectionModel().selectedRows()
         if len(indices) > 0:
             for index in indices:
                 alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
