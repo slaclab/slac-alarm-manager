@@ -5,7 +5,7 @@ from operator import attrgetter
 def test_clear(tree_model, alarm_item):
     """ A quick check that clear is removing data as expected. """
     tree_model.nodes.append(alarm_item)
-    tree_model.added_paths.add('/path/to/the/node')
+    tree_model.added_paths['node'] = ['/path/to/the/node']
     tree_model.root_item = alarm_item
 
     tree_model.clear()
@@ -63,7 +63,7 @@ def test_update_item(tree_model):
     assert len(tree_model.nodes) == 0  # This update should have done nothing, this node has not yet been added
 
     tree_model.nodes.append(alarm_item)
-    tree_model.added_paths.add('/path/to/TEST:PV')
+    tree_model.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
 
     tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'alarm', None, 'FAULT',
                            AlarmSeverity.MINOR, 'alarm_status')
@@ -119,8 +119,8 @@ def test_remove_item(tree_model):
     alarm_item_two = AlarmItem('OTHER:PV', '/other/pv/OTHER:PV', AlarmSeverity.OK)
     tree_model.nodes.append(alarm_item)
     tree_model.nodes.append(alarm_item_two)
-    tree_model.added_paths.add('/to/be/removed/TEST:PV')
-    tree_model.added_paths.add('/other/pv/OTHER:PV')
+    tree_model.added_paths['TEST:PV'] = ['/to/be/removed/TEST:PV']
+    tree_model.added_paths['OTHER:PV'] = ['/other/pv/OTHER:PV']
 
     assert len(tree_model.nodes) == 2
 
