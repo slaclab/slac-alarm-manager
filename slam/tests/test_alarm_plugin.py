@@ -32,7 +32,7 @@ def test_process_message(mock_record, severity_from_kafka, signal_to_send):
 
     # Setup the alarm plugin and an associated connection
     alarm_plugin = AlarmPlugin()
-    alarm_plugin.kafka_topic = 'test_topic'
+    alarm_plugin.kafka_topics = ['test_topic']
     alarm_plugin.alarm_severities = {}
     alarm_channel = PyDMChannel()
     alarm_connection = Connection(alarm_channel, 'pva://TEST:ADDRESS')

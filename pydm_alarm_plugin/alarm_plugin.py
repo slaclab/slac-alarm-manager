@@ -24,6 +24,7 @@ class Connection(PyDMConnection):
                  parent: Optional[QObject] = None):
         super().__init__(channel, address, protocol, parent)
         self.add_listener(channel)
+        self.current_severity = AlarmSeverity.OK
 
     def send_alarm_data(self, severity: AlarmSeverity):
         """
@@ -44,6 +45,16 @@ class Connection(PyDMConnection):
             self.new_severity_signal.emit(PyDMWidget.ALARM_INVALID)
         elif severity is AlarmSeverity.UNDEFINED:
             self.new_severity_signal.emit(PyDMWidget.ALARM_DISCONNECTED)
+        elif severity is AlarmSeverity.MINOR_ACK and self.current_severity <= AlarmSeverity.MINOR:
+            self.new_severity_signal.emit(PyDMWidget.ALARM_NONE)
+        elif severity is AlarmSeverity.MAJOR_ACK and self.current_severity <= AlarmSeverity.MAJOR:
+            self.new_severity_signal.emit(PyDMWidget.ALARM_NONE)
+        elif severity is AlarmSeverity.INVALID_ACK and self.current_severity <= AlarmSeverity.INVALID:
+            self.new_severity_signal.emit(PyDMWidget.ALARM_NONE)
+        elif severity is AlarmSeverity.UNDEFINED_ACK and self.current_severity <= AlarmSeverity.UNDEFINED:
+            self.new_severity_signal.emit(PyDMWidget.ALARM_NONE)
+
+        self.current_severity = severity
 
 
 class AlarmPlugin(PyDMPlugin):
@@ -56,11 +67,11 @@ class AlarmPlugin(PyDMPlugin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        kafka_topic = os.getenv('PYDM_KAFKA_ALARM_TOPIC')
+        kafka_topics = os.getenv('PYDM_KAFKA_ALARM_TOPICS')
         kafka_bootstrap_servers = os.getenv('PYDM_KAFKA_BOOTSTRAP_SERVERS')
-        if not kafka_topic:
-            logger.debug('Could not initialize alarm data plugin, topic must be specified in the '
-                         'PYDM_KAFKA_ALARM_TOPIC environment variable')
+        if not kafka_topics:
+            logger.debug('Could not initialize alarm data plugin, at least one topic must be specified in the '
+                         'PYDM_KAFKA_ALARM_TOPICS environment variable')
             return
         if not kafka_bootstrap_servers:
             logger.debug('Could not initialize alarm data plugin, kafka bootstrap server location must be '
@@ -68,8 +79,10 @@ class AlarmPlugin(PyDMPlugin):
             return
 
         self.alarm_severities = dict()  # Mapping from alarm name to current alarm severity
-        self.kafka_reader = KafkaReader(kafka_topic, kafka_bootstrap_servers.split(','), self.process_message)
-        self.kafka_topic = kafka_topic
+        self.kafka_reader = KafkaReader(kafka_topics.split(','),
+                                        kafka_bootstrap_servers.split(','),
+                                        self.process_message)
+        self.kafka_topics = kafka_topics
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
         self.processing_thread.started.connect(self.kafka_reader.run)
@@ -106,7 +119,7 @@ class AlarmPlugin(PyDMPlugin):
             # An example key could look something like: state:/top-level-system/sub-system/sub-component/PV:NAME
             alarm_path = message.key[6:]
             alarm_name = alarm_path.split('/')[-1]
-            if alarm_name != self.kafka_topic:
+            if alarm_name not in self.kafka_topics:
                 current_severity = AlarmSeverity(message.value['severity'])
                 self.alarm_severities[alarm_name] = current_severity
                 if alarm_name in self.connections:
