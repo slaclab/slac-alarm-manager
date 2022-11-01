@@ -174,9 +174,10 @@ class AlarmTableViewWidget(QWidget):
                 alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
                 username = getpass.getuser()
                 hostname = socket.gethostname()
-                self.kafka_producer.send(self.topic + 'Command',
-                                         key=f'command:{alarm_item.path}',
-                                         value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+                for alarm_path in self.tree_model.added_paths[alarm_item.name]:
+                    self.kafka_producer.send(self.topic + 'Command',
+                                             key=f'command:{alarm_path}',
+                                             value={'user': username, 'host': hostname, 'command': 'acknowledge'})
 
     def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
@@ -186,6 +187,7 @@ class AlarmTableViewWidget(QWidget):
                 alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
                 username = getpass.getuser()
                 hostname = socket.gethostname()
-                self.kafka_producer.send(self.topic + 'Command',
-                                         key=f'command:{alarm_item.path}',
-                                         value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
+                for alarm_path in self.tree_model.added_paths[alarm_item.name]:
+                    self.kafka_producer.send(self.topic + 'Command',
+                                             key=f'command:{alarm_path}',
+                                             value={'user': username, 'host': hostname, 'command': 'unacknowledge'})

@@ -56,6 +56,7 @@ def test_send_acknowledgement(qtbot, monkeypatch, alarm_tree_view, mock_kafka_pr
     indices = [model_index]
     monkeypatch.setattr(alarm_tree_view.tree_view, 'selectedIndexes', lambda: indices)
     monkeypatch.setattr(alarm_tree_view.treeModel, 'getItem', lambda x: alarm_item)
+    alarm_tree_view.treeModel.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
 
     alarm_tree_view.send_acknowledgement()
     # Setting the correct topic, path, and acknowledgement command is all we need to acknowledge an alarm
@@ -76,6 +77,7 @@ def test_send_unacknowledgement(qtbot, monkeypatch, alarm_tree_view, mock_kafka_
     indices = [model_index]
     monkeypatch.setattr(alarm_tree_view.tree_view, 'selectedIndexes', lambda: indices)
     monkeypatch.setattr(alarm_tree_view.treeModel, 'getItem', lambda x: alarm_item)
+    alarm_tree_view.treeModel.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
 
     alarm_tree_view.send_unacknowledgement()
     # Setting the correct topic, path, and acknowledgement command is all we need to acknowledge an alarm
@@ -94,6 +96,7 @@ def test_enable_alarm(qtbot, monkeypatch, alarm_item, alarm_tree_view, mock_kafk
     alarm_item.enabled = False  # Disable the alarm so we can enable it later
     monkeypatch.setattr(alarm_tree_view.tree_view, 'selectedIndexes', lambda: indices)
     monkeypatch.setattr(alarm_tree_view.treeModel, 'getItem', lambda x: alarm_item)
+    alarm_tree_view.treeModel.added_paths['TEST:PV:ONE'] = ['/ROOT/SECTOR_ONE/TEST:PV:ONE']
 
     alarm_tree_view.enable_alarm()
     assert mock_kafka_producer.topic == 'TEST_TOPIC'
@@ -111,6 +114,7 @@ def test_disable_alarm(qtbot, monkeypatch, alarm_item, alarm_tree_view, mock_kaf
     alarm_item.description = 'Test Alarm'
     monkeypatch.setattr(alarm_tree_view.tree_view, 'selectedIndexes', lambda: indices)
     monkeypatch.setattr(alarm_tree_view.treeModel, 'getItem', lambda x: alarm_item)
+    alarm_tree_view.treeModel.added_paths['TEST:PV:ONE'] = ['/ROOT/SECTOR_ONE/TEST:PV:ONE']
 
     alarm_tree_view.disable_alarm()
     assert mock_kafka_producer.topic == 'TEST_TOPIC'

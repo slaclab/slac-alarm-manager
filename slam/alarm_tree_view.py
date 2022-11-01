@@ -162,9 +162,10 @@ class AlarmTreeViewWidget(QWidget):
             alarm_item = self.treeModel.getItem(index)
             username = getpass.getuser()
             hostname = socket.gethostname()
-            self.kafka_producer.send(self.topic + 'Command',
-                                     key=f'command:{alarm_item.path}',
-                                     value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+            for alarm_path in self.treeModel.added_paths[alarm_item.name]:
+                self.kafka_producer.send(self.topic + 'Command',
+                                         key=f'command:{alarm_path}',
+                                         value={'user': username, 'host': hostname, 'command': 'acknowledge'})
 
     def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
@@ -174,9 +175,10 @@ class AlarmTreeViewWidget(QWidget):
             alarm_item = self.treeModel.getItem(index)
             username = getpass.getuser()
             hostname = socket.gethostname()
-            self.kafka_producer.send(self.topic + 'Command',
-                                     key=f'command:{alarm_item.path}',
-                                     value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
+            for alarm_path in self.treeModel.added_paths[alarm_item.name]:
+                self.kafka_producer.send(self.topic + 'Command',
+                                         key=f'command:{alarm_path}',
+                                         value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
 
     def enable_alarm(self) -> None:
         """ Enable the selected alarm. If the selected item is a parent node, enable all its children """
@@ -187,21 +189,23 @@ class AlarmTreeViewWidget(QWidget):
             username = getpass.getuser()
             hostname = socket.gethostname()
             if alarm_item.is_leaf() and not alarm_item.is_enabled():
-                self.kafka_producer.send(self.topic,
-                                         key=f'config:{alarm_item.path}',
-                                         value={'user': username, 'host': hostname,
-                                                'description': alarm_item.description, 'enabled': True,
-                                                'latching': alarm_item.latching,
-                                                'annunciating': alarm_item.annunciating})
+                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
+                    self.kafka_producer.send(self.topic,
+                                             key=f'config:{alarm_path}',
+                                             value={'user': username, 'host': hostname,
+                                                    'description': alarm_item.description, 'enabled': True,
+                                                    'latching': alarm_item.latching,
+                                                    'annunciating': alarm_item.annunciating})
             elif not alarm_item.is_leaf():
                 all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
                 for leaf in all_leaf_nodes:
                     if not leaf.is_enabled():
-                        self.kafka_producer.send(self.topic,
-                                                 key=f'config:{leaf.path}',
-                                                 value={'user': username, 'host': hostname,
-                                                        'description': leaf.description, 'enabled': True,
-                                                        'latching': leaf.latching, 'annunciating': leaf.annunciating})
+                        for alarm_path in self.treeModel.added_paths[leaf.name]:
+                            self.kafka_producer.send(self.topic,
+                                                     key=f'config:{alarm_path}',
+                                                     value={'user': username, 'host': hostname,
+                                                            'description': leaf.description, 'enabled': True,
+                                                            'latching': leaf.latching, 'annunciating': leaf.annunciating})
 
     def disable_alarm(self) -> None:
         """ Disable the selected alarm. If the selected item is a parent node, disable all its children """
@@ -212,18 +216,20 @@ class AlarmTreeViewWidget(QWidget):
             username = getpass.getuser()
             hostname = socket.gethostname()
             if alarm_item.is_leaf() and alarm_item.is_enabled():
-                self.kafka_producer.send(self.topic,
-                                         key=f'config:{alarm_item.path}',
-                                         value={'user': username, 'host': hostname,
-                                                'description': alarm_item.description, 'enabled': False,
-                                                'latching': alarm_item.latching,
-                                                'annunciating': alarm_item.annunciating})
+                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
+                    self.kafka_producer.send(self.topic,
+                                             key=f'config:{alarm_path}',
+                                             value={'user': username, 'host': hostname,
+                                                    'description': alarm_item.description, 'enabled': False,
+                                                    'latching': alarm_item.latching,
+                                                    'annunciating': alarm_item.annunciating})
             elif not alarm_item.is_leaf():
                 all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
                 for leaf in all_leaf_nodes:
                     if leaf.is_enabled():
-                        self.kafka_producer.send(self.topic,
-                                                 key=f'config:{leaf.path}',
-                                                 value={'user': username, 'host': hostname,
-                                                        'description': leaf.description, 'enabled': False,
-                                                        'latching': leaf.latching, 'annunciating': leaf.annunciating})
+                        for alarm_path in self.treeModel.added_paths[leaf.name]:
+                            self.kafka_producer.send(self.topic,
+                                                     key=f'config:{alarm_path}',
+                                                     value={'user': username, 'host': hostname,
+                                                            'description': leaf.description, 'enabled': False,
+                                                            'latching': leaf.latching, 'annunciating': leaf.annunciating})

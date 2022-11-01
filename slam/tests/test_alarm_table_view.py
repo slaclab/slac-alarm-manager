@@ -49,6 +49,7 @@ def test_send_acknowledgement(qtbot, monkeypatch, active_alarm_table_view, mock_
     # Create an alarm with a severity of major
     alarm_item = AlarmItem('TEST:PV', path='/path/to/TEST:PV', alarm_severity=AlarmSeverity.MAJOR)
     active_alarm_table_view.alarmModel.append(alarm_item)
+    active_alarm_table_view.tree_model.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
 
     # Monkeypatch some qt methods to return our alarm as the selected index
     model_index = QModelIndex()
@@ -71,6 +72,7 @@ def test_send_unacknowledgement(qtbot, monkeypatch, acknowledged_alarm_table_vie
     # Create an alarm that has been acknowledged
     alarm_item = AlarmItem('TEST:PV', path='/path/to/TEST:PV', alarm_severity=AlarmSeverity.MAJOR_ACK)
     acknowledged_alarm_table_view.alarmModel.append(alarm_item)
+    acknowledged_alarm_table_view.tree_model.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
 
     # Monkeypatch some qt methods to return our alarm as the selected index
     model_index = QModelIndex()
