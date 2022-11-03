@@ -162,10 +162,19 @@ class AlarmTreeViewWidget(QWidget):
             alarm_item = self.treeModel.getItem(index)
             username = getpass.getuser()
             hostname = socket.gethostname()
-            for alarm_path in self.treeModel.added_paths[alarm_item.name]:
-                self.kafka_producer.send(self.topic + 'Command',
-                                         key=f'command:{alarm_path}',
-                                         value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+            if alarm_item.is_leaf():
+                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
+                    self.kafka_producer.send(self.topic + 'Command',
+                                             key=f'command:{alarm_path}',
+                                             value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+            else:
+                all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
+                for leaf in all_leaf_nodes:
+                    if leaf.is_in_active_alarm_state():
+                        for alarm_path in self.treeModel.added_paths[leaf.name]:
+                            self.kafka_producer.send(self.topic + 'Command',
+                                                     key=f'command:{alarm_path}',
+                                                     value={'user': username, 'host': hostname, 'command': 'acknowledge'})
 
     def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
@@ -175,10 +184,19 @@ class AlarmTreeViewWidget(QWidget):
             alarm_item = self.treeModel.getItem(index)
             username = getpass.getuser()
             hostname = socket.gethostname()
-            for alarm_path in self.treeModel.added_paths[alarm_item.name]:
-                self.kafka_producer.send(self.topic + 'Command',
-                                         key=f'command:{alarm_path}',
-                                         value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
+            if alarm_item.is_leaf():
+                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
+                    self.kafka_producer.send(self.topic + 'Command',
+                                             key=f'command:{alarm_path}',
+                                             value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
+            else:
+                all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
+                for leaf in all_leaf_nodes:
+                    if not leaf.is_in_active_alarm_state():
+                        for alarm_path in self.treeModel.added_paths[leaf.name]:
+                            self.kafka_producer.send(self.topic + 'Command',
+                                                     key=f'command:{alarm_path}',
+                                                     value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
 
     def enable_alarm(self) -> None:
         """ Enable the selected alarm. If the selected item is a parent node, enable all its children """

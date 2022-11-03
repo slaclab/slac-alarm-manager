@@ -137,6 +137,11 @@ class AlarmItem(QObject):
         else:
             logger.error(f'Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
 
+    def is_in_active_alarm_state(self) -> bool:
+        """ A convenience method for returning whether or not this item is actively in an alarm state """
+        return self.alarm_severity in (AlarmSeverity.MINOR, AlarmSeverity.MAJOR,
+                                       AlarmSeverity.INVALID, AlarmSeverity.UNDEFINED)
+
     def display_color(self, severity) -> QBrush:
         """
         Return a QBrush with the appropriate color for drawing this alarm based on severity
