@@ -15,6 +15,22 @@ def test_is_leaf():
     assert not alarm_root.is_leaf()
 
 
+@pytest.mark.parametrize('alarm_severity, expected_state',
+                         [(AlarmSeverity.MINOR, True),
+                          (AlarmSeverity.MAJOR, True),
+                          (AlarmSeverity.INVALID, True),
+                          (AlarmSeverity.UNDEFINED, True),
+                          (AlarmSeverity.MINOR_ACK, False),
+                          (AlarmSeverity.MAJOR_ACK, False),
+                          (AlarmSeverity.INVALID_ACK, False),
+                          (AlarmSeverity.UNDEFINED_ACK, False)])
+def test_is_in_activate_alarm_state(alarm_severity, expected_state):
+    """ Confirm that the alarm item correctly reports whether or not it is in an active alarm state """
+    alarm_item = AlarmItem('TEST:PV')
+    alarm_item.alarm_severity = alarm_severity
+    assert alarm_item.is_in_active_alarm_state() == expected_state
+
+
 def test_is_enabled():
     """ Verify the various methods of indicating an alarm item is enabled work properly """
     alarm_item = AlarmItem('TEST:PV')
