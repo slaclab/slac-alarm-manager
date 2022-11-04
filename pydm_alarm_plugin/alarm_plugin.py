@@ -2,7 +2,7 @@ import logging
 import os
 from kafka.consumer.fetcher import ConsumerRecord
 from pydm.data_plugins.plugin import PyDMPlugin, PyDMConnection
-from pydm.utilities import remove_protocol
+from pydm.utilities import is_qt_designer, remove_protocol
 from pydm.widgets.base import PyDMWidget
 from pydm.widgets.channel import PyDMChannel
 from qtpy.QtCore import QObject, QThread
@@ -99,8 +99,12 @@ class AlarmPlugin(PyDMPlugin):
         channel : PyDMChannel
             The channel to establish a connection with
         """
+        if is_qt_designer():
+            return
+
         super(AlarmPlugin, self).add_connection(channel)
         alarm_name = remove_protocol(channel.address)
+        self.connections[alarm_name].connected = True
         if alarm_name in self.alarm_severities:
             self.connections[alarm_name].send_alarm_data(self.alarm_severities[alarm_name])
 
