@@ -1,0 +1,14 @@
+site_name: SLAC Alarm Manager
+repo_url: https://github.com/slaclab/slac-alarm-manager
+
+nav:
+  - Home: index.md
+  - Alarm Manager: alarm_manager.md
+  - PyDM Data Source: pydm.md
+  - Developer Info: developer.md
+
+theme:
+  name: 'material'
+
+plugins:
+  - search
