@@ -1,0 +1,8 @@
+name: slam-docs
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - mkdocs
+  - mkdocs-material
+  - pip
