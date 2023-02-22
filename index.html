@@ -217,9 +217,40 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Home
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="." class="md-nav__link md-nav__link--active">
         Home
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -290,6 +321,21 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -308,9 +354,13 @@
 
 <h1 id="slac-alarm-manager">SLAC Alarm Manager</h1>
 <p>The SLAC Alarm Manager contains two main ways of interfacing with the <a href="https://slaclab.github.io/nalms/">NALMS</a> alarm
-system. There is a standalone python application for viewing and interacting with alarms descibed in greater
-detail <a href="app.md">here</a>. And a PyDM data plugin that will allow for building displays containing
-summary alarms as described <a href="pydm/">here</a>.</p>
+system. There is a standalone python application for viewing and interacting with alarms described in greater
+detail <a href="alarm_manager/">here</a>. And a <a href="pydm/">PyDM data plugin</a> that will allow for building displays containing
+summary alarms.</p>
+<h2 id="installation">Installation</h2>
+<p>The easiest installation method is using pip to install from PyPI into a virtual environment:</p>
+<p><code>pip install slac-alarm-manager</code></p>
+<p>It can also be installed from source using pip from the repository here: https://github.com/slaclab/slac-alarm-manager</p>
 
 
 
