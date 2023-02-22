@@ -35,3 +35,8 @@ on the project.
 In order to run all of the tests included with this project, a few additional test-only requirements must be installed
 as included in `dev-requirements.txt`. This test suite will also be run as part of every pull request, and whenever
 a new commit is made to main.
+
+## User Documentation
+
+https://slaclab.github.io/slac-alarm-manager/
+
