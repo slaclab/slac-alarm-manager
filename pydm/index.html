@@ -1,0 +1,501 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../alarm_manager/">
+      
+      
+        <link rel="next" href="../developer/">
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.13">
+    
+    
+      
+        <title>PyDM Data Source - SLAC Alarm Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ffa9267a.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pydm-support" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="SLAC Alarm Manager" class="md-header__button md-logo" aria-label="SLAC Alarm Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SLAC Alarm Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              PyDM Data Source
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/slaclab/slac-alarm-manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="SLAC Alarm Manager" class="md-nav__button md-logo" aria-label="SLAC Alarm Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    SLAC Alarm Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/slaclab/slac-alarm-manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../alarm_manager/" class="md-nav__link">
+        Alarm Manager
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          PyDM Data Source
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        PyDM Data Source
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-summary-alarms" class="md-nav__link">
+    What Are Summary Alarms?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-sample-display" class="md-nav__link">
+    Creating a Sample Display
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-display" class="md-nav__link">
+    Running the Display
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        Developer Info
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-summary-alarms" class="md-nav__link">
+    What Are Summary Alarms?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-a-sample-display" class="md-nav__link">
+    Creating a Sample Display
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-display" class="md-nav__link">
+    Running the Display
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="pydm-support">PyDM Support</h1>
+<p>PyDM is a python based framework for building interfaces for control systems described in more detail <a href="https://slaclab.github.io/pydm/">here</a>.
+PyDM is able to read in data from multiple sources via data plugins, allowing a standard way for UI widgets
+to receive and display data.</p>
+<p>One such data plugin is included with the slac-alarm-manager package. An associated <a href="https://pypi.org/project/entrypoints/">entrypoint</a>
+will cause PyDM to automatically discover this data plugin and allow the user to build displays that include
+data from the alarm system.</p>
+<h2 id="what-are-summary-alarms">What Are Summary Alarms?</h2>
+<p>Since PyDM already includes built-in support for fetching and displaying the alarm status of individual PVs, the 
+main benefit of this new plugin is for the display of summary alarms. A summary alarm is one which comprises a
+number of underlying PVs or (other summary alarms). As an example, let's take an alarm hierarchy that looks like this:</p>
+<p><img alt="Alarm Hierarchy" src="../img/demo-structure.png" /></p>
+<p>Where the associated xml file describing the structure could look as follows:</p>
+<pre><code class="language-xml">&lt;?xml version='1.0' encoding='utf8'?&gt;
+&lt;config name=&quot;Demo&quot;&gt;
+    &lt;component name=&quot;GROUP1&quot;&gt;
+        &lt;pv name=&quot;DEMO:PV1&quot;&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/pv&gt;
+        &lt;pv name=&quot;DEMO:PV2&quot;&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/pv&gt;
+        &lt;pv name=&quot;DEMO:PV3&quot;&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/pv&gt;
+    &lt;/component&gt;
+    &lt;component name=&quot;GROUP2&quot;&gt;
+        &lt;component name=&quot;GROUP3&quot;&gt;
+            &lt;pv name=&quot;DEMO:PV4&quot;&gt;
+                &lt;enabled&gt;true&lt;/enabled&gt;
+            &lt;/pv&gt;
+            &lt;pv name=&quot;DEMO:PV5&quot;&gt;
+                &lt;enabled&gt;true&lt;/enabled&gt;
+            &lt;/pv&gt;
+        &lt;/component&gt;
+        &lt;pv name=&quot;DEMO:PV6&quot;&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/pv&gt;
+        &lt;pv name=&quot;DEMO:PV7&quot;&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/pv&gt;
+    &lt;/component&gt;
+&lt;/config&gt;
+</code></pre>
+<p>Here <code>GROUP1</code> is a top level summary that will reflect the highest severity alarm from <code>DEMO:PV1</code>, <code>DEMO:PV2</code>, and <code>DEMO:PV3</code>.
+<code>GROUP2</code> will do the same for its underlying components, one of which (<code>GROUP3</code>) is a summary alarm itself.
+So if say <code>DEMO:PV2</code> goes into a minor alarm state, and <code>DEMO:PV3</code> into a major, then <code>GROUP1</code> will go into a major alarm
+state as well. If <code>DEMO:PV3</code> returns to normal, then <code>GROUP1</code> will go into a minor alarm state as <code>DEMO:PV2</code> now has the
+highest severity among its components.</p>
+<p>We will create an example display based on this alarm hierarchy to show this and the PyDM/NALMS integration in action.</p>
+<h2 id="creating-a-sample-display">Creating a Sample Display</h2>
+<p>To keep this display simple, we will just drop some PyDMFrame widgets onto it along with associated labels
+identifying each summary alarm or PV being represented:</p>
+<p><img alt="Basic Display" src="../img/demo-display.png" /></p>
+<p>Next we'll connect each to a channel. The new <code>nalms://</code> protocol has been added as a way to communicate with the alarm
+system. Using this protocol is required for the summary alarms as there is no actual IOC backing any of them. But as 
+shown in this demo, using either regular channel access or <code>nalms://</code> is fine when dealing with individual PVs:</p>
+<p><img alt="nalms protocol" src="../img/nalms-protocol.gif" /></p>
+<h2 id="running-the-display">Running the Display</h2>
+<p>To see the display working, first ensure that the following two environment variables are set to the correct value of the
+alarm topic to monitor, as well as the location of the kafka cluster. For this demo:</p>
+<pre><code>export PYDM_KAFKA_ALARM_TOPIC=Demo
+export PYDM_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+</code></pre>
+<p>Now with an instance of this display running, we can issue caput commands in order to toggle the PVs into various alarm
+states. Here a minor alarm is represented by the darkened single border around a frame, and a major by the red double
+border. You can see that the summary alarms will automatically take on the highest alarm state of any of its underlying
+PVs as described above:</p>
+<p><img alt="PYDM Demo" src="../img/pydm-demo.gif" /></p>
+<p>As a final note, the <code>nalms://</code> protocol should work with any widget which supports displaying alarm status, so more
+complex displays than this can be created, for example with related display buttons to drill down into the components
+of a system. And it is also possible to have the same PV as part of multiple summary alarms if needed.</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.2a6f1dda.min.js"></script>
+      
+    
+  </body>
+</html>
