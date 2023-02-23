@@ -51,11 +51,12 @@ class AlarmTableViewWidget(QWidget):
         self.plot_signal.connect(self.plot_slot)
         self.clipboard = QApplication.clipboard()
 
+        self.alarmModel = AlarmItemsTableModel()
+
         self.layout = QVBoxLayout(self)
         self.alarm_count_label = QLabel('Active Alarms: 0')
         self.alarmView = QTableView(self)
-
-        self.alarmModel = AlarmItemsTableModel()
+        self.update_counter_label()
 
         # Using a proxy model allows for filtering based on a search bar
         self.alarm_proxy_model = QSortFilterProxyModel()
