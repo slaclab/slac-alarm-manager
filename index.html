@@ -248,6 +248,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#setting-up-alarm-configurations" class="md-nav__link">
+    Setting up Alarm Configurations
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -334,6 +341,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#setting-up-alarm-configurations" class="md-nav__link">
+    Setting up Alarm Configurations
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -353,14 +367,21 @@
 
 
 <h1 id="slac-alarm-manager">SLAC Alarm Manager</h1>
-<p>The SLAC Alarm Manager contains two main ways of interfacing with the <a href="https://slaclab.github.io/nalms/">NALMS</a> alarm
-system. There is a standalone python application for viewing and interacting with alarms described in greater
-detail <a href="alarm_manager/">here</a>. And a <a href="pydm/">PyDM data plugin</a> that will allow for building displays containing
-summary alarms.</p>
+<p>The <a href="https://github.com/slaclab/slac-alarm-manager">SLAC Alarm Manager</a> is a python package providing an interface to the <a href="https://slaclab.github.io/nalms/">NALMS alarm system</a>.
+It contains two main ways of interacting with NALMS. There is a standalone python application for 
+viewing and interacting with alarms described in greater detail <a href="alarm_manager/">here</a>. And 
+a <a href="pydm/">PyDM data plugin</a> that will allow for building PyDM displays containing summary alarms.</p>
 <h2 id="installation">Installation</h2>
 <p>The easiest installation method is using pip to install from PyPI into a virtual environment:</p>
 <p><code>pip install slac-alarm-manager</code></p>
 <p>It can also be installed from source using pip from the repository here: https://github.com/slaclab/slac-alarm-manager</p>
+<h2 id="setting-up-alarm-configurations">Setting up Alarm Configurations</h2>
+<p>The alarm hierarchies displayed in this system are defined using xml files. As an example, we can look at this file:</p>
+<p>https://github.com/pcdshub/pcds-nalms/blob/master/XML/KFE/GMDXGMD.xml</p>
+<p>The top level config name, <code>nalms-kfe-GMDXGMD</code>, represents the system being monitored. It will also be referred to
+as the alarm topic or kafka topic in the rest of this documentation. A component is a way of grouping PVs together
+in whatever way makes sense. For more information about the valid options for each pv, please see the description
+of these at the NALMS documentation here: https://slaclab.github.io/nalms/configuration/.</p>
 
 
 
