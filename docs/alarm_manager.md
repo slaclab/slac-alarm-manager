@@ -74,3 +74,23 @@ has been completed.
 
 Finally the remaining two options are to copy the name of the PV to the clipboard, and to draw a plot of the PV in 
 a separate window. This plot is rendered using PyDM.
+
+## Additional Options Menu
+
+By double-clicking on a PV in the alarm tree, a menu will be brought up displaying a few additional options as well
+as more information.
+
+![double click menu](img/double-click-menu.png)
+
+The `Disable Until` option will bypass an alarm as described above, except with a specified end time set. Once that
+time is reached, the alarm will automatically be re-enabled. In the above maintenance example, this can be useful
+to ensure someone does not need to remember to manually re-enable the alarm once the maintenance is completed.
+
+The `Alarm Delay` represents how long the PV must be in an alarm state before triggering the alarm. The default is
+to raise an alarm immediately, but this can be increased if temporary fluctuations in values are to be expected.
+
+Information under guidance is free-form and can be used to indicate information like who to call if a certain PV
+or component goes into an alarm state.
+
+Please note that any information entered here while the application is running will NOT be persisted when the associated
+alarm server is updated or restarted. To ensure persistence, all information must be saved in the xml configuration file.
