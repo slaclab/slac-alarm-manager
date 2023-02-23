@@ -44,7 +44,7 @@ class AlarmHandlerMainWindow(QMainWindow):
 
         self.main_menu = self.menuBar()
         self.file_menu = self.main_menu.addMenu('File')
-        self.applications_menu = self.main_menu.addMenu('Applications')
+        self.applications_menu = self.main_menu.addMenu('Tools')
         self.exit_action = QAction('Exit')
         self.exit_action.triggered.connect(self.exit_application)
         self.file_menu.addAction(self.exit_action)
