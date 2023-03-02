@@ -79,10 +79,10 @@ class AlarmPlugin(PyDMPlugin):
             return
 
         self.alarm_severities = dict()  # Mapping from alarm name to current alarm severity
-        self.kafka_reader = KafkaReader(kafka_topics.split(','),
+        self.kafka_topics = kafka_topics.split(',')
+        self.kafka_reader = KafkaReader(self.kafka_topics,
                                         kafka_bootstrap_servers.split(','),
                                         self.process_message)
-        self.kafka_topics = kafka_topics
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
         self.processing_thread.started.connect(self.kafka_reader.run)
