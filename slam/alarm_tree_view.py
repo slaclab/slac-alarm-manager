@@ -62,6 +62,7 @@ class AlarmTreeViewWidget(QWidget):
         self.plot_action = QAction('Draw Plot')
         self.enable_action = QAction('Enable')
         self.disable_action = QAction('Disable')
+        self.display_actions = []
 
         self.acknowledge_action.triggered.connect(self.send_acknowledgement)
         self.unacknowledge_action.triggered.connect(self.send_unacknowledgement)
@@ -111,11 +112,13 @@ class AlarmTreeViewWidget(QWidget):
                     self.context_menu.addAction(self.unacknowledge_action)
             self.context_menu.addAction(self.enable_action)
             self.context_menu.addAction(self.disable_action)
+            self.display_actions.clear()
             if alarm_item.displays:
                 for display in alarm_item.displays:
                     display_action = QAction(display['title'])
                     display_action.triggered.connect(partial(self.launch_pydm_display, display['details']))
                     self.context_menu.addAction(display_action)
+                    self.display_actions.append(display_action)
             self.context_menu.popup(self.mapToGlobal(pos))
 
     def create_alarm_configuration_widget(self, index: QModelIndex) -> None:
