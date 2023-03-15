@@ -2,6 +2,7 @@ from ..alarm_item import AlarmItem, AlarmSeverity
 from ..alarm_table_view import AlarmTableType, AlarmTableViewWidget
 from ..kafka_reader import KafkaReader
 from ..main_window import AlarmHandlerMainWindow
+from datetime import datetime, timedelta
 from kafka.producer import KafkaProducer
 from qtpy.QtCore import QThread
 import pytest
@@ -42,7 +43,7 @@ def test_update_tables(qtbot, main_window, tree_model, mock_kafka_producer):
     main_window.acknowledged_alarm_tables['TEST'] = AlarmTableViewWidget(tree_model, mock_kafka_producer, 'TEST_TOPIC',
                                                                          AlarmTableType.ACKNOWLEDGED, lambda x: x)
 
-    # First let's add both an active and an acknowledge alarm so we have some test data to work with
+    # First let's add both an active and an acknowledged alarm so we have some test data to work with
     active_alarm = AlarmItem('ACTIVE:ALARM', path='/path/to/ACTIVE:ALARM', alarm_severity=AlarmSeverity.MAJOR)
     acknowledged_alarm = AlarmItem('ACK:ALARM', path='/path/to/ACK:ALARM', alarm_severity=AlarmSeverity.MINOR_ACK)
     main_window.active_alarm_tables['TEST'].alarmModel.append(active_alarm)
@@ -78,3 +79,23 @@ def test_update_tables(qtbot, main_window, tree_model, mock_kafka_producer):
     assert len(main_window.active_alarm_tables['TEST'].alarmModel.alarm_items) == 1
     # And it was moved out of this table
     assert len(main_window.acknowledged_alarm_tables['TEST'].alarmModel.alarm_items) == 0
+
+
+def test_check_server_status(qtbot, main_window):
+    """ Verify that the disconnected alarm server banner shows and hides as expected """
+    # When the application first starts up and has a fresh update, there should be no warning banner visible
+    now = datetime.now()
+    main_window.last_received_update = now
+    main_window.check_server_status()
+    assert main_window.alarm_server_disconnected_banner.isHidden()
+
+    # Mock a last received update 30 seconds ago, verify that the warning banner is now displayed
+    server_timeout = now - timedelta(seconds=30)
+    main_window.last_received_update = server_timeout
+    main_window.check_server_status()
+    assert not main_window.alarm_server_disconnected_banner.isHidden()
+
+    # Mock the server coming back online, verify that the banner is hidden again
+    main_window.last_received_update = datetime.now()
+    main_window.check_server_status()
+    assert main_window.alarm_server_disconnected_banner.isHidden()
