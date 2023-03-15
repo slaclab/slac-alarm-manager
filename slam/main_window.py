@@ -4,8 +4,8 @@ from datetime import datetime
 from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
 from pydm.widgets import PyDMArchiverTimePlot
-from qtpy.QtCore import Qt, QThread, Signal, Slot
-from qtpy.QtWidgets import QAction, QApplication, QComboBox, QMainWindow, QSplitter, QVBoxLayout, QWidget
+from qtpy.QtCore import Qt, QThread, QTimer, Signal, Slot
+from qtpy.QtWidgets import QAction, QApplication, QComboBox, QLabel, QMainWindow, QSplitter, QVBoxLayout, QWidget
 from typing import List, Optional
 from .alarm_item import AlarmSeverity
 from .alarm_table_view import AlarmTableType, AlarmTableViewWidget
@@ -64,9 +64,11 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_trees = dict()
         self.active_alarm_tables = dict()
         self.acknowledged_alarm_tables = dict()
+        self.alarm_server_connection_status = {}
 
         # Create a separate tree and table widget for each alarm configuration we are monitoring
         for topic in topics:
+            self.alarm_server_connection_status[topic] = True
             self.alarm_select_combo_box.addItem(topic)
             self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv)
             self.active_alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel,
@@ -83,6 +85,16 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_update_signal.connect(self.update_tree)
         self.alarm_update_signal.connect(self.update_table)
 
+        self.server_status_timer = QTimer()  # Periodically checks to ensure connection to the alarm server is active
+        self.server_status_timer.timeout.connect(self.check_server_status)
+        self.server_status_timer.start(5000)
+        self.last_received_update = datetime.now()
+        self.alarm_server_disconnected_banner = QLabel('WARNING: No connection to alarm server, data may be stale')
+        self.alarm_server_disconnected_banner.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.alarm_server_disconnected_banner.setStyleSheet('background-color: red')
+        self.alarm_server_disconnected_banner.setMaximumHeight(40)
+        self.alarm_server_disconnected_banner.hide()
+
         self.kafka_reader = KafkaReader(topics, bootstrap_servers, self.process_message)
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
@@ -94,7 +106,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.setCentralWidget(self.widget)
         self.horizontal_splitter = QSplitter(self)
 
-        # The active and acknolwedged alarm tables will appear in their own right-hand vertical split
+        # The active and acknowledged alarm tables will appear in their own right-hand vertical split
         self.vertical_splitter = QSplitter(self)
         self.vertical_splitter.setOrientation(Qt.Orientation.Vertical)
         self.vertical_splitter.addWidget(self.active_alarm_tables[topics[0]])
@@ -111,6 +123,7 @@ class AlarmHandlerMainWindow(QMainWindow):
 
         self.alarm_selector_layout = QVBoxLayout()
         self.widget.setLayout(self.alarm_selector_layout)
+        self.alarm_selector_layout.addWidget(self.alarm_server_disconnected_banner)
         self.alarm_selector_layout.addWidget(self.alarm_select_combo_box)
         self.alarm_selector_layout.addWidget(self.horizontal_splitter)
 
@@ -176,6 +189,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         key = message.key
         values = message.value
+        if key.startswith(f'state:/{self.current_alarm_config}'):
+            self.last_received_update = datetime.now()
         if key.startswith('config'):  # [7:] because config:
             logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
             alarm_config_name = key.split('/')[1]
@@ -202,6 +217,17 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.alarm_update_signal.emit(alarm_config_name, pv, message.key[6:], AlarmSeverity(values['severity']),
                                           values['message'], time, values['value'],
                                           AlarmSeverity(values['current_severity']), values['current_message'])
+
+    def check_server_status(self):
+        """ Ensure that our client is still receiving alarm updates, display a warning if not """
+        if (datetime.now() - self.last_received_update).seconds > 25:
+            # The alarm server will always send a heartbeat message confirming it is still up
+            # every 10 seconds even if no alarm has changed its status
+            self.alarm_server_connection_status[self.current_alarm_config] = False
+            self.alarm_server_disconnected_banner.show()
+        elif not self.alarm_server_connection_status[self.current_alarm_config]:
+            self.alarm_server_connection_status[self.current_alarm_config] = True
+            self.alarm_server_disconnected_banner.hide()
 
     def create_archiver_search_widget(self):
         """ Create and show the widget for sending search requests to archiver appliance """
