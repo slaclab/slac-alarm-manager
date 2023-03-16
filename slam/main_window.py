@@ -64,11 +64,11 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.alarm_trees = dict()
         self.active_alarm_tables = dict()
         self.acknowledged_alarm_tables = dict()
-        self.alarm_server_connection_status = {}
+        self.last_received_update_time = {}  # Mapping from alarm config name to last kafka message received for it
 
         # Create a separate tree and table widget for each alarm configuration we are monitoring
         for topic in topics:
-            self.alarm_server_connection_status[topic] = True
+            self.last_received_update_time[topic] = datetime.now()
             self.alarm_select_combo_box.addItem(topic)
             self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv)
             self.active_alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel,
@@ -87,8 +87,8 @@ class AlarmHandlerMainWindow(QMainWindow):
 
         self.server_status_timer = QTimer()  # Periodically checks to ensure connection to the alarm server is active
         self.server_status_timer.timeout.connect(self.check_server_status)
-        self.server_status_timer.start(5000)
-        self.last_received_update = datetime.now()
+        self.server_status_timer.start(3000)
+        self.alarm_server_connected = True
         self.alarm_server_disconnected_banner = QLabel('WARNING: No connection to alarm server, data may be stale')
         self.alarm_server_disconnected_banner.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.alarm_server_disconnected_banner.setStyleSheet('background-color: red')
@@ -189,8 +189,6 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         key = message.key
         values = message.value
-        if key.startswith(f'state:/{self.current_alarm_config}'):
-            self.last_received_update = datetime.now()
         if key.startswith('config'):  # [7:] because config:
             logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
             alarm_config_name = key.split('/')[1]
@@ -205,12 +203,13 @@ class AlarmHandlerMainWindow(QMainWindow):
                 self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
         elif key.startswith('command'):
             pass  # Nothing for us to do
-        elif values is not None and (len(values) <= 2):
-            pass
-        elif key.startswith('state') and values is not None:
+        elif key.startswith('state'):
             pv = message.key.split('/')[-1]
             alarm_config_name = key.split('/')[1]
+            self.last_received_update_time[alarm_config_name] = datetime.now()
             logger.debug(f'Processing STATE message with key: {message.key} and values: {message.value}')
+            if values is None or len(values) <= 2:
+                return  # This is either a misconfigured message, or the heartbeat message which doesn't get recorded
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
@@ -220,13 +219,13 @@ class AlarmHandlerMainWindow(QMainWindow):
 
     def check_server_status(self):
         """ Ensure that our client is still receiving alarm updates, display a warning if not """
-        if (datetime.now() - self.last_received_update).seconds > 25:
+        if (datetime.now() - self.last_received_update_time[self.current_alarm_config]).seconds > 25:
             # The alarm server will always send a heartbeat message confirming it is still up
             # every 10 seconds even if no alarm has changed its status
-            self.alarm_server_connection_status[self.current_alarm_config] = False
+            self.alarm_server_connected = False
             self.alarm_server_disconnected_banner.show()
-        elif not self.alarm_server_connection_status[self.current_alarm_config]:
-            self.alarm_server_connection_status[self.current_alarm_config] = True
+        elif not self.alarm_server_connected:
+            self.alarm_server_connected = True
             self.alarm_server_disconnected_banner.hide()
 
     def create_archiver_search_widget(self):
