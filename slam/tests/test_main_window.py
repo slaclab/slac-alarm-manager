@@ -16,7 +16,7 @@ def main_window(monkeypatch, mock_kafka_producer):
     monkeypatch.setattr(KafkaReader, 'moveToThread', lambda *args: None)
     monkeypatch.setattr(QThread, 'start', lambda *args: None)
 
-    main_window = AlarmHandlerMainWindow('TEST_TOPIC', ['localhost:9092'])
+    main_window = AlarmHandlerMainWindow(['TEST_TOPIC'], ['localhost:9092'])
     return main_window
 
 
@@ -85,17 +85,17 @@ def test_check_server_status(qtbot, main_window):
     """ Verify that the disconnected alarm server banner shows and hides as expected """
     # When the application first starts up and has a fresh update, there should be no warning banner visible
     now = datetime.now()
-    main_window.last_received_update = now
+    main_window.last_received_update_time['TEST_TOPIC'] = now
     main_window.check_server_status()
     assert main_window.alarm_server_disconnected_banner.isHidden()
 
     # Mock a last received update 30 seconds ago, verify that the warning banner is now displayed
     server_timeout = now - timedelta(seconds=30)
-    main_window.last_received_update = server_timeout
+    main_window.last_received_update_time['TEST_TOPIC'] = server_timeout
     main_window.check_server_status()
     assert not main_window.alarm_server_disconnected_banner.isHidden()
 
     # Mock the server coming back online, verify that the banner is hidden again
-    main_window.last_received_update = datetime.now()
+    main_window.last_received_update_time['TEST_TOPIC'] = datetime.now()
     main_window.check_server_status()
     assert main_window.alarm_server_disconnected_banner.isHidden()
