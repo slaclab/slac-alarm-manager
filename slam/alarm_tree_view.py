@@ -6,9 +6,9 @@ from pydm.display import load_file
 from qtpy.QtCore import QModelIndex, QPoint, Qt, Signal
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QAbstractItemView, QAction, QApplication, QMenu, QTreeView, QVBoxLayout, QWidget
-from typing import Callable
+from typing import Callable, Dict, Optional
 from .alarm_configuration_widget import AlarmConfigurationWidget
-from .alarm_item import AlarmSeverity
+from .alarm_item import AlarmItem, AlarmSeverity
 from .alarm_tree_model import AlarmItemsTreeModel
 
 
@@ -64,12 +64,12 @@ class AlarmTreeViewWidget(QWidget):
         self.disable_action = QAction('Disable')
         self.display_actions = []
 
-        self.acknowledge_action.triggered.connect(self.send_acknowledgement)
-        self.unacknowledge_action.triggered.connect(self.send_unacknowledgement)
+        self.acknowledge_action.triggered.connect(partial(self.send_action, True, None))
+        self.unacknowledge_action.triggered.connect(partial(self.send_action, False, None))
         self.plot_action.triggered.connect(self.plot_pv)
         self.copy_action.triggered.connect(self.copy_to_clipboard)
-        self.enable_action.triggered.connect(self.enable_alarm)
-        self.disable_action.triggered.connect(self.disable_alarm)
+        self.enable_action.triggered.connect(partial(self.send_action, None, True))
+        self.disable_action.triggered.connect(partial(self.send_action, None, False))
 
         self.tree_view.setModel(self.treeModel)
 
@@ -157,100 +157,43 @@ class AlarmTreeViewWidget(QWidget):
         """
         load_file(file_path)
 
-    def send_acknowledgement(self) -> None:
-        """ Send the acknowledge action by sending it to the command topic in the kafka cluster """
-        indices = self.tree_view.selectedIndexes()
-        if len(indices) > 0:
-            index = indices[0]
-            alarm_item = self.treeModel.getItem(index)
-            username = getpass.getuser()
-            hostname = socket.gethostname()
-            if alarm_item.is_leaf():
-                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
-                    self.kafka_producer.send(self.topic + 'Command',
-                                             key=f'command:{alarm_path}',
-                                             value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+    @staticmethod
+    def create_config_values_for_action(alarm_item: AlarmItem,
+                                        enabled: Optional[bool] = None,
+                                        acknowledged: Optional[bool] = None) -> Dict[str, any]:
+        """ Return a dict to send to kafka changing the enabled and/or acknowledged status of the alarm """
+        values_to_send = dict()
+        values_to_send['user'] = getpass.getuser()
+        values_to_send['hostname'] = socket.gethostname()
+        if enabled is not None:
+            values_to_send.update(alarm_item.to_config_dict())
+            values_to_send['enabled'] = enabled
+        if acknowledged is not None:
+            if acknowledged:
+                values_to_send['command'] = 'acknowledge'
             else:
-                all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
-                for leaf in all_leaf_nodes:
-                    if leaf.is_in_active_alarm_state():
-                        for alarm_path in self.treeModel.added_paths[leaf.name]:
-                            self.kafka_producer.send(self.topic + 'Command',
-                                                     key=f'command:{alarm_path}',
-                                                     value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+                values_to_send['command'] = 'unacknowledge'
+        return values_to_send
 
-    def send_unacknowledgement(self) -> None:
-        """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
+    def send_action(self, acknowledged: Optional[bool] = None, enabled: Optional[bool] = None) -> None:
+        """ Send the appropriate message to kafka to take an enable or acknowledgement related action """
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
-            index = indices[0]
-            alarm_item = self.treeModel.getItem(index)
-            username = getpass.getuser()
-            hostname = socket.gethostname()
-            if alarm_item.is_leaf():
-                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
-                    self.kafka_producer.send(self.topic + 'Command',
-                                             key=f'command:{alarm_path}',
-                                             value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
-            else:
-                all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
-                for leaf in all_leaf_nodes:
-                    if not leaf.is_in_active_alarm_state():
-                        for alarm_path in self.treeModel.added_paths[leaf.name]:
-                            self.kafka_producer.send(self.topic + 'Command',
-                                                     key=f'command:{alarm_path}',
-                                                     value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
-
-    def enable_alarm(self) -> None:
-        """ Enable the selected alarm. If the selected item is a parent node, enable all its children """
-        indices = self.tree_view.selectedIndexes()
-        if len(indices) > 0:
-            index = indices[0]
-            alarm_item = self.treeModel.getItem(index)
-            username = getpass.getuser()
-            hostname = socket.gethostname()
-            if alarm_item.is_leaf() and not alarm_item.is_enabled():
-                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
-                    self.kafka_producer.send(self.topic,
-                                             key=f'config:{alarm_path}',
-                                             value={'user': username, 'host': hostname,
-                                                    'description': alarm_item.description, 'enabled': True,
-                                                    'latching': alarm_item.latching,
-                                                    'annunciating': alarm_item.annunciating})
-            elif not alarm_item.is_leaf():
-                all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
-                for leaf in all_leaf_nodes:
-                    if not leaf.is_enabled():
-                        for alarm_path in self.treeModel.added_paths[leaf.name]:
-                            self.kafka_producer.send(self.topic,
-                                                     key=f'config:{alarm_path}',
-                                                     value={'user': username, 'host': hostname,
-                                                            'description': leaf.description, 'enabled': True,
-                                                            'latching': leaf.latching, 'annunciating': leaf.annunciating})
-
-    def disable_alarm(self) -> None:
-        """ Disable the selected alarm. If the selected item is a parent node, disable all its children """
-        indices = self.tree_view.selectedIndexes()
-        if len(indices) > 0:
-            index = indices[0]
-            alarm_item = self.treeModel.getItem(index)
-            username = getpass.getuser()
-            hostname = socket.gethostname()
-            if alarm_item.is_leaf() and alarm_item.is_enabled():
-                for alarm_path in self.treeModel.added_paths[alarm_item.name]:
-                    self.kafka_producer.send(self.topic,
-                                             key=f'config:{alarm_path}',
-                                             value={'user': username, 'host': hostname,
-                                                    'description': alarm_item.description, 'enabled': False,
-                                                    'latching': alarm_item.latching,
-                                                    'annunciating': alarm_item.annunciating})
-            elif not alarm_item.is_leaf():
-                all_leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
-                for leaf in all_leaf_nodes:
-                    if leaf.is_enabled():
-                        for alarm_path in self.treeModel.added_paths[leaf.name]:
-                            self.kafka_producer.send(self.topic,
-                                                     key=f'config:{alarm_path}',
-                                                     value={'user': username, 'host': hostname,
-                                                            'description': leaf.description, 'enabled': False,
-                                                            'latching': leaf.latching, 'annunciating': leaf.annunciating})
+            alarms_to_modify = []
+            alarm_item = self.treeModel.getItem(indices[0])
+            alarms_to_modify.append(alarm_item)
+            if not alarm_item.is_leaf():
+                alarms_to_modify.extend(self.treeModel.get_all_leaf_nodes(alarm_item))
+            for alarm in alarms_to_modify:
+                for alarm_path in self.treeModel.added_paths[alarm.name]:
+                    values_to_send = self.create_config_values_for_action(alarm, enabled, acknowledged)
+                    if enabled is not None and enabled != alarm.is_enabled():
+                        # Changes to enabled status go to the regular topic
+                        self.kafka_producer.send(self.topic,
+                                                 key=f'config:{alarm_path}',
+                                                 value=values_to_send)
+                    if acknowledged is not None and acknowledged != alarm.is_acknowledged():
+                        # Changes to acknowledgement status go to the command topic
+                        self.kafka_producer.send(self.topic + 'Command',
+                                                 key=f'command:{alarm_path}',
+                                                 value=values_to_send)

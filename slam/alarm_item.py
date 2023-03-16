@@ -137,6 +137,11 @@ class AlarmItem(QObject):
         else:
             logger.error(f'Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
 
+    def is_acknowledged(self) -> bool:
+        """ A convenience method for returning whether or not this item has been acknolwedged """
+        return self.alarm_severity in (AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
+                                       AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK)
+
     def is_in_active_alarm_state(self) -> bool:
         """ A convenience method for returning whether or not this item is actively in an alarm state """
         return self.alarm_severity in (AlarmSeverity.MINOR, AlarmSeverity.MAJOR,
@@ -199,6 +204,12 @@ class AlarmItem(QObject):
     def column_count(self) -> int:
         """ Return the column count of this item """
         return 1
+
+    def to_config_dict(self) -> Dict[str, any]:
+        """ Dump the current values of the alarm item into a dict that can be sent as a kafka alarm config message """
+        return {'description': self.description, 'guidance': self.guidance, 'displays': self.displays,
+                'commands': self.commands, 'enabled': self.enabled, 'latching': self.latching,
+                'annunciating' : self.annunciating, 'delta': self.delay, 'filter': self.alarm_filter}
 
     def __repr__(self) -> str:
         return f'AlarmItem("{self.name}", {repr(self.path)}, {str(self.alarm_severity)}, {repr(self.alarm_status)}, '\
