@@ -76,15 +76,15 @@ def test_update_item(tree_model):
     assert tree_model.nodes[0].pv_severity == AlarmSeverity.MINOR
     assert tree_model.nodes[0].pv_status == 'alarm_status'
 
-    # Send a disable update message, verify the alarm gets marked disabled
+    # Send a disable update message, verify the alarm gets marked filtered
     tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'Disabled', None, 'FAULT',
                            AlarmSeverity.MINOR, 'alarm_status')
-    assert not tree_model.nodes[0].enabled
+    assert tree_model.nodes[0].filtered
 
     # And then send a message re-enabling the alarm and verify it is marked enabled again
     tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'OK', None, 'FAULT',
                            AlarmSeverity.MINOR, 'alarm_status')
-    assert tree_model.nodes[0].enabled
+    assert not tree_model.nodes[0].filtered
 
 
 def test_update_model(tree_model):

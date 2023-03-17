@@ -67,6 +67,8 @@ class AlarmItem(QObject):
     enabled : Union[bool, str], optional
         Whether or not this alarm is enabled. A bool in the simple case, a str here will also mean
         disabled, with the str being the date-time it should automatically re-enable.
+    filtered: bool
+        If true, this alarm is disabled via a filter rule, false otherwise.
     latching : bool, optional
         If set to true, this alarm will remain at the highest severity level it attains even if the PV it is monitoring
         returns to a lower severity level. If false, it will stay in sync with its associated PV.
@@ -90,6 +92,7 @@ class AlarmItem(QObject):
                  displays: Optional[List[Dict]] = None,
                  commands: Optional[List[Dict]] = None,
                  enabled: Optional[Union[bool, str]] = True,
+                 filtered: Optional[bool] = False,
                  latching: Optional[bool] = False,
                  annunciating: Optional[bool] = False,
                  delay: Optional[int] = None,
@@ -111,11 +114,14 @@ class AlarmItem(QObject):
         self.commands = commands
         if enabled is None:  # Protect against setting it explicitly to None
             enabled = True
+        if filtered is None:
+            filtered = False
         if latching is None:
             latching = False
         if annunciating is None:
             annunciating = False
         self.enabled = enabled
+        self.filtered = filtered
         self.latching = latching
         self.annunciating = annunciating
         self.delay = delay
@@ -127,6 +133,8 @@ class AlarmItem(QObject):
 
     def is_enabled(self) -> bool:
         """ A convenience method for checking the enabled state of the alarm """
+        if self.filtered:
+            return False
         if type(self.enabled) is bool:
             return self.enabled
         elif type(self.enabled) is str:
@@ -136,6 +144,11 @@ class AlarmItem(QObject):
                 return True
         else:
             logger.error(f'Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
+
+    def is_acknowledged(self) -> bool:
+        """ A convenience method for returning whether or not this item has been acknolwedged """
+        return self.alarm_severity in (AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
+                                       AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK)
 
     def is_in_active_alarm_state(self) -> bool:
         """ A convenience method for returning whether or not this item is actively in an alarm state """
@@ -200,8 +213,14 @@ class AlarmItem(QObject):
         """ Return the column count of this item """
         return 1
 
+    def to_config_dict(self) -> Dict[str, any]:
+        """ Dump the current values of the alarm item into a dict that can be sent as a kafka alarm config message """
+        return {'description': self.description, 'guidance': self.guidance, 'displays': self.displays,
+                'commands': self.commands, 'enabled': self.enabled, 'latching': self.latching,
+                'annunciating' : self.annunciating, 'delta': self.delay, 'filter': self.alarm_filter}
+
     def __repr__(self) -> str:
         return f'AlarmItem("{self.name}", {repr(self.path)}, {str(self.alarm_severity)}, {repr(self.alarm_status)}, '\
                f'{repr(self.alarm_time)}, {repr(self.alarm_value)}, {str(self.pv_severity)}, {repr(self.pv_status)}, '\
                f'{repr(self.description)}, {repr(self.guidance)}, {repr(self.displays)}, {repr(self.commands)}, '\
-               f'{self.enabled}, {self.latching}, {self.annunciating}, {self.delay}, {repr(self.alarm_filter)})'
+               f'{self.enabled}, {self.filtered}, {self.latching}, {self.annunciating}, {self.delay}, {repr(self.alarm_filter)})'

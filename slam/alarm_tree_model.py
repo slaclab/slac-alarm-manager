@@ -49,7 +49,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 # Set an indication there is a bypassed alarm somewhere underneath this top level summary
                 all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
                 for node in all_leaf_nodes:
-                    if not node.enabled:
+                    if not node.is_enabled():
                         bypass_indicator = ' *'
                         break
             if not alarm_item.is_enabled():
@@ -143,10 +143,9 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             item_to_update.pv_severity = pv_severity
             item_to_update.pv_status = pv_status
             if status == 'Disabled':
-                if item_to_update.enabled and type(item_to_update.enabled) is not str:
-                    item_to_update.enabled = False
-            elif status == 'OK':
-                item_to_update.enabled = True
+                item_to_update.filtered = True
+            elif item_to_update.filtered:
+                item_to_update.filtered = False
         self.layoutChanged.emit()
 
     def update_model(self, item_path: str, values: dict) -> None:
