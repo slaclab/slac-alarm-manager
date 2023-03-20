@@ -36,23 +36,29 @@ class UserAction(enum.Enum):
     UPDATE_CONFIG = 'update-config'
 
 
-user_permission = UserPermission.READ_ONLY
+__user_permission = UserPermission.ADMIN
 
 
 def can_take_action(action: UserAction, log_warning=False) -> bool:
     """ Return True if the user can take the input action, False otherwise """
-    if action is UserAction.ACKNOWLEDGE and user_permission == UserPermission.READ_ONLY:
+    if action is UserAction.ACKNOWLEDGE and __user_permission == UserPermission.READ_ONLY:
         if log_warning:
             logger.warning(' Cannot take acknowledge action, permissions are currently set to read-only')
         return False
-    elif action is UserAction.ENABLE and user_permission < UserPermission.ADMIN:
+    elif action is UserAction.ENABLE and __user_permission < UserPermission.ADMIN:
         if log_warning:
             logger.warning(f' Cannot take enable/disable action, requires alarm admin permissions, '
-                           f'currently set to {user_permission.value}')
+                           f'currently set to {__user_permission.value}')
         return False
-    elif action is UserAction.UPDATE_CONFIG and user_permission < UserPermission.ADMIN:
+    elif action is UserAction.UPDATE_CONFIG and __user_permission < UserPermission.ADMIN:
         if log_warning:
             logger.warning(f' Cannot update config, requires alarm admin permissions, '
-                           f'currently set to: {user_permission.value}')
+                           f'currently set to: {__user_permission.value}')
         return False
     return True
+
+
+def set_user_permission(permission: UserPermission) -> None:
+    """ Set the permission determining what the user is allowed to do """
+    global __user_permission
+    __user_permission = permission

@@ -12,7 +12,7 @@ def main():
     parser.add_argument('--bootstrap-servers',
                         default='localhost:9092',
                         help='Comma separated list of urls for one or more kafka boostrap servers')
-    parser.add_argument('--user-permissions', default='read-only', help='One of read-only, operator, admin')
+    parser.add_argument('--user-permissions', default='admin', help='One of read-only, operator, admin')
     parser.add_argument('--log', default='warning', help='Logging level. debug, info, warning, error, critical')
 
     app_args = parser.parse_args()
