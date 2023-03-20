@@ -3,7 +3,7 @@ import logging
 import sys
 
 from qtpy.QtWidgets import QApplication
-from slam import AlarmHandlerMainWindow
+from slam import AlarmHandlerMainWindow, permissions
 
 
 def main():
@@ -12,11 +12,14 @@ def main():
     parser.add_argument('--bootstrap-servers',
                         default='localhost:9092',
                         help='Comma separated list of urls for one or more kafka boostrap servers')
+    parser.add_argument('--user-permissions', default='admin', help='One of read-only, operator, admin')
     parser.add_argument('--log', default='warning', help='Logging level. debug, info, warning, error, critical')
 
     app_args = parser.parse_args()
 
     logging.basicConfig(level=app_args.log.upper())
+
+    permissions.set_user_permission(permissions.UserPermission(app_args.user_permissions))
 
     topics = app_args.topics.split(',')
     kafka_boostrap_servers = app_args.bootstrap_servers.split(',')

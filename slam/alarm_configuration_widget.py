@@ -1,6 +1,7 @@
 import getpass
 import socket
 from .alarm_item import AlarmItem
+from .permissions import UserAction, can_take_action
 from kafka.producer import KafkaProducer
 from qtpy.QtCore import QDateTime, QObject
 from qtpy.QtWidgets import (QCheckBox, QDateTimeEdit, QDialog, QHBoxLayout, QHeaderView, QLabel,
@@ -11,7 +12,7 @@ from typing import Optional
 class AlarmConfigurationWidget(QDialog):
     """
     The AlarmConfigurationWidget is a pop-up dialog allowing the user to specify various configuration options
-    for each alarm. Double clicking on an alarm item in either the tree or table model will create this dialog.
+    for each alarm. Double-clicking on an alarm item in either the tree or table model will create this dialog.
 
     Parameters
     ----------
@@ -41,6 +42,9 @@ class AlarmConfigurationWidget(QDialog):
         self.path_value_label = QLabel(alarm_item.path)
         self.description_label = QLabel('Description:')
         self.description_box = QLineEdit(alarm_item.description or '')
+
+        self.cant_edit_label = QLabel('Warning: Cannot edit - requires alarm admin privileges')
+        self.cant_edit_label.setStyleSheet('background-color: orange')
 
         self.behavior_label = QLabel('Behavior:')
         self.enabled_checkbox = QCheckBox('Enabled')
@@ -109,6 +113,9 @@ class AlarmConfigurationWidget(QDialog):
                 self.commands_table.cellWidget(index, 0).setText(command_item['title'])
                 self.commands_table.cellWidget(index, 1).setText(command_item['details'])
 
+        if not can_take_action(UserAction.UPDATE_CONFIG):
+            self.layout.addWidget(self.cant_edit_label)
+
         self.layout.addWidget(self.path_value_label)
         if alarm_item.is_leaf():
             self.description_layout = QHBoxLayout()
@@ -156,6 +163,8 @@ class AlarmConfigurationWidget(QDialog):
         self.cancel_button.clicked.connect(self.close_window)
         self.ok_button.clicked.connect(self.save_configuration)
         self.ok_button.setDefault(True)
+        if not can_take_action(UserAction.UPDATE_CONFIG):
+            self.ok_button.setDisabled(True)
 
         self.button_layout = QHBoxLayout()
         self.button_layout.addWidget(self.cancel_button)
@@ -166,6 +175,9 @@ class AlarmConfigurationWidget(QDialog):
 
     def save_configuration(self):
         """ Saves the input the user entered into the widget by sending it to the kafka config queue """
+        if not can_take_action(UserAction.UPDATE_CONFIG, log_warning=True):
+            return
+
         guidance = []
         displays = []
         commands = []
