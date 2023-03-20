@@ -10,6 +10,7 @@ from typing import Callable, Dict, Optional
 from .alarm_configuration_widget import AlarmConfigurationWidget
 from .alarm_item import AlarmItem, AlarmSeverity
 from .alarm_tree_model import AlarmItemsTreeModel
+from .permissions import UserAction, can_take_action
 
 
 class AlarmTreeViewWidget(QWidget):
@@ -177,6 +178,14 @@ class AlarmTreeViewWidget(QWidget):
 
     def send_action(self, acknowledged: Optional[bool] = None, enabled: Optional[bool] = None) -> None:
         """ Send the appropriate message to kafka to take an enable or acknowledgement related action """
+        # Verify if the user can actually take the requested action and just return if there's nothing to do
+        if acknowledged is not None and not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
+            acknowledged = None
+        if enabled is not None and not can_take_action(UserAction.ENABLE, log_warning=True):
+            enabled = None
+        if acknowledged is None and enabled is None:
+            return
+
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
             alarms_to_modify = []

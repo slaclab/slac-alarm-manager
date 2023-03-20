@@ -9,6 +9,7 @@ from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication, QHBoxLayou
 from typing import Callable
 from .alarm_table_model import AlarmItemsTableModel
 from .alarm_tree_model import AlarmItemsTreeModel
+from .permissions import UserAction, can_take_action
 
 
 class AlarmTableType(str, enum.Enum):
@@ -169,6 +170,9 @@ class AlarmTableViewWidget(QWidget):
 
     def send_acknowledgement(self) -> None:
         """ Send the acknowledge action by sending it to the command topic in the kafka cluster """
+        if not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
+            return
+
         indices = self.alarmView.selectionModel().selectedRows()
         if len(indices) > 0:
             for index in indices:
@@ -182,6 +186,9 @@ class AlarmTableViewWidget(QWidget):
 
     def send_unacknowledgement(self) -> None:
         """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
+        if not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
+            return
+
         indices = self.alarmView.selectionModel().selectedRows()
         if len(indices) > 0:
             for index in indices:
