@@ -19,7 +19,7 @@ def main():
 
     logging.basicConfig(level=app_args.log.upper())
 
-    permissions.user_permission = permissions.UserPermission(app_args.user_permissions)
+    permissions.set_user_permission(permissions.UserPermission(app_args.user_permissions))
 
     topics = app_args.topics.split(',')
     kafka_boostrap_servers = app_args.bootstrap_servers.split(',')
