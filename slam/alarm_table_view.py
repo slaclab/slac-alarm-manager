@@ -1,6 +1,7 @@
 import enum
 import getpass
 import socket
+from functools import partial
 from kafka.producer import KafkaProducer
 from qtpy.QtCore import QEvent, QSortFilterProxyModel, Qt, Signal
 from qtpy.QtGui import QCursor
@@ -86,8 +87,8 @@ class AlarmTableViewWidget(QWidget):
         self.unacknowledge_action = QAction('Unacknowledge')
         self.copy_action = QAction('Copy PV To Clipboard')
         self.plot_action = QAction('Draw Plot')
-        self.acknowledge_action.triggered.connect(self.send_acknowledgement)
-        self.unacknowledge_action.triggered.connect(self.send_unacknowledgement)
+        self.acknowledge_action.triggered.connect(partial(self.send_acknowledge_action, True))
+        self.unacknowledge_action.triggered.connect(partial(self.send_acknowledge_action, False))
         self.plot_action.triggered.connect(self.plot_pv)
         self.copy_action.triggered.connect(self.copy_alarm_name_to_clipboard)
 
@@ -168,8 +169,8 @@ class AlarmTableViewWidget(QWidget):
             self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Selection)
             self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Clipboard)
 
-    def send_acknowledgement(self) -> None:
-        """ Send the acknowledge action by sending it to the command topic in the kafka cluster """
+    def send_acknowledge_action(self, acknowledged: bool) -> None:
+        """ Send the input action by sending it to the command topic in the kafka cluster """
         if not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
             return
 
@@ -179,23 +180,15 @@ class AlarmTableViewWidget(QWidget):
                 alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
                 username = getpass.getuser()
                 hostname = socket.gethostname()
-                for alarm_path in self.tree_model.added_paths[alarm_item.name]:
-                    self.kafka_producer.send(self.topic + 'Command',
-                                             key=f'command:{alarm_path}',
-                                             value={'user': username, 'host': hostname, 'command': 'acknowledge'})
+                if alarm_item.name not in self.tree_model.added_paths:
+                    # Alarm is no longer valid, send a None value to delete it from kafka
+                    self.kafka_producer.send(self.topic,
+                                             key=f'state:{alarm_item.path}',
+                                             value=None)
+                else:
+                    command_to_send = 'acknowledge' if acknowledged else 'unacknowledge'
+                    for alarm_path in self.tree_model.added_paths[alarm_item.name]:
+                        self.kafka_producer.send(self.topic + 'Command',
+                                                 key=f'command:{alarm_path}',
+                                                 value={'user': username, 'host': hostname, 'command': command_to_send})
 
-    def send_unacknowledgement(self) -> None:
-        """ Send the un-acknowledge action by sending it to the command topic in the kafka cluster """
-        if not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
-            return
-
-        indices = self.alarmView.selectionModel().selectedRows()
-        if len(indices) > 0:
-            for index in indices:
-                alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
-                username = getpass.getuser()
-                hostname = socket.gethostname()
-                for alarm_path in self.tree_model.added_paths[alarm_item.name]:
-                    self.kafka_producer.send(self.topic + 'Command',
-                                             key=f'command:{alarm_path}',
-                                             value={'user': username, 'host': hostname, 'command': 'unacknowledge'})
