@@ -58,7 +58,7 @@ def test_send_acknowledgement(qtbot, monkeypatch, active_alarm_table_view, mock_
     monkeypatch.setattr(model_index, 'row', lambda: 0)
 
     # Send the acknowledgement, and verify the message we are sending to kafka looks the way we want it to
-    active_alarm_table_view.send_acknowledgement()
+    active_alarm_table_view.send_acknowledge_action(True)
     # Setting the correct topic, path, and acknowledgement command is all we need to acknowledge an alarm
     assert mock_kafka_producer.topic == 'TEST_TOPICCommand'
     assert mock_kafka_producer.key == 'command:/path/to/TEST:PV'
@@ -81,7 +81,7 @@ def test_send_unacknowledgement(qtbot, monkeypatch, acknowledged_alarm_table_vie
     monkeypatch.setattr(model_index, 'row', lambda: 0)
 
     # Send the unacknowledgement, and verify the message we are sending to kafka looks the way we want it to
-    acknowledged_alarm_table_view.send_unacknowledgement()
+    acknowledged_alarm_table_view.send_acknowledge_action(False)
     # Setting the correct topic, path, and acknoledgement command is all we need to acknowledge an alarm
     assert mock_kafka_producer.topic == 'TEST_TOPICCommand'
     assert mock_kafka_producer.key == 'command:/path/to/TEST:PV'

@@ -208,8 +208,12 @@ class AlarmHandlerMainWindow(QMainWindow):
             alarm_config_name = key.split('/')[1]
             self.last_received_update_time[alarm_config_name] = datetime.now()
             logger.debug(f'Processing STATE message with key: {message.key} and values: {message.value}')
-            if values is None or len(values) <= 2:
-                return  # This is either a misconfigured message, or the heartbeat message which doesn't get recorded
+            if values is None:
+                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split('/')[-1])
+                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split('/')[-1])
+                return
+            if len(values) <= 2:
+                return  # This is the heartbeat message which doesn't get recorded
             time = ''
             if 'time' in values:
                 time = datetime.fromtimestamp(values['time']['seconds'])
