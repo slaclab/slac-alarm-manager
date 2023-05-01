@@ -3,11 +3,11 @@ import getpass
 import socket
 from functools import partial
 from kafka.producer import KafkaProducer
-from qtpy.QtCore import QEvent, QSortFilterProxyModel, Qt, Signal
+from qtpy.QtCore import QEvent, QModelIndex, QSortFilterProxyModel, Qt, Signal
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication, QHBoxLayout, QHeaderView, QLabel,
                             QLineEdit, QMenu, QPushButton, QTableView, QVBoxLayout, QWidget)
-from typing import Callable
+from typing import Callable, List
 from .alarm_table_model import AlarmItemsTableModel
 from .alarm_tree_model import AlarmItemsTreeModel
 from .permissions import UserAction, can_take_action
@@ -122,8 +122,7 @@ class AlarmTableViewWidget(QWidget):
         self.layout.addWidget(self.filter_active_label)
         self.layout.addWidget(self.alarmView)
 
-        self.alarmModel.rowsInserted.connect(self.update_counter_label)
-        self.alarmModel.rowsRemoved.connect(self.update_counter_label)
+        self.alarmModel.layoutChanged.connect(self.update_counter_label)
 
     def filter_table(self) -> None:
         """ Filter the table based on the text typed into the filter bar """
@@ -150,9 +149,16 @@ class AlarmTableViewWidget(QWidget):
         """ Display the right-click context menu for items in the active alarms table """
         self.alarm_context_menu.popup(QCursor.pos())
 
+    def get_selected_indices(self) -> List[QModelIndex]:
+        """ Return the indices which have been selected by the user, applying a mapping if a filter has been applied """
+        indices = self.alarmView.selectionModel().selectedRows()
+        if self.filter_active_label.isVisible():
+            indices = [self.alarm_proxy_model.mapToSource(proxy_index) for proxy_index in indices]
+        return indices
+
     def plot_pv(self) -> None:
         """ Send off the signal for plotting a PV """
-        indices = self.alarmView.selectedIndexes()
+        indices = self.get_selected_indices()
         if len(indices) > 0:
             index = indices[0]
             alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
@@ -160,7 +166,7 @@ class AlarmTableViewWidget(QWidget):
 
     def copy_alarm_name_to_clipboard(self) -> None:
         """ Copy the selected PV to the user's clipboard """
-        indices = self.alarmView.selectionModel().selectedRows()
+        indices = self.get_selected_indices()
         if len(indices) > 0:
             copy_text = ''
             for index in indices:
@@ -174,7 +180,7 @@ class AlarmTableViewWidget(QWidget):
         if not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
             return
 
-        indices = self.alarmView.selectionModel().selectedRows()
+        indices = self.get_selected_indices()
         if len(indices) > 0:
             for index in indices:
                 alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
@@ -191,4 +197,4 @@ class AlarmTableViewWidget(QWidget):
                         self.kafka_producer.send(self.topic + 'Command',
                                                  key=f'command:{alarm_path}',
                                                  value={'user': username, 'host': hostname, 'command': command_to_send})
-
+        self.alarmView.selectionModel().reset()

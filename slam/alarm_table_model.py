@@ -89,9 +89,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if alarm_item.name in self.alarm_items:
             logger.warning(f'Attempting to append a row to the alarm table which is already there: {alarm_item.name}')
             return
-        self.beginInsertRows(QModelIndex(), len(self.alarm_items), len(self.alarm_items))
+        self.layoutAboutToBeChanged.emit()
         self.alarm_items[alarm_item.name] = alarm_item
-        self.endInsertRows()
         self.layoutChanged.emit()
 
     def remove_row(self, alarm_name: str):
@@ -99,9 +98,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if alarm_name not in self.alarm_items:
             return
         index_to_remove = list(self.alarm_items.keys()).index(alarm_name)
-        self.beginRemoveRows(QModelIndex(), index_to_remove, index_to_remove)
+        self.layoutAboutToBeChanged.emit()
         del self.alarm_items[alarm_name]
-        self.endRemoveRows()
         self.layoutChanged.emit()
 
     def sort(self, col: int, order=Qt.AscendingOrder):
