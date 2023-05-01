@@ -190,7 +190,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         key = message.key
         values = message.value
         if key.startswith('config'):  # [7:] because config:
-            print(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
+            logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
             alarm_config_name = key.split('/')[1]
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
@@ -207,7 +207,7 @@ class AlarmHandlerMainWindow(QMainWindow):
             pv = message.key.split('/')[-1]
             alarm_config_name = key.split('/')[1]
             self.last_received_update_time[alarm_config_name] = datetime.now()
-            print(f'Processing STATE message with key: {message.key} and values: {message.value}')
+            logger.debug(f'Processing STATE message with key: {message.key} and values: {message.value}')
             if values is None:
                 self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split('/')[-1])
                 self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split('/')[-1])
