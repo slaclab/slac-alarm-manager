@@ -164,7 +164,7 @@ class AlarmItem(QObject):
         severity : AlarmSeverity
             The severity to base the display color on
         """
-        if not self.is_enabled():
+        if not self.is_enabled() and self.is_leaf():
             return QBrush(Qt.gray)
         elif severity == AlarmSeverity.OK:
             return QBrush(Qt.darkGreen)

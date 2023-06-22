@@ -1,5 +1,6 @@
 from operator import attrgetter
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
+from qtpy.QtGui import QBrush
 from typing import List, Optional
 from .alarm_item import AlarmItem, AlarmSeverity
 import logging
@@ -53,7 +54,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                         bypass_indicator = ' *'
                         break
             if not alarm_item.is_enabled():
-                return alarm_item.name + ' (disabled)'
+                return alarm_item.name + ' * (disabled)'
             elif alarm_item.alarm_severity != AlarmSeverity.OK:
                 return alarm_item.name + f'{bypass_indicator} - {alarm_item.alarm_severity.value}/{alarm_item.alarm_status}'
             return alarm_item.name + bypass_indicator
@@ -63,6 +64,8 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             else:
                 all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
                 highest_severity_alarm = max(all_leaf_nodes, key=attrgetter('alarm_severity'))
+                if not highest_severity_alarm.is_enabled():
+                    return QBrush(Qt.darkGreen)
                 return highest_severity_alarm.display_color(highest_severity_alarm.alarm_severity)
 
     def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
