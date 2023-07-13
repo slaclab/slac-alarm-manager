@@ -21,8 +21,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
     def __init__(self, parent: Optional[QObject] = None):
         super(QAbstractTableModel, self).__init__(parent=parent)
         self.alarm_items = OrderedDict()  # Key (str) to data
-        self.column_names = ('PV', 'Latched Severity', 'Latched Status', 'Description', 'Time', 'Alarm Value',
-                             'Current Severity', 'Current Status')
+        self.column_names = ('PV', 'Latched Severity', 'Current Severity', 'Description', 'Time', 'Value',
+                             'Latched Status', 'Current Status')
         self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'alarm_status', 3: 'description', 4: 'alarm_time',
                                5: 'alarm_value', 6: 'pv_severity', 7: 'pv_status'}
 
