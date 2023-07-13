@@ -23,8 +23,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
         self.alarm_items = OrderedDict()  # Key (str) to data
         self.column_names = ('PV', 'Latched Severity', 'Current Severity', 'Description', 'Time', 'Value',
                              'Latched Status', 'Current Status')
-        self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'alarm_status', 3: 'description', 4: 'alarm_time',
-                               5: 'alarm_value', 6: 'pv_severity', 7: 'pv_status'}
+        self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'pv_severity', 3: 'description', 4: 'alarm_time',
+                               5: 'alarm_value', 6: 'alarm_status', 7: 'pv_status'}
 
     def rowCount(self, parent) -> int:
         """ Return the row count of the table """
@@ -69,7 +69,7 @@ class AlarmItemsTableModel(QAbstractTableModel):
             return alarm_item.description
         elif column_name == 'Time':
             return str(alarm_item.alarm_time)
-        elif column_name == 'Alarm Value':
+        elif column_name == 'Value':
             return alarm_item.alarm_value
         elif column_name == 'Current Severity':
             return alarm_item.pv_severity.value
