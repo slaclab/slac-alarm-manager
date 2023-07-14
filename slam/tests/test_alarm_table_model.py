@@ -34,7 +34,7 @@ def test_get_data(alarm_table):
     assert alarm_table.getData('Latched Severity', alarm_item) == 'MAJOR'
     assert alarm_table.getData('Latched Status', alarm_item) == 'enabled'
     assert alarm_table.getData('Time', alarm_item) == '2022-01-02 00:10:00'
-    assert alarm_table.getData('Alarm Value', alarm_item) == 'FAULT'
+    assert alarm_table.getData('Value', alarm_item) == 'FAULT'
     assert alarm_table.getData('Current Severity', alarm_item) == 'MINOR'
     assert alarm_table.getData('Current Status', alarm_item) == 'enabled'
 
@@ -79,11 +79,11 @@ def test_remove_row(alarm_table):
 
 @pytest.mark.parametrize('column, expected_order', [(0, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED')),
                                                     (1, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
-                                                    (2, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED')),
+                                                    (2, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
                                                     (3, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED')),
                                                     (4, ('PV:UNDEFINED', 'PV:MINOR', 'PV:MAJOR')),
                                                     (5, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
-                                                    (6, ('PV:MINOR', 'PV:MAJOR', 'PV:UNDEFINED')),
+                                                    (6, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED')),
                                                     (7, ('PV:MAJOR', 'PV:MINOR', 'PV:UNDEFINED'))])
 def test_sort(alarm_table, column, expected_order):
     """ Test that the order of alarm items in the table is correct when sorting on every column """
