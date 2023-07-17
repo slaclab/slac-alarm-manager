@@ -12,7 +12,15 @@ def test_create_and_show(qtbot, alarm_item, mock_kafka_producer):
 
     with qtbot.waitExposed(alarm_config_widget):
         alarm_config_widget.show()
-
+    
+    # Also simple test for it the presence of enabled-filter text disables the "Enabled" check-box
+    assert (not alarm_config_widget.filter_edit.text() and alarm_config_widget.enabled_checkbox.isEnabled()) 
+    
+    alarm_config_widget.filter_edit.setText("Test filter")
+    assert (not alarm_config_widget.enabled_checkbox.isEnabled())
+    
+    alarm_config_widget.filter_edit.setText("")
+    assert (alarm_config_widget.enabled_checkbox.isEnabled())
 
 @pytest.mark.parametrize('enabled, latching, annunciating', [(False, False, False), (True, True, True)])
 def test_save_configuration(qtbot, alarm_item, mock_kafka_producer, enabled, latching, annunciating):

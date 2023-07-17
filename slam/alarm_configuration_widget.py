@@ -58,7 +58,7 @@ class AlarmConfigurationWidget(QDialog):
         self.datetime_widget.setSpecialValueText(' ')
         self.datetime_widget.setCalendarPopup(True)
 
-        self.datetime_widget.dateTimeChanged.connect(self.uncheck_enabled_box)
+        self.datetime_widget.dateTimeChanged.connect(self.uncheck_enabled_box_when_date_set)
         self.enabled_checkbox.stateChanged.connect(self.clear_datetime_widget)
 
         self.delay_label = QLabel('Alarm Delay (sec)')
@@ -150,6 +150,9 @@ class AlarmConfigurationWidget(QDialog):
             self.filter_layout = QHBoxLayout()
             self.filter_layout.addWidget(self.filter_label)
             self.filter_layout.addWidget(self.filter_edit)
+            if self.filter_edit.text():
+                self.enabled_checkbox.setEnabled(False)
+            self.filter_edit.textChanged.connect(self.uncheck_enabled_box_when_filter_set)
             self.layout.addLayout(self.filter_layout)
         self.layout.addWidget(self.guidance_label)
         self.layout.addWidget(self.guidance_table)
@@ -231,7 +234,16 @@ class AlarmConfigurationWidget(QDialog):
 
         self.close()
 
-    def uncheck_enabled_box(self):
+    def uncheck_enabled_box_when_filter_set(self):
+        """
+        Grey out "Enabled" checkbox on config-page when enabling-filter is present.
+        Avoids confusion over if checkbox needs to be checked when adding filter.
+        Assume filter is valid if any text is present in text-edit (no easy way verify). 
+        """
+        editIsEmpty = not self.filter_edit.text()
+        self.enabled_checkbox.setEnabled(editIsEmpty)
+
+    def uncheck_enabled_box_when_date_set(self):
         """ A simple slot for unchecking the enabled checkbox when the date time widget is set  """
         if self.datetime_widget.dateTime() != self.minimum_datetime:
             self.enabled_checkbox.setChecked(False)
