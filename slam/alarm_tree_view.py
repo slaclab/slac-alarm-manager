@@ -63,7 +63,9 @@ class AlarmTreeViewWidget(QWidget):
         self.plot_action = QAction('Draw Plot')
         self.enable_action = QAction('Enable')
         self.disable_action = QAction('Disable')
+        self.guidance_menu = QMenu('Guidance')
         self.display_actions = []
+        self.guidance_objects = []
 
         self.acknowledge_action.triggered.connect(partial(self.send_action, True, None))
         self.unacknowledge_action.triggered.connect(partial(self.send_action, False, None))
@@ -113,6 +115,31 @@ class AlarmTreeViewWidget(QWidget):
                     self.context_menu.addAction(self.unacknowledge_action)
             self.context_menu.addAction(self.enable_action)
             self.context_menu.addAction(self.disable_action)
+            self.context_menu.addMenu(self.guidance_menu)
+    
+            # Make the entires from the config-page appear when alarm in tree is right-clicked
+            self.guidance_objects.clear()
+            indices = self.tree_view.selectedIndexes()
+            alarm_item = self.treeModel.getItem(indices[0])
+
+            self.guidance_objects.clear()
+            has_guidance = False
+            if alarm_item.guidance is not None:
+                for index, guidance_item in enumerate(alarm_item.guidance):
+                    has_guidance = True
+                    curr_title = guidance_item['title']
+                    curr_details = guidance_item['details']
+
+                    title_menu = QMenu(curr_title)
+                    self.detail_action = QAction(curr_details)
+                    self.guidance_menu.addMenu(title_menu)
+                    title_menu.addAction(self.detail_action)
+
+                    self.guidance_objects.append(title_menu)
+                    self.guidance_objects.append(self.detail_action)
+
+            self.guidance_menu.menuAction().setVisible(has_guidance)
+
             self.display_actions.clear()
             if alarm_item.displays:
                 for display in alarm_item.displays:

@@ -56,3 +56,6 @@ def test_save_configuration(qtbot, alarm_item, mock_kafka_producer, enabled, lat
     assert values_sent['displays'][0]['details'] == ''
     assert values_sent['commands'][0]['title'] == 'How to run display'
     assert values_sent['commands'][0]['details'] == 'bash run_display.sh'
+
+    # Verify right click menu displays the guidance data
+    
