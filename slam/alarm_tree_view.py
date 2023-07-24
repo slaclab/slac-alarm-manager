@@ -125,9 +125,15 @@ class AlarmTreeViewWidget(QWidget):
             self.guidance_objects.clear()
             has_guidance = False
             if alarm_item.guidance is not None:
+                guidance_count = 0
                 for index, guidance_item in enumerate(alarm_item.guidance):
                     has_guidance = True
+                    guidance_count += 1
+ 
                     curr_title = guidance_item['title']
+                    # sometimes people don't add titles to their guidance notes
+                    if curr_title == "":
+                        curr_title = "Guidance #" + str(guidance_count)
                     curr_details = guidance_item['details']
 
                     title_menu = QMenu(curr_title)
