@@ -82,6 +82,14 @@ class AlarmHandlerMainWindow(QMainWindow):
                                                                          AlarmTableType.ACKNOWLEDGED,
                                                                          self.plot_pv)
 
+            # Sync the column widths in the active and acknowledged tables, resizing a column will effect both tables.
+            # Managing the width of tables is done with their headers (QHeaderViews). 
+            self.acknowledged_alarm_tables[topic].alarmView.horizontalHeader().sectionResized.connect(\
+                lambda logicalIndex, oldSize, newSize: self.active_alarm_tables[topic].alarmView.horizontalHeader().resizeSection(logicalIndex, newSize))
+
+            self.active_alarm_tables[topic].alarmView.horizontalHeader().sectionResized.connect(\
+                lambda logicalIndex, oldSize, newSize: self.acknowledged_alarm_tables[topic].alarmView.horizontalHeader().resizeSection(logicalIndex, newSize))
+        
         self.alarm_update_signal.connect(self.update_tree)
         self.alarm_update_signal.connect(self.update_table)
 

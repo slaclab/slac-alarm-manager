@@ -36,14 +36,24 @@ def test_create_and_show_plot(qtbot, main_window):
 
 def test_update_tables(qtbot, main_window, tree_model, mock_kafka_producer):
     """ Test the various updates that can happen to the alarm table view """
+
+    # First verify that the columns in the active and acknowledged tables resize in sync
+    main_window.show()
+     # Want to use main-window's tables created during init, so the resize-column signals are connected
+    main_window.active_alarm_tables['TEST_TOPIC'].alarmView.horizontalHeader().resizeSection(2 , 200)
+
+    other_table_column_width = main_window.acknowledged_alarm_tables['TEST_TOPIC'].alarmView.columnWidth(2)
+    assert (other_table_column_width == 200)
+
     qtbot.addWidget(main_window)
+    # Create new tables for testing
     main_window.active_alarm_tables['TEST'] = AlarmTableViewWidget(tree_model, mock_kafka_producer, 'TEST_TOPIC',
                                                                    AlarmTableType.ACTIVE, lambda x: x)
 
     main_window.acknowledged_alarm_tables['TEST'] = AlarmTableViewWidget(tree_model, mock_kafka_producer, 'TEST_TOPIC',
                                                                          AlarmTableType.ACKNOWLEDGED, lambda x: x)
 
-    # First let's add both an active and an acknowledged alarm so we have some test data to work with
+    # Now let's add both an active and an acknowledged alarm so we have some test data to work with
     active_alarm = AlarmItem('ACTIVE:ALARM', path='/path/to/ACTIVE:ALARM', alarm_severity=AlarmSeverity.MAJOR)
     acknowledged_alarm = AlarmItem('ACK:ALARM', path='/path/to/ACK:ALARM', alarm_severity=AlarmSeverity.MINOR_ACK)
     main_window.active_alarm_tables['TEST'].alarmModel.append(active_alarm)
