@@ -118,7 +118,6 @@ class AlarmTreeViewWidget(QWidget):
             self.context_menu.addMenu(self.guidance_menu)
     
             # Make the entires from the config-page appear when alarm in tree is right-clicked
-            self.guidance_objects.clear()
             indices = self.tree_view.selectedIndexes()
             alarm_item = self.treeModel.getItem(indices[0])
 
