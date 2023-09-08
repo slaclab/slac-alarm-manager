@@ -16,6 +16,7 @@ def main():
     )
     parser.add_argument("--user-permissions", default="admin", help="One of read-only, operator, admin")
     parser.add_argument("--log", default="warning", help="Logging level. debug, info, warning, error, critical")
+    parser.add_argument('--annunciate', default=False, help='Enable beep from alarms that have annunciate setting enabled')
 
     app_args = parser.parse_args()
 
