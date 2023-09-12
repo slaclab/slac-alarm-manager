@@ -57,13 +57,11 @@ class AlarmConfigurationWidget(QDialog):
         self.cant_edit_label = QLabel("Warning: Cannot edit - requires alarm admin privileges")
         self.cant_edit_label.setStyleSheet("background-color: orange")
 
-        self.behavior_label = QLabel("Behavior:")
-        self.enabled_checkbox = QCheckBox("Enabled")
-        self.enabled_checkbox.clicked.connect(self.update_enabled_checkbox_pre_disabled_value)
-        self.annunciate_checkbox.setEnabled(annunciate == "True")
-
-        self.latch_checkbox = QCheckBox("Latched")
-        self.annunciate_checkbox = QCheckBox("Annunciate")
+        self.behavior_label = QLabel('Behavior:')
+        self.enabled_checkbox = QCheckBox('Enabled')
+        self.latch_checkbox = QCheckBox('Latched')
+        self.annunciate_checkbox = QCheckBox('Annunciate')
+        self.annunciate_checkbox.setEnabled(annunciate)
 
         self.disable_date_label = QLabel("Disable Until:")
         self.minimum_datetime = QDateTime.currentDateTime().addDays(-1)
