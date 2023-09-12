@@ -7,6 +7,7 @@ from slam import AlarmHandlerMainWindow, permissions
 
 
 def main():
+
     parser = argparse.ArgumentParser(description="SLAC Alarm Manager")
     parser.add_argument('--topics', help='Comma separated list of kafka alarm topics to listen to')
     parser.add_argument('--bootstrap-servers',

@@ -157,12 +157,18 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             item_to_update = self.nodes[self.getItemIndex(alarm_path)]
             item_to_update.alarm_severity = severity
             item_to_update.alarm_status = status
+
             item_to_update.alarm_time = time
+            #print ("alarm time: ", time)
             item_to_update.alarm_value = value
+            #print ("alarm value: ", value)
             item_to_update.pv_severity = pv_severity
             item_to_update.pv_status = pv_status
             if status == "Disabled":
                 item_to_update.filtered = True
+            elif status == 'STATE_ALARM':
+                #print ("alarm for: ", name)
+                print ('\a')
             elif item_to_update.filtered:
                 item_to_update.filtered = False
         self.layoutChanged.emit()
