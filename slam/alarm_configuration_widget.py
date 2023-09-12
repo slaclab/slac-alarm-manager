@@ -39,9 +39,8 @@ class AlarmConfigurationWidget(QDialog):
         The parent of this widget
     """
 
-    def __init__(
-        self, alarm_item: AlarmItem, kafka_producer: KafkaProducer, topic: str, parent: Optional[QObject] = None
-    ):
+    def __init__(self, alarm_item: AlarmItem, kafka_producer: KafkaProducer,
+                 topic: str, annunciate: bool, parent: Optional[QObject] = None,):
         super().__init__(parent=parent)
         self.alarm_item = alarm_item
         self.kafka_producer = kafka_producer
@@ -61,6 +60,7 @@ class AlarmConfigurationWidget(QDialog):
         self.behavior_label = QLabel("Behavior:")
         self.enabled_checkbox = QCheckBox("Enabled")
         self.enabled_checkbox.clicked.connect(self.update_enabled_checkbox_pre_disabled_value)
+        self.annunciate_checkbox.setEnabled(annunciate == "True")
 
         self.latch_checkbox = QCheckBox("Latched")
         self.annunciate_checkbox = QCheckBox("Annunciate")
