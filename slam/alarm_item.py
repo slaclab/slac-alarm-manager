@@ -128,6 +128,7 @@ class AlarmItem(QObject):
         self.filtered = filtered
         self.latching = latching
         self.annunciating = annunciating
+        #print ("!! in alarm item, annunciating: ", annunciating)
         self.delay = delay
         self.alarm_filter = alarm_filter
 

@@ -166,8 +166,8 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             item_to_update.pv_status = pv_status
             if status == "Disabled":
                 item_to_update.filtered = True
-            elif status == 'STATE_ALARM':
-                #print ("alarm for: ", name)
+            elif status == 'STATE_ALARM' and item_to_update.annunciating:
+                print ("!!!alarm tripped for: ", name, ", is annunciating: ", item_to_update.annunciating)
                 print ('\a')
             elif item_to_update.filtered:
                 item_to_update.filtered = False

@@ -54,14 +54,8 @@ class AlarmTableViewWidget(QWidget):
 
     plot_signal = Signal(str)
 
-    def __init__(
-        self,
-        tree_model: AlarmItemsTreeModel,
-        kafka_producer: KafkaProducer,
-        topic: str,
-        table_type: AlarmTableType,
-        plot_slot: Callable,
-    ):
+    def __init__(self, tree_model: AlarmItemsTreeModel, kafka_producer: KafkaProducer,
+                 topic: str, table_type: AlarmTableType, plot_slot: Callable, annunciate: bool):
         super().__init__()
         self.resize(1035, 600)
 
@@ -73,7 +67,7 @@ class AlarmTableViewWidget(QWidget):
         self.plot_signal.connect(self.plot_slot)
         self.clipboard = QApplication.clipboard()
 
-        self.alarmModel = AlarmItemsTableModel()
+        self.alarmModel = AlarmItemsTableModel(annunciate)
 
         self.layout = QVBoxLayout(self)
         self.alarm_count_label = QLabel("Active Alarms: 0")

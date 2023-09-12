@@ -18,8 +18,10 @@ class AlarmItemsTableModel(QAbstractTableModel):
         The parent of the table model.
     """
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(self, annunciate: bool, parent: Optional[QObject] = None):
         super(QAbstractTableModel, self).__init__(parent=parent)
+        self.annunciate = annunciate
+        #print ("!!AlarmItemsTableModel annunciate: ", annunciate)
         self.alarm_items = OrderedDict()  # Key (str) to data
         self.column_names = (
             "PV",
@@ -147,19 +149,9 @@ class AlarmItemsTableModel(QAbstractTableModel):
 
         if name not in self.alarm_items:
             # This item does not yet exist in the table, so create it and return
-            self.append(
-                AlarmItem(
-                    name=name,
-                    path=path,
-                    alarm_severity=severity,
-                    alarm_status=status,
-                    alarm_time=time,
-                    alarm_value=value,
-                    pv_severity=pv_severity,
-                    pv_status=pv_status,
-                    description=description,
-                )
-            )
+            self.append(AlarmItem(name=name, path=path, alarm_severity=severity, alarm_status=status,
+                                  alarm_time=time, alarm_value=value, pv_severity=pv_severity,
+                                  pv_status=pv_status, description=description, annunciating=self.annunciate))
             return
 
         # Otherwise update the row with the newly received data

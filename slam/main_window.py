@@ -110,12 +110,14 @@ class AlarmHandlerMainWindow(QMainWindow):
                                                                    self.kafka_producer,
                                                                    topic,
                                                                    AlarmTableType.ACTIVE,
-                                                                   self.plot_pv)
+                                                                   self.plot_pv,
+                                                                   annunciate)
             self.acknowledged_alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel,
                                                                          self.kafka_producer,
                                                                          topic,
                                                                          AlarmTableType.ACKNOWLEDGED,
-                                                                         self.plot_pv)
+                                                                         self.plot_pv,
+                                                                         annunciate)
 
             # Sync the column widths in the active and acknowledged tables, resizing a column will effect both tables.
             # Managing the width of tables is done with their headers (QHeaderViews).
