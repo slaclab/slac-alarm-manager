@@ -159,9 +159,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             item_to_update.alarm_status = status
 
             item_to_update.alarm_time = time
-            #print ("alarm time: ", time)
             item_to_update.alarm_value = value
-            #print ("alarm value: ", value)
             item_to_update.pv_severity = pv_severity
             item_to_update.pv_status = pv_status
             if status == "Disabled":
