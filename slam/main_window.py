@@ -32,7 +32,7 @@ class AlarmHandlerMainWindow(QMainWindow):
 
     alarm_update_signal = Signal(str, str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
 
-    def __init__(self, topics: List[str], bootstrap_servers: List[str], annunciate: bool):
+    def __init__(self, topics: List[str], bootstrap_servers: List[str], annunciate: bool = False):
         super().__init__()
 
         self.kafka_producer = None

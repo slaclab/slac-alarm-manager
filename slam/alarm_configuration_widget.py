@@ -40,7 +40,7 @@ class AlarmConfigurationWidget(QDialog):
     """
 
     def __init__(self, alarm_item: AlarmItem, kafka_producer: KafkaProducer,
-                 topic: str, annunciate: bool, parent: Optional[QObject] = None,):
+                 topic: str, annunciate: bool = False, parent: Optional[QObject] = None,):
         super().__init__(parent=parent)
         self.alarm_item = alarm_item
         self.kafka_producer = kafka_producer

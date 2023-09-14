@@ -18,9 +18,8 @@ class AlarmItemsTableModel(QAbstractTableModel):
         The parent of the table model.
     """
 
-    def __init__(self, annunciateEnabled: bool, parent: Optional[QObject] = None):
+    def __init__(self, parent: Optional[QObject] = None):
         super(QAbstractTableModel, self).__init__(parent=parent)
-        self.annunciateEnabled = annunciateEnabled
         self.alarm_items = OrderedDict()  # Key (str) to data
         self.column_names = (
             "PV",
