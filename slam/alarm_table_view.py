@@ -5,8 +5,20 @@ from functools import partial
 from kafka.producer import KafkaProducer
 from qtpy.QtCore import QEvent, QModelIndex, QSortFilterProxyModel, Qt, Signal
 from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import (QAbstractItemView, QAction, QApplication, QHBoxLayout, QHeaderView, QLabel,
-                            QLineEdit, QMenu, QPushButton, QTableView, QVBoxLayout, QWidget)
+from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QAction,
+    QApplication,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMenu,
+    QPushButton,
+    QTableView,
+    QVBoxLayout,
+    QWidget,
+)
 from typing import Callable, List
 from .alarm_table_model import AlarmItemsTableModel
 from .alarm_tree_model import AlarmItemsTreeModel
@@ -17,8 +29,9 @@ class AlarmTableType(str, enum.Enum):
     """
     An enum for the type of alarms this table is displaying.
     """
-    ACTIVE = 'ACTIVE'
-    ACKNOWLEDGED = 'ACKNOWLEDGED'
+
+    ACTIVE = "ACTIVE"
+    ACKNOWLEDGED = "ACKNOWLEDGED"
 
 
 class AlarmTableViewWidget(QWidget):
@@ -38,10 +51,17 @@ class AlarmTableViewWidget(QWidget):
     plot_slot : callable
         The function to invoke for plotting a PV
     """
+
     plot_signal = Signal(str)
 
-    def __init__(self, tree_model: AlarmItemsTreeModel, kafka_producer: KafkaProducer,
-                 topic: str, table_type: AlarmTableType, plot_slot: Callable):
+    def __init__(
+        self,
+        tree_model: AlarmItemsTreeModel,
+        kafka_producer: KafkaProducer,
+        topic: str,
+        table_type: AlarmTableType,
+        plot_slot: Callable,
+    ):
         super().__init__()
         self.resize(1035, 600)
 
@@ -56,7 +76,7 @@ class AlarmTableViewWidget(QWidget):
         self.alarmModel = AlarmItemsTableModel()
 
         self.layout = QVBoxLayout(self)
-        self.alarm_count_label = QLabel('Active Alarms: 0')
+        self.alarm_count_label = QLabel("Active Alarms: 0")
         self.alarmView = QTableView(self)
         self.update_counter_label()
 
@@ -83,10 +103,10 @@ class AlarmTableViewWidget(QWidget):
 
         # The actions which may be taken on an alarm
         self.alarm_context_menu = QMenu(self)
-        self.acknowledge_action = QAction('Acknowledge')
-        self.unacknowledge_action = QAction('Unacknowledge')
-        self.copy_action = QAction('Copy PV To Clipboard')
-        self.plot_action = QAction('Draw Plot')
+        self.acknowledge_action = QAction("Acknowledge")
+        self.unacknowledge_action = QAction("Unacknowledge")
+        self.copy_action = QAction("Copy PV To Clipboard")
+        self.plot_action = QAction("Draw Plot")
         self.acknowledge_action.triggered.connect(partial(self.send_acknowledge_action, True))
         self.unacknowledge_action.triggered.connect(partial(self.send_acknowledge_action, False))
         self.plot_action.triggered.connect(self.plot_pv)
@@ -105,11 +125,11 @@ class AlarmTableViewWidget(QWidget):
         # For filtering the alarm table
         self.alarm_filter_bar = QLineEdit()
         self.alarm_filter_bar.setMaximumSize(415, 30)
-        self.filter_button = QPushButton('Filter')
+        self.filter_button = QPushButton("Filter")
         self.filter_button.setMaximumSize(120, 30)
         self.filter_button.pressed.connect(self.filter_table)
-        self.filter_active_label = QLabel('Filter Active: ')
-        self.filter_active_label.setStyleSheet('background-color: orange')
+        self.filter_active_label = QLabel("Filter Active: ")
+        self.filter_active_label.setStyleSheet("background-color: orange")
         self.filter_active_label.hide()
         self.first_filter = True
 
@@ -125,7 +145,7 @@ class AlarmTableViewWidget(QWidget):
         self.alarmModel.layoutChanged.connect(self.update_counter_label)
 
     def filter_table(self) -> None:
-        """ Filter the table based on the text typed into the filter bar """
+        """Filter the table based on the text typed into the filter bar"""
         if self.first_filter:
             # By delaying setting the proxy model until an actual filter request, performance is improved by a lot
             # when first loading data into the table
@@ -133,31 +153,31 @@ class AlarmTableViewWidget(QWidget):
             self.alarmView.setModel(self.alarm_proxy_model)
         self.alarm_proxy_model.setFilterFixedString(self.alarm_filter_bar.text())
         if self.alarm_filter_bar.text():
-            self.filter_active_label.setText(f'Filter Active: {self.alarm_filter_bar.text()}')
+            self.filter_active_label.setText(f"Filter Active: {self.alarm_filter_bar.text()}")
             self.filter_active_label.show()
         else:
             self.filter_active_label.hide()
 
     def update_counter_label(self) -> None:
-        """ Update the labels displaying the count of active and acknowledged alarms """
+        """Update the labels displaying the count of active and acknowledged alarms"""
         if self.table_type is AlarmTableType.ACTIVE:
-            self.alarm_count_label.setText(f'Active Alarms: {len(self.alarmModel.alarm_items)}')
+            self.alarm_count_label.setText(f"Active Alarms: {len(self.alarmModel.alarm_items)}")
         else:
-            self.alarm_count_label.setText(f'Acknowledged Alarms: {len(self.alarmModel.alarm_items)}')
+            self.alarm_count_label.setText(f"Acknowledged Alarms: {len(self.alarmModel.alarm_items)}")
 
     def alarm_context_menu_event(self, ev: QEvent) -> None:
-        """ Display the right-click context menu for items in the active alarms table """
+        """Display the right-click context menu for items in the active alarms table"""
         self.alarm_context_menu.popup(QCursor.pos())
 
     def get_selected_indices(self) -> List[QModelIndex]:
-        """ Return the indices which have been selected by the user, applying a mapping if a filter has been applied """
+        """Return the indices which have been selected by the user, applying a mapping if a filter has been applied"""
         indices = self.alarmView.selectionModel().selectedRows()
         if self.filter_active_label.isVisible():
             indices = [self.alarm_proxy_model.mapToSource(proxy_index) for proxy_index in indices]
         return indices
 
     def plot_pv(self) -> None:
-        """ Send off the signal for plotting a PV """
+        """Send off the signal for plotting a PV"""
         indices = self.get_selected_indices()
         if len(indices) > 0:
             index = indices[0]
@@ -165,18 +185,18 @@ class AlarmTableViewWidget(QWidget):
             self.plot_signal.emit(alarm_item.name)
 
     def copy_alarm_name_to_clipboard(self) -> None:
-        """ Copy the selected PV to the user's clipboard """
+        """Copy the selected PV to the user's clipboard"""
         indices = self.get_selected_indices()
         if len(indices) > 0:
-            copy_text = ''
+            copy_text = ""
             for index in indices:
                 alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
-                copy_text += alarm_item.name + ' '
+                copy_text += alarm_item.name + " "
             self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Selection)
             self.clipboard.setText(copy_text[:-1], mode=self.clipboard.Clipboard)
 
     def send_acknowledge_action(self, acknowledged: bool) -> None:
-        """ Send the input action by sending it to the command topic in the kafka cluster """
+        """Send the input action by sending it to the command topic in the kafka cluster"""
         if not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
             return
 
@@ -188,13 +208,13 @@ class AlarmTableViewWidget(QWidget):
                 hostname = socket.gethostname()
                 if alarm_item.name not in self.tree_model.added_paths:
                     # Alarm is no longer valid, send a None value to delete it from kafka
-                    self.kafka_producer.send(self.topic,
-                                             key=f'state:{alarm_item.path}',
-                                             value=None)
+                    self.kafka_producer.send(self.topic, key=f"state:{alarm_item.path}", value=None)
                 else:
-                    command_to_send = 'acknowledge' if acknowledged else 'unacknowledge'
+                    command_to_send = "acknowledge" if acknowledged else "unacknowledge"
                     for alarm_path in self.tree_model.added_paths[alarm_item.name]:
-                        self.kafka_producer.send(self.topic + 'Command',
-                                                 key=f'command:{alarm_path}',
-                                                 value={'user': username, 'host': hostname, 'command': command_to_send})
+                        self.kafka_producer.send(
+                            self.topic + "Command",
+                            key=f"command:{alarm_path}",
+                            value={"user": username, "host": hostname, "command": command_to_send},
+                        )
         self.alarmView.selectionModel().reset()

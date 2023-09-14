@@ -1,7 +1,7 @@
 # AlarmPlugin
 
 The `AlarmPlugin` class is a `PyDMPlugin` with support for reading alarm information from the NALMS kafka cluster.
-It uses an entry point in order to be discoverable by `PyDM` such that installing this package into an environment which 
+It uses an entry point in order to be discoverable by `PyDM` such that installing this package into an environment which
 contains `PyDM` will allow it to be used. See here for more information: https://slaclab.github.io/pydm/data_plugins/external_plugins.html
 
 In order to connect to kafka correctly, two environment variable must be specified. `PYDM_KAFKA_ALARM_TOPIC` must be

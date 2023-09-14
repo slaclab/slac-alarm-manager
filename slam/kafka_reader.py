@@ -23,12 +23,14 @@ class KafkaReader(QObject):
 
     def __init__(self, topics: List[str], bootstrap_servers: List[str], new_message_slot: Callable):
         self.topics = topics
-        self.main_consumer = KafkaConsumer(*topics,
-                                           bootstrap_servers=bootstrap_servers,
-                                           auto_offset_reset='earliest',
-                                           enable_auto_commit=False,
-                                           key_deserializer=lambda x: x.decode('utf-8'),
-                                           value_deserializer=self.value_decode)
+        self.main_consumer = KafkaConsumer(
+            *topics,
+            bootstrap_servers=bootstrap_servers,
+            auto_offset_reset="earliest",
+            enable_auto_commit=False,
+            key_deserializer=lambda x: x.decode("utf-8"),
+            value_deserializer=self.value_decode
+        )
 
         super(KafkaReader, self).__init__()
         self.new_message_slot = new_message_slot
@@ -36,7 +38,7 @@ class KafkaReader(QObject):
 
     def value_decode(self, x):
         if x is not None:
-            return json.loads(x.decode('utf-8'))
+            return json.loads(x.decode("utf-8"))
         return None
 
     def run(self):

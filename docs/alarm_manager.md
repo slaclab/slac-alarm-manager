@@ -15,7 +15,7 @@ nothing will write back to any PV.
 
 ## Starting the Alarm Manager
 
-As this application is a frontend interface to NALMS, a running NALMS instance is 
+As this application is a frontend interface to NALMS, a running NALMS instance is
 required. The specific component which the alarm manager will be communicating with is [kafka](https://kafka.apache.org/).
 
 Both the location of the kafka instance, and the alarm topics which should be monitored are required arguments
@@ -36,11 +36,11 @@ In an ideal scenario, the main window will look something like this:
 
 The panel to the left of the window is the tree view of all the alarms being monitored. It will match the alarm hierarchy
 defined in the xml config file above. To the right are two tables, the top one will display PVs which are in an active
-alarm state, the bottom one will display acknowledged alarms (more on this later). 
+alarm state, the bottom one will display acknowledged alarms (more on this later).
 
 ## Active Alarms
 
-In order to make this display a little more interesting, let's run a few caput commands to get PVs into an 
+In order to make this display a little more interesting, let's run a few caput commands to get PVs into an
 alarm state:
 
 ![toggling alarms](img/toggle-alarms.gif)
@@ -68,11 +68,11 @@ summary alarm. And if an acknowledgment is done by accident, it can be reverted 
 choosing unacknowledge.
 
 The other important action there is to enable or disable an alarm. Disabling an alarm will stop any future updates
-to the underlying PV(s) from being displayed until it is re-enabled. One example where this is useful is if a 
+to the underlying PV(s) from being displayed until it is re-enabled. One example where this is useful is if a
 component is undergoing planned maintenance and so there is no need for any alarms to trigger until the maintenance
 has been completed.
 
-Finally the remaining two options are to copy the name of the PV to the clipboard, and to draw a plot of the PV in 
+Finally the remaining two options are to copy the name of the PV to the clipboard, and to draw a plot of the PV in
 a separate window. This plot is rendered using PyDM.
 
 ## Additional Options Menu

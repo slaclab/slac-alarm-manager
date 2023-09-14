@@ -4,8 +4,19 @@ from .alarm_item import AlarmItem
 from .permissions import UserAction, can_take_action
 from kafka.producer import KafkaProducer
 from qtpy.QtCore import QDateTime, QObject
-from qtpy.QtWidgets import (QCheckBox, QDateTimeEdit, QDialog, QHBoxLayout, QHeaderView, QLabel,
-                            QLineEdit, QPushButton, QSpinBox, QTableWidget, QVBoxLayout)
+from qtpy.QtWidgets import (
+    QCheckBox,
+    QDateTimeEdit,
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSpinBox,
+    QTableWidget,
+    QVBoxLayout,
+)
 from typing import Optional
 
 
@@ -28,8 +39,9 @@ class AlarmConfigurationWidget(QDialog):
         The parent of this widget
     """
 
-    def __init__(self, alarm_item: AlarmItem, kafka_producer: KafkaProducer,
-                 topic: str, parent: Optional[QObject] = None):
+    def __init__(
+        self, alarm_item: AlarmItem, kafka_producer: KafkaProducer, topic: str, parent: Optional[QObject] = None
+    ):
         super().__init__(parent=parent)
         self.alarm_item = alarm_item
         self.kafka_producer = kafka_producer
@@ -40,42 +52,42 @@ class AlarmConfigurationWidget(QDialog):
         self.layout = QVBoxLayout()
 
         self.path_value_label = QLabel(alarm_item.path)
-        self.description_label = QLabel('Description:')
-        self.description_box = QLineEdit(alarm_item.description or '')
+        self.description_label = QLabel("Description:")
+        self.description_box = QLineEdit(alarm_item.description or "")
 
-        self.cant_edit_label = QLabel('Warning: Cannot edit - requires alarm admin privileges')
-        self.cant_edit_label.setStyleSheet('background-color: orange')
+        self.cant_edit_label = QLabel("Warning: Cannot edit - requires alarm admin privileges")
+        self.cant_edit_label.setStyleSheet("background-color: orange")
 
-        self.behavior_label = QLabel('Behavior:')
-        self.enabled_checkbox = QCheckBox('Enabled')
-        self.latch_checkbox = QCheckBox('Latched')
-        self.annunciate_checkbox = QCheckBox('Annunciate')
+        self.behavior_label = QLabel("Behavior:")
+        self.enabled_checkbox = QCheckBox("Enabled")
+        self.latch_checkbox = QCheckBox("Latched")
+        self.annunciate_checkbox = QCheckBox("Annunciate")
 
-        self.disable_date_label = QLabel('Disable Until:')
+        self.disable_date_label = QLabel("Disable Until:")
         self.minimum_datetime = QDateTime.currentDateTime().addDays(-1)
         self.datetime_widget = QDateTimeEdit(self.minimum_datetime)
         self.datetime_widget.setMinimumDateTime(self.minimum_datetime)
-        self.datetime_widget.setSpecialValueText(' ')
+        self.datetime_widget.setSpecialValueText(" ")
         self.datetime_widget.setCalendarPopup(True)
 
         self.datetime_widget.dateTimeChanged.connect(self.uncheck_enabled_box_when_date_set)
         self.enabled_checkbox.stateChanged.connect(self.clear_datetime_widget)
 
-        self.delay_label = QLabel('Alarm Delay (sec)')
+        self.delay_label = QLabel("Alarm Delay (sec)")
         self.delay_spinbox = QSpinBox()
         self.delay_spinbox.setRange(0, 1000000)
         self.delay_spinbox.setFixedWidth(100)
 
-        self.filter_label = QLabel('Enabling Filter:')
-        self.filter_edit = QLineEdit(alarm_item.alarm_filter or '')
+        self.filter_label = QLabel("Enabling Filter:")
+        self.filter_edit = QLineEdit(alarm_item.alarm_filter or "")
 
-        self.guidance_label = QLabel('Guidance:')
-        self.displays_label = QLabel('Display:')
-        self.commands_label = QLabel('Commands:')
+        self.guidance_label = QLabel("Guidance:")
+        self.displays_label = QLabel("Display:")
+        self.commands_label = QLabel("Commands:")
 
         self.guidance_table = QTableWidget(10, 2)
         self.guidance_table.verticalHeader().setVisible(False)
-        self.guidance_table.setHorizontalHeaderLabels(['Title', 'Detail'])
+        self.guidance_table.setHorizontalHeaderLabels(["Title", "Detail"])
         self.guidance_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.guidance_table.setAlternatingRowColors(True)
         for i in range(10):
@@ -84,7 +96,7 @@ class AlarmConfigurationWidget(QDialog):
 
         self.displays_table = QTableWidget(10, 2)
         self.displays_table.verticalHeader().setVisible(False)
-        self.displays_table.setHorizontalHeaderLabels(['Title', 'Detail'])
+        self.displays_table.setHorizontalHeaderLabels(["Title", "Detail"])
         self.displays_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.displays_table.setAlternatingRowColors(True)
         for i in range(10):
@@ -93,7 +105,7 @@ class AlarmConfigurationWidget(QDialog):
 
         self.commands_table = QTableWidget(10, 2)
         self.commands_table.verticalHeader().setVisible(False)
-        self.commands_table.setHorizontalHeaderLabels(['Title', 'Detail'])
+        self.commands_table.setHorizontalHeaderLabels(["Title", "Detail"])
         self.commands_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.commands_table.setAlternatingRowColors(True)
         for i in range(10):
@@ -102,16 +114,16 @@ class AlarmConfigurationWidget(QDialog):
 
         if alarm_item.guidance is not None:
             for index, guidance_item in enumerate(alarm_item.guidance):
-                self.guidance_table.cellWidget(index, 0).setText(guidance_item['title'])
-                self.guidance_table.cellWidget(index, 1).setText(guidance_item['details'])
+                self.guidance_table.cellWidget(index, 0).setText(guidance_item["title"])
+                self.guidance_table.cellWidget(index, 1).setText(guidance_item["details"])
         if alarm_item.displays is not None:
             for index, display_item in enumerate(alarm_item.displays):
-                self.displays_table.cellWidget(index, 0).setText(display_item['title'])
-                self.displays_table.cellWidget(index, 1).setText(display_item['details'])
+                self.displays_table.cellWidget(index, 0).setText(display_item["title"])
+                self.displays_table.cellWidget(index, 1).setText(display_item["details"])
         if alarm_item.commands is not None:
             for index, command_item in enumerate(alarm_item.commands):
-                self.commands_table.cellWidget(index, 0).setText(command_item['title'])
-                self.commands_table.cellWidget(index, 1).setText(command_item['details'])
+                self.commands_table.cellWidget(index, 0).setText(command_item["title"])
+                self.commands_table.cellWidget(index, 1).setText(command_item["details"])
 
         if not can_take_action(UserAction.UPDATE_CONFIG):
             self.layout.addWidget(self.cant_edit_label)
@@ -124,9 +136,9 @@ class AlarmConfigurationWidget(QDialog):
             self.layout.addLayout(self.description_layout)
             self.behavior_layout = QHBoxLayout()
             self.behavior_layout.addWidget(self.behavior_label)
-            if type(self.alarm_item.enabled) is bool:
+            if isinstance(self.alarm_item.enabled, bool):
                 self.enabled_checkbox.setChecked(self.alarm_item.enabled)
-            elif self.alarm_item.enabled and type(self.alarm_item.enabled) is str:
+            elif self.alarm_item.enabled and isinstance(self.alarm_item.enabled, str):
                 self.enabled_checkbox.setChecked(False)  # Any string here means a disable timeout has been set
             self.behavior_layout.addWidget(self.enabled_checkbox)
             self.latch_checkbox.setChecked(self.alarm_item.latching)
@@ -137,9 +149,8 @@ class AlarmConfigurationWidget(QDialog):
             self.disable_layout = QHBoxLayout()
             self.disable_layout.addWidget(self.disable_date_label)
             self.disable_layout.addWidget(self.datetime_widget)
-            if self.alarm_item.enabled and type(self.alarm_item.enabled) == str:
-                self.datetime_widget.setDateTime(
-                    QDateTime.fromString(alarm_item.enabled[:19], 'yyyy-MM-ddThh:mm:ss'))
+            if self.alarm_item.enabled and isinstance(self.alarm_item.enabled, str):
+                self.datetime_widget.setDateTime(QDateTime.fromString(alarm_item.enabled[:19], "yyyy-MM-ddThh:mm:ss"))
             self.layout.addLayout(self.disable_layout)
             self.delay_layout = QHBoxLayout()
             self.delay_layout.addWidget(self.delay_label)
@@ -161,8 +172,8 @@ class AlarmConfigurationWidget(QDialog):
         self.layout.addWidget(self.commands_label)
         self.layout.addWidget(self.commands_table)
 
-        self.cancel_button = QPushButton('Cancel')
-        self.ok_button = QPushButton('OK')
+        self.cancel_button = QPushButton("Cancel")
+        self.ok_button = QPushButton("OK")
         self.cancel_button.clicked.connect(self.close_window)
         self.ok_button.clicked.connect(self.save_configuration)
         self.ok_button.setDefault(True)
@@ -177,7 +188,7 @@ class AlarmConfigurationWidget(QDialog):
         self.layout.addLayout(self.button_layout)
 
     def save_configuration(self):
-        """ Saves the input the user entered into the widget by sending it to the kafka config queue """
+        """Saves the input the user entered into the widget by sending it to the kafka config queue"""
         if not can_take_action(UserAction.UPDATE_CONFIG, log_warning=True):
             return
 
@@ -191,46 +202,58 @@ class AlarmConfigurationWidget(QDialog):
             title = self.guidance_table.cellWidget(row, 0).text()
             detail = self.guidance_table.cellWidget(row, 1).text()
             if title or detail:
-                guidance.append({'title': title, 'details': detail})
+                guidance.append({"title": title, "details": detail})
 
         for row in range(self.displays_table.rowCount()):
             title = self.displays_table.cellWidget(row, 0).text()
             detail = self.displays_table.cellWidget(row, 1).text()
             if title or detail:
-                displays.append({'title': title, 'details': detail})
+                displays.append({"title": title, "details": detail})
 
         for row in range(self.commands_table.rowCount()):
             title = self.commands_table.cellWidget(row, 0).text()
             detail = self.commands_table.cellWidget(row, 1).text()
             if title or detail:
-                commands.append({'title': title, 'details': detail})
+                commands.append({"title": title, "details": detail})
 
         if self.alarm_item.is_leaf():
-            values_to_send = {'user': username, 'host': hostname, 'description': self.description_box.text(),
-                              'enabled': self.alarm_item.enabled, 'latching': self.alarm_item.latching,
-                              'annunciating': self.alarm_item.annunciating, 'guidance': guidance, 'displays': displays,
-                              'commands': commands}
+            values_to_send = {
+                "user": username,
+                "host": hostname,
+                "description": self.description_box.text(),
+                "enabled": self.alarm_item.enabled,
+                "latching": self.alarm_item.latching,
+                "annunciating": self.alarm_item.annunciating,
+                "guidance": guidance,
+                "displays": displays,
+                "commands": commands,
+            }
             if self.datetime_widget.dateTime() != self.minimum_datetime and not self.enabled_checkbox.isChecked():
-                values_to_send['enabled'] = self.datetime_widget.dateTime().toString('yyyy-MM-ddThh:mm:ss')
+                values_to_send["enabled"] = self.datetime_widget.dateTime().toString("yyyy-MM-ddThh:mm:ss")
             elif self.alarm_item.enabled != self.enabled_checkbox.isChecked():
-                values_to_send['enabled'] = self.enabled_checkbox.isChecked()
+                values_to_send["enabled"] = self.enabled_checkbox.isChecked()
             if self.alarm_item.latching != self.latch_checkbox.isChecked():
-                values_to_send['latching'] = self.enabled_checkbox.isChecked()
+                values_to_send["latching"] = self.enabled_checkbox.isChecked()
             if self.alarm_item.annunciating != self.annunciate_checkbox.isChecked():
-                values_to_send['annunciating'] = self.annunciate_checkbox.isChecked()
+                values_to_send["annunciating"] = self.annunciate_checkbox.isChecked()
             if self.delay_spinbox.value() != 0:
-                values_to_send['delay'] = self.delay_spinbox.value()
+                values_to_send["delay"] = self.delay_spinbox.value()
             if self.filter_edit.text():
-                values_to_send['filter'] = self.filter_edit.text()
+                values_to_send["filter"] = self.filter_edit.text()
 
-            self.kafka_producer.send(self.topic,
-                                     key=f'config:{self.alarm_item.path}',
-                                     value=values_to_send)
+            self.kafka_producer.send(self.topic, key=f"config:{self.alarm_item.path}", value=values_to_send)
         else:
-            self.kafka_producer.send(self.topic,
-                                     key=f'config:{self.alarm_item.path}',
-                                     value={'user': username, 'host': hostname, 'guidance': guidance,
-                                            'displays': displays, 'commands': commands})
+            self.kafka_producer.send(
+                self.topic,
+                key=f"config:{self.alarm_item.path}",
+                value={
+                    "user": username,
+                    "host": hostname,
+                    "guidance": guidance,
+                    "displays": displays,
+                    "commands": commands,
+                },
+            )
 
         self.close()
 
@@ -238,18 +261,18 @@ class AlarmConfigurationWidget(QDialog):
         """
         Grey out "Enabled" checkbox on config-page when enabling-filter is present.
         Avoids confusion over if checkbox needs to be checked when adding filter.
-        Assume filter is valid if any text is present in text-edit (no easy way verify). 
+        Assume filter is valid if any text is present in text-edit (no easy way verify).
         """
         editIsEmpty = not self.filter_edit.text()
         self.enabled_checkbox.setEnabled(editIsEmpty)
 
     def uncheck_enabled_box_when_date_set(self):
-        """ A simple slot for unchecking the enabled checkbox when the date time widget is set  """
+        """A simple slot for unchecking the enabled checkbox when the date time widget is set"""
         if self.datetime_widget.dateTime() != self.minimum_datetime:
             self.enabled_checkbox.setChecked(False)
 
     def clear_datetime_widget(self, checkbox_state: int):
-        """ A simple slot for clearing out the datetime widget if the enabled checkbox is checked """
+        """A simple slot for clearing out the datetime widget if the enabled checkbox is checked"""
         if checkbox_state != 0:
             self.datetime_widget.setDateTime(self.minimum_datetime)
 

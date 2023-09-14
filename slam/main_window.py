@@ -34,23 +34,25 @@ class AlarmHandlerMainWindow(QMainWindow):
     def __init__(self, topics: List[str], bootstrap_servers: List[str]):
         super().__init__()
 
-        self.kafka_producer = KafkaProducer(bootstrap_servers=bootstrap_servers,
-                                            value_serializer=lambda x: json.dumps(x).encode('utf-8'),
-                                            key_serializer=lambda x: x.encode('utf-8'))
+        self.kafka_producer = KafkaProducer(
+            bootstrap_servers=bootstrap_servers,
+            value_serializer=lambda x: json.dumps(x).encode("utf-8"),
+            key_serializer=lambda x: x.encode("utf-8"),
+        )
         self.topics = topics
         self.descriptions = dict()  # Map from alarm path to description
 
         self.clipboard = QApplication.clipboard()
 
         self.main_menu = self.menuBar()
-        self.file_menu = self.main_menu.addMenu('File')
-        self.applications_menu = self.main_menu.addMenu('Tools')
-        self.exit_action = QAction('Exit')
+        self.file_menu = self.main_menu.addMenu("File")
+        self.applications_menu = self.main_menu.addMenu("Tools")
+        self.exit_action = QAction("Exit")
         self.exit_action.triggered.connect(self.exit_application)
         self.file_menu.addAction(self.exit_action)
-        self.archiver_search_action = QAction('Archiver Search')
+        self.archiver_search_action = QAction("Archiver Search")
         self.archiver_search_action.triggered.connect(self.create_archiver_search_widget)
-        self.empty_plot_action = QAction('Time Plot')
+        self.empty_plot_action = QAction("Time Plot")
         self.empty_plot_action.triggered.connect(self.create_plot_widget)
         self.applications_menu.addAction(self.archiver_search_action)
         self.applications_menu.addAction(self.empty_plot_action)
@@ -71,25 +73,27 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.last_received_update_time[topic] = datetime.now()
             self.alarm_select_combo_box.addItem(topic)
             self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv)
-            self.active_alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel,
-                                                                   self.kafka_producer,
-                                                                   topic,
-                                                                   AlarmTableType.ACTIVE,
-                                                                   self.plot_pv)
-            self.acknowledged_alarm_tables[topic] = AlarmTableViewWidget(self.alarm_trees[topic].treeModel,
-                                                                         self.kafka_producer,
-                                                                         topic,
-                                                                         AlarmTableType.ACKNOWLEDGED,
-                                                                         self.plot_pv)
+            self.active_alarm_tables[topic] = AlarmTableViewWidget(
+                self.alarm_trees[topic].treeModel, self.kafka_producer, topic, AlarmTableType.ACTIVE, self.plot_pv
+            )
+            self.acknowledged_alarm_tables[topic] = AlarmTableViewWidget(
+                self.alarm_trees[topic].treeModel, self.kafka_producer, topic, AlarmTableType.ACKNOWLEDGED, self.plot_pv
+            )
 
             # Sync the column widths in the active and acknowledged tables, resizing a column will effect both tables.
-            # Managing the width of tables is done with their headers (QHeaderViews). 
-            self.acknowledged_alarm_tables[topic].alarmView.horizontalHeader().sectionResized.connect(\
-                lambda logicalIndex, oldSize, newSize: self.active_alarm_tables[topic].alarmView.horizontalHeader().resizeSection(logicalIndex, newSize))
+            # Managing the width of tables is done with their headers (QHeaderViews).
+            self.acknowledged_alarm_tables[topic].alarmView.horizontalHeader().sectionResized.connect(
+                lambda logicalIndex, oldSize, newSize: self.active_alarm_tables[topic]
+                .alarmView.horizontalHeader()
+                .resizeSection(logicalIndex, newSize)
+            )
 
-            self.active_alarm_tables[topic].alarmView.horizontalHeader().sectionResized.connect(\
-                lambda logicalIndex, oldSize, newSize: self.acknowledged_alarm_tables[topic].alarmView.horizontalHeader().resizeSection(logicalIndex, newSize))
-        
+            self.active_alarm_tables[topic].alarmView.horizontalHeader().sectionResized.connect(
+                lambda logicalIndex, oldSize, newSize: self.acknowledged_alarm_tables[topic]
+                .alarmView.horizontalHeader()
+                .resizeSection(logicalIndex, newSize)
+            )
+
         self.alarm_update_signal.connect(self.update_tree)
         self.alarm_update_signal.connect(self.update_table)
 
@@ -97,9 +101,9 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.server_status_timer.timeout.connect(self.check_server_status)
         self.server_status_timer.start(3000)
         self.alarm_server_connected = True
-        self.alarm_server_disconnected_banner = QLabel('WARNING: No connection to alarm server, data may be stale')
+        self.alarm_server_disconnected_banner = QLabel("WARNING: No connection to alarm server, data may be stale")
         self.alarm_server_disconnected_banner.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.alarm_server_disconnected_banner.setStyleSheet('background-color: red')
+        self.alarm_server_disconnected_banner.setStyleSheet("background-color: red")
         self.alarm_server_disconnected_banner.setMaximumHeight(40)
         self.alarm_server_disconnected_banner.hide()
 
@@ -146,29 +150,43 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         self.alarm_trees[alarm_config_name].treeModel.update_item(*args)
 
-    def update_table(self, alarm_config_name: str, name: str, path: str, severity: AlarmSeverity, status: str, time,
-                     value: str, pv_severity: AlarmSeverity, pv_status: str) -> None:
+    def update_table(
+        self,
+        alarm_config_name: str,
+        name: str,
+        path: str,
+        severity: AlarmSeverity,
+        status: str,
+        time,
+        value: str,
+        pv_severity: AlarmSeverity,
+        pv_status: str,
+    ) -> None:
         """
         A slot for updating an alarm table
         """
-        if status == 'Disabled':
+        if status == "Disabled":
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
-        elif severity in (AlarmSeverity.INVALID_ACK, AlarmSeverity.MAJOR_ACK,
-                          AlarmSeverity.MINOR_ACK, AlarmSeverity.UNDEFINED_ACK):
+        elif severity in (
+            AlarmSeverity.INVALID_ACK,
+            AlarmSeverity.MAJOR_ACK,
+            AlarmSeverity.MINOR_ACK,
+            AlarmSeverity.UNDEFINED_ACK,
+        ):
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
-            self.acknowledged_alarm_tables[alarm_config_name].alarmModel.update_row(name, path, severity, status, time,
-                                                                                    value, pv_severity, pv_status,
-                                                                                    self.descriptions.get(path, ''))
+            self.acknowledged_alarm_tables[alarm_config_name].alarmModel.update_row(
+                name, path, severity, status, time, value, pv_severity, pv_status, self.descriptions.get(path, "")
+            )
         elif severity == AlarmSeverity.OK:
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
         else:
             if name in self.acknowledged_alarm_tables[alarm_config_name].alarmModel.alarm_items:
                 self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
-            self.active_alarm_tables[alarm_config_name].alarmModel.update_row(name, path, severity, status, time, value,
-                                                                              pv_severity, pv_status,
-                                                                              self.descriptions.get(path, ''))
+            self.active_alarm_tables[alarm_config_name].alarmModel.update_row(
+                name, path, severity, status, time, value, pv_severity, pv_status, self.descriptions.get(path, "")
+            )
 
     def change_display(self, alarm_config_name: str) -> None:
         """
@@ -197,40 +215,48 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         key = message.key
         values = message.value
-        if key.startswith('config'):  # [7:] because config:
-            logger.debug(f'Processing CONFIG message with key: {message.key} and values: {message.value}')
-            alarm_config_name = key.split('/')[1]
+        if key.startswith("config"):  # [7:] because config:
+            logger.debug(f"Processing CONFIG message with key: {message.key} and values: {message.value}")
+            alarm_config_name = key.split("/")[1]
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
                 self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
-                if 'description' in values:
-                    self.descriptions[message.key[7:]] = values.get('description')
+                if "description" in values:
+                    self.descriptions[message.key[7:]] = values.get("description")
             else:  # A null message indicates this item should be removed from the tree
                 self.alarm_trees[alarm_config_name].treeModel.remove_item(message.key[7:])
-                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
-                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split('/')[-1])
-        elif key.startswith('command'):
+                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split("/")[-1])
+                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split("/")[-1])
+        elif key.startswith("command"):
             pass  # Nothing for us to do
-        elif key.startswith('state'):
-            pv = message.key.split('/')[-1]
-            alarm_config_name = key.split('/')[1]
+        elif key.startswith("state"):
+            pv = message.key.split("/")[-1]
+            alarm_config_name = key.split("/")[1]
             self.last_received_update_time[alarm_config_name] = datetime.now()
-            logger.debug(f'Processing STATE message with key: {message.key} and values: {message.value}')
+            logger.debug(f"Processing STATE message with key: {message.key} and values: {message.value}")
             if values is None:
-                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split('/')[-1])
-                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split('/')[-1])
+                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split("/")[-1])
+                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split("/")[-1])
                 return
             if len(values) <= 2:
                 return  # This is the heartbeat message which doesn't get recorded
-            time = ''
-            if 'time' in values:
-                time = datetime.fromtimestamp(values['time']['seconds'])
-            self.alarm_update_signal.emit(alarm_config_name, pv, message.key[6:], AlarmSeverity(values['severity']),
-                                          values['message'], time, values['value'],
-                                          AlarmSeverity(values['current_severity']), values['current_message'])
+            time = ""
+            if "time" in values:
+                time = datetime.fromtimestamp(values["time"]["seconds"])
+            self.alarm_update_signal.emit(
+                alarm_config_name,
+                pv,
+                message.key[6:],
+                AlarmSeverity(values["severity"]),
+                values["message"],
+                time,
+                values["value"],
+                AlarmSeverity(values["current_severity"]),
+                values["current_message"],
+            )
 
     def check_server_status(self):
-        """ Ensure that our client is still receiving alarm updates, display a warning if not """
+        """Ensure that our client is still receiving alarm updates, display a warning if not"""
         if (datetime.now() - self.last_received_update_time[self.current_alarm_config]).seconds > 25:
             # The alarm server will always send a heartbeat message confirming it is still up
             # every 10 seconds even if no alarm has changed its status
@@ -241,8 +267,8 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.alarm_server_disconnected_banner.hide()
 
     def create_archiver_search_widget(self):
-        """ Create and show the widget for sending search requests to archiver appliance """
-        if not hasattr(self, 'search_widget'):
+        """Create and show the widget for sending search requests to archiver appliance"""
+        if not hasattr(self, "search_widget"):
             self.search_widget = ArchiveSearchWidget()
         self.search_widget.show()
 
@@ -258,7 +284,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         plot = PyDMArchiverTimePlot()
         plot.setTimeSpan(300)
         if pv:
-            plot.addYChannel(y_channel=f'ca://{pv}', name=pv, yAxisName=f'Axis {self.axis_count}', useArchiveData=True)
+            plot.addYChannel(y_channel=f"ca://{pv}", name=pv, yAxisName=f"Axis {self.axis_count}", useArchiveData=True)
             self.axis_count += 1
 
         def drag_enter_event(ev):
@@ -271,8 +297,9 @@ class AlarmHandlerMainWindow(QMainWindow):
             ev.accept()
             if ev.mimeData().text():
                 pv = ev.mimeData().text()
-                plot.addYChannel(y_channel=f'ca://{pv}', name=pv, yAxisName=f'Axis {self.axis_count}',
-                                 useArchiveData=True)
+                plot.addYChannel(
+                    y_channel=f"ca://{pv}", name=pv, yAxisName=f"Axis {self.axis_count}", useArchiveData=True
+                )
                 self.axis_count += 1
 
         plot.setAcceptDrops(True)
@@ -284,9 +311,9 @@ class AlarmHandlerMainWindow(QMainWindow):
 
     @Slot(str)
     def plot_pv(self, pv: Optional[str] = None):
-        """ Create a plot and associate it with the input PV if present """
+        """Create a plot and associate it with the input PV if present"""
         self.create_plot_widget(pv)
 
     def exit_application(self):
-        """ Close out the entire application """
+        """Close out the entire application"""
         self.close()

@@ -1,8 +1,8 @@
 # SLAC Alarm Manager
 
 The [SLAC Alarm Manager](https://github.com/slaclab/slac-alarm-manager) is a python package providing an interface to the [NALMS alarm system](https://slaclab.github.io/nalms/).
-It contains two main ways of interacting with NALMS. There is a standalone python application for 
-viewing and interacting with alarms described in greater detail [here](alarm_manager.md). And 
+It contains two main ways of interacting with NALMS. There is a standalone python application for
+viewing and interacting with alarms described in greater detail [here](alarm_manager.md). And
 a [PyDM data plugin](pydm.md) that will allow for building PyDM displays containing summary alarms.
 
 ## Installation

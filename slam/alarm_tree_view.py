@@ -40,7 +40,7 @@ class AlarmTreeViewWidget(QWidget):
         self.plot_signal.connect(self.plot_slot)
         self.clipboard = QApplication.clipboard()
 
-        self.setFont(QFont('Arial', 12))
+        self.setFont(QFont("Arial", 12))
         self.layout = QVBoxLayout(self)
         self.treeModel = AlarmItemsTreeModel()
         self.tree_view = QTreeView(self)
@@ -57,12 +57,12 @@ class AlarmTreeViewWidget(QWidget):
         self.tree_view.doubleClicked.connect(self.create_alarm_configuration_widget)
 
         self.context_menu = QMenu(self)
-        self.acknowledge_action = QAction('Acknowledge')
-        self.unacknowledge_action = QAction('Unacknowledge')
-        self.copy_action = QAction('Copy PV To Clipboard')
-        self.plot_action = QAction('Draw Plot')
-        self.enable_action = QAction('Enable')
-        self.disable_action = QAction('Disable')
+        self.acknowledge_action = QAction("Acknowledge")
+        self.unacknowledge_action = QAction("Unacknowledge")
+        self.copy_action = QAction("Copy PV To Clipboard")
+        self.plot_action = QAction("Draw Plot")
+        self.enable_action = QAction("Enable")
+        self.disable_action = QAction("Disable")
         self.display_actions = []
 
         self.acknowledge_action.triggered.connect(partial(self.send_action, True, None))
@@ -77,18 +77,26 @@ class AlarmTreeViewWidget(QWidget):
         self.layout.addWidget(self.tree_view)
 
     def tree_menu(self, pos: QPoint) -> None:
-        """ Creates and displays the context menu to be displayed upon right clicking on an alarm item """
+        """Creates and displays the context menu to be displayed upon right clicking on an alarm item"""
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
             index = indices[0]
             alarm_item = self.treeModel.getItem(index)
             if alarm_item.is_leaf():
                 self.context_menu = QMenu(self)
-                if alarm_item.alarm_severity in (AlarmSeverity.MINOR, AlarmSeverity.MAJOR,
-                                                 AlarmSeverity.INVALID, AlarmSeverity.UNDEFINED):
+                if alarm_item.alarm_severity in (
+                    AlarmSeverity.MINOR,
+                    AlarmSeverity.MAJOR,
+                    AlarmSeverity.INVALID,
+                    AlarmSeverity.UNDEFINED,
+                ):
                     self.context_menu.addAction(self.acknowledge_action)
-                elif alarm_item.alarm_severity in (AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
-                                                   AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK):
+                elif alarm_item.alarm_severity in (
+                    AlarmSeverity.MINOR_ACK,
+                    AlarmSeverity.MAJOR_ACK,
+                    AlarmSeverity.INVALID_ACK,
+                    AlarmSeverity.UNDEFINED_ACK,
+                ):
                     self.context_menu.addAction(self.unacknowledge_action)
                 self.context_menu.addAction(self.copy_action)
                 self.context_menu.addAction(self.plot_action)
@@ -98,13 +106,20 @@ class AlarmTreeViewWidget(QWidget):
                 add_unacknowledge_action = False
                 for leaf in leaf_nodes:
                     if leaf.alarm_severity is not None and leaf.alarm_severity in (
-                            AlarmSeverity.MINOR, AlarmSeverity.MAJOR, AlarmSeverity.INVALID, AlarmSeverity.UNDEFINED):
+                        AlarmSeverity.MINOR,
+                        AlarmSeverity.MAJOR,
+                        AlarmSeverity.INVALID,
+                        AlarmSeverity.UNDEFINED,
+                    ):
                         # As long as one item needs acknowledging we will display the acknowledge action
                         add_acknowledge_action = True
                         break
                     elif leaf.alarm_severity is not None and leaf.alarm_severity in (
-                            AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
-                            AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK):
+                        AlarmSeverity.MINOR_ACK,
+                        AlarmSeverity.MAJOR_ACK,
+                        AlarmSeverity.INVALID_ACK,
+                        AlarmSeverity.UNDEFINED_ACK,
+                    ):
                         add_unacknowledge_action = True
                 self.context_menu = QMenu(self)
                 if add_acknowledge_action:  # This always should take precedence over unacknowledge
@@ -116,21 +131,22 @@ class AlarmTreeViewWidget(QWidget):
             self.display_actions.clear()
             if alarm_item.displays:
                 for display in alarm_item.displays:
-                    display_action = QAction(display['title'])
-                    display_action.triggered.connect(partial(self.launch_pydm_display, display['details']))
+                    display_action = QAction(display["title"])
+                    display_action.triggered.connect(partial(self.launch_pydm_display, display["details"]))
                     self.context_menu.addAction(display_action)
                     self.display_actions.append(display_action)
             self.context_menu.popup(self.mapToGlobal(pos))
 
     def create_alarm_configuration_widget(self, index: QModelIndex) -> None:
-        """ Create and display the alarm configuration widget for the alarm item with the input index """
+        """Create and display the alarm configuration widget for the alarm item with the input index"""
         alarm_item = self.treeModel.getItem(index)
-        alarm_config_window = AlarmConfigurationWidget(alarm_item=alarm_item, kafka_producer=self.kafka_producer,
-                                                       topic=self.topic, parent=self)
+        alarm_config_window = AlarmConfigurationWidget(
+            alarm_item=alarm_item, kafka_producer=self.kafka_producer, topic=self.topic, parent=self
+        )
         alarm_config_window.show()
 
     def copy_to_clipboard(self) -> None:
-        """ Copy the selected PV to the user's clipboard """
+        """Copy the selected PV to the user's clipboard"""
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
             index = indices[0]
@@ -139,7 +155,7 @@ class AlarmTreeViewWidget(QWidget):
             self.clipboard.setText(alarm_item.name, mode=self.clipboard.Clipboard)
 
     def plot_pv(self) -> None:
-        """ Send off the signal for plotting a PV """
+        """Send off the signal for plotting a PV"""
         indices = self.tree_view.selectedIndexes()
         if len(indices) > 0:
             index = indices[0]
@@ -159,25 +175,25 @@ class AlarmTreeViewWidget(QWidget):
         load_file(file_path)
 
     @staticmethod
-    def create_config_values_for_action(alarm_item: AlarmItem,
-                                        enabled: Optional[bool] = None,
-                                        acknowledged: Optional[bool] = None) -> Dict[str, any]:
-        """ Return a dict to send to kafka changing the enabled and/or acknowledged status of the alarm """
+    def create_config_values_for_action(
+        alarm_item: AlarmItem, enabled: Optional[bool] = None, acknowledged: Optional[bool] = None
+    ) -> Dict[str, any]:
+        """Return a dict to send to kafka changing the enabled and/or acknowledged status of the alarm"""
         values_to_send = dict()
-        values_to_send['user'] = getpass.getuser()
-        values_to_send['hostname'] = socket.gethostname()
+        values_to_send["user"] = getpass.getuser()
+        values_to_send["hostname"] = socket.gethostname()
         if enabled is not None:
             values_to_send.update(alarm_item.to_config_dict())
-            values_to_send['enabled'] = enabled
+            values_to_send["enabled"] = enabled
         if acknowledged is not None:
             if acknowledged:
-                values_to_send['command'] = 'acknowledge'
+                values_to_send["command"] = "acknowledge"
             else:
-                values_to_send['command'] = 'unacknowledge'
+                values_to_send["command"] = "unacknowledge"
         return values_to_send
 
     def send_action(self, acknowledged: Optional[bool] = None, enabled: Optional[bool] = None) -> None:
-        """ Send the appropriate message to kafka to take an enable or acknowledgement related action """
+        """Send the appropriate message to kafka to take an enable or acknowledgement related action"""
         # Verify if the user can actually take the requested action and just return if there's nothing to do
         if acknowledged is not None and not can_take_action(UserAction.ACKNOWLEDGE, log_warning=True):
             acknowledged = None
@@ -198,11 +214,9 @@ class AlarmTreeViewWidget(QWidget):
                     values_to_send = self.create_config_values_for_action(alarm, enabled, acknowledged)
                     if enabled is not None and enabled != alarm.is_enabled():
                         # Changes to enabled status go to the regular topic
-                        self.kafka_producer.send(self.topic,
-                                                 key=f'config:{alarm_path}',
-                                                 value=values_to_send)
+                        self.kafka_producer.send(self.topic, key=f"config:{alarm_path}", value=values_to_send)
                     if acknowledged is not None and acknowledged != alarm.is_acknowledged():
                         # Changes to acknowledgement status go to the command topic
-                        self.kafka_producer.send(self.topic + 'Command',
-                                                 key=f'command:{alarm_path}',
-                                                 value=values_to_send)
+                        self.kafka_producer.send(
+                            self.topic + "Command", key=f"command:{alarm_path}", value=values_to_send
+                        )
