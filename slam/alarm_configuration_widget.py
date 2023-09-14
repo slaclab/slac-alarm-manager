@@ -58,10 +58,13 @@ class AlarmConfigurationWidget(QDialog):
         self.cant_edit_label = QLabel("Warning: Cannot edit - requires alarm admin privileges")
         self.cant_edit_label.setStyleSheet("background-color: orange")
 
-        self.behavior_label = QLabel("Behavior:")
-        self.enabled_checkbox = QCheckBox("Enabled")
-        self.latch_checkbox = QCheckBox("Latched")
-        self.annunciate_checkbox = QCheckBox("Annunciate")
+
+        self.behavior_label = QLabel('Behavior:')
+        self.enabled_checkbox = QCheckBox('Enabled')
+        self.enabled_checkbox.clicked.connect(self.update_enabled_checkbox_pre_disabled_value)
+
+        self.latch_checkbox = QCheckBox('Latched')
+        self.annunciate_checkbox = QCheckBox('Annunciate')
 
         self.disable_date_label = QLabel("Disable Until:")
         self.minimum_datetime = QDateTime.currentDateTime().addDays(-1)
@@ -140,6 +143,7 @@ class AlarmConfigurationWidget(QDialog):
                 self.enabled_checkbox.setChecked(self.alarm_item.enabled)
             elif self.alarm_item.enabled and isinstance(self.alarm_item.enabled, str):
                 self.enabled_checkbox.setChecked(False)  # Any string here means a disable timeout has been set
+            self.enabled_checkbox_pre_disabled_value = self.enabled_checkbox.isChecked()
             self.behavior_layout.addWidget(self.enabled_checkbox)
             self.latch_checkbox.setChecked(self.alarm_item.latching)
             self.behavior_layout.addWidget(self.latch_checkbox)
@@ -163,7 +167,7 @@ class AlarmConfigurationWidget(QDialog):
             self.filter_layout.addWidget(self.filter_edit)
             if self.filter_edit.text():
                 self.enabled_checkbox.setEnabled(False)
-            self.filter_edit.textChanged.connect(self.uncheck_enabled_box_when_filter_set)
+            self.filter_edit.textChanged.connect(self.grey_out_enabled_box_when_filter_set)
             self.layout.addLayout(self.filter_layout)
         self.layout.addWidget(self.guidance_label)
         self.layout.addWidget(self.guidance_table)
@@ -257,14 +261,28 @@ class AlarmConfigurationWidget(QDialog):
 
         self.close()
 
-    def uncheck_enabled_box_when_filter_set(self):
+    def grey_out_enabled_box_when_filter_set(self):
         """
-        Grey out "Enabled" checkbox on config-page when enabling-filter is present.
-        Avoids confusion over if checkbox needs to be checked when adding filter.
-        Assume filter is valid if any text is present in text-edit (no easy way verify).
+        Check and grey-out "Enabled" checkbox on config-page when enabling-filter is present.
+        Avoids confusion and keep consistency in regards to if checkbox needs to be checked when adding filter.
+        Assume filter is valid if any text is present in text-edit (no easy way verify). 
         """
         editIsEmpty = not self.filter_edit.text()
         self.enabled_checkbox.setEnabled(editIsEmpty)
+        
+        if editIsEmpty:
+            # reset checkbox to value before getting overridden when user enters filter
+            self.enabled_checkbox.setChecked(self.enabled_checkbox_pre_disabled_value)
+        else:
+            self.enabled_checkbox.setChecked(True)
+
+    def update_enabled_checkbox_pre_disabled_value(self):
+        """ 
+        Grabs the checked/unchecked value of the "Enabled" checkbox, so we know what it was before
+        it was overridden because filter-text was added. For example, if the user had the checkbox un-clicked,
+        then started to add a filter but decided to clear it instead, the checkbox returns to its original value.
+        """
+        self.enabled_checkbox_pre_disabled_value = self.enabled_checkbox.isChecked()
 
     def uncheck_enabled_box_when_date_set(self):
         """A simple slot for unchecking the enabled checkbox when the date time widget is set"""

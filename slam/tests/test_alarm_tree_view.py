@@ -1,5 +1,6 @@
 from ..alarm_item import AlarmItem, AlarmSeverity
 from ..alarm_tree_view import AlarmTreeViewWidget
+import time
 from qtpy.QtCore import QModelIndex, QPoint
 from qtpy.QtWidgets import QTreeView
 import pytest
@@ -30,10 +31,27 @@ def test_tree_menu(qtbot, monkeypatch, alarm_tree_view):
     monkeypatch.setattr(QTreeView, "selectedIndexes", lambda x: indices)
     monkeypatch.setattr(alarm_tree_view.treeModel, "getItem", lambda x: leaf_item)
 
+        # Add a dummy guidance entry
+    indices = alarm_tree_view.tree_view.selectedIndexes()
+    alarm_item = alarm_tree_view.treeModel.getItem(indices[0])
+    alarm_item.guidance =[{"title":"Don't call anybody", "details": "Read the manual"}, {"title":"Call Somebody", "details": "bash run_display.sh"}]
+
     qtbot.addWidget(alarm_tree_view.context_menu)
     alarm_tree_view.tree_menu(QPoint())
     with qtbot.waitExposed(alarm_tree_view.context_menu):
         alarm_tree_view.context_menu.show()
+    
+    # Verify that guidance info is displayed correctly in the context menu
+    assert (alarm_tree_view.guidance_menu.title() == "Guidance")
+    for i in range(len(alarm_tree_view.guidance_menu.actions())):
+
+        curr_guidance_title = alarm_tree_view.guidance_menu.actions()[i]
+        curr_title = curr_guidance_title.iconText()
+        # curr_guidance_title is a QAction, so need to first access its menu and then can access its sub-actions
+        curr_details = curr_guidance_title.menu().actions()[0].iconText() # always only 1 sub-action here, for details of guidance entry
+
+        assert (curr_title == alarm_item.guidance[i]["title"]) 
+        assert (curr_details == alarm_item.guidance[i]["details"])
 
     # Check that creating a menu from a non-leaf node works too
     parent_item = AlarmItem("PV:GROUP:NAME", "/path/to/PV:GROUP:NAME", AlarmSeverity.OK)

@@ -79,7 +79,7 @@ To see the display working, first ensure that the following two environment vari
 alarm topic to monitor, as well as the location of the kafka cluster. For this demo:
 
 ```
-export PYDM_KAFKA_ALARM_TOPIC=Demo
+export PYDM_KAFKA_ALARM_TOPICS=Demo
 export PYDM_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 ```
 
