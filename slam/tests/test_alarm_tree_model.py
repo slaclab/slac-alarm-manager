@@ -1,6 +1,7 @@
 from ..alarm_item import AlarmItem, AlarmSeverity
 from operator import attrgetter
-
+import sys
+from io import StringIO
 
 def test_clear(tree_model, alarm_item):
     """A quick check that clear is removing data as expected."""
@@ -145,3 +146,42 @@ def test_remove_item(tree_model):
 
     assert len(tree_model.nodes) == 0
     assert len(tree_model.added_paths) == 0
+
+
+def test_annunciation(tree_model):
+    """ Test making an update to an item that has already been placed in the alarm tree """
+    alarm_item = AlarmItem('TEST:PV', path='/path/to/TEST:PV', alarm_severity=AlarmSeverity.OK,
+                           alarm_status='OK', pv_severity=AlarmSeverity.OK, annunciating=True)
+
+    tree_model.nodes.append(alarm_item)
+    tree_model.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
+
+    # Create a StringIO object to capture stdout
+    stdout_capture = StringIO()
+
+    tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'STATE_ALARM', None, 'FAULT',
+                           AlarmSeverity.MINOR, 'alarm_status')
+    
+    captured_output = stdout_capture.getvalue()
+    print ("!!captured output: ", captured_output)
+    # or test that noise was played somehow?
+    assert 0 == 1
+    # Verify the update applied successfully
+    assert tree_model.nodes[0].name == 'TEST:PV'
+    assert tree_model.nodes[0].alarm_severity == AlarmSeverity.MINOR
+    assert tree_model.nodes[0].alarm_status == 'alarm'
+    assert tree_model.nodes[0].alarm_value == 'FAULT'
+    assert tree_model.nodes[0].pv_severity == AlarmSeverity.MINOR
+    assert tree_model.nodes[0].pv_status == 'alarm_status'
+
+    # Send a disable update message, verify the alarm gets marked filtered
+    tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'Disabled', None, 'FAULT',
+                           AlarmSeverity.MINOR, 'alarm_status')
+    assert tree_model.nodes[0].filtered
+
+    # And then send a message re-enabling the alarm and verify it is marked enabled again
+    tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'OK', None, 'FAULT',
+                           AlarmSeverity.MINOR, 'alarm_status')
+    assert not tree_model.nodes[0].filtered
+
+    stdout_capture.close()
