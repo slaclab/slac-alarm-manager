@@ -57,13 +57,13 @@ class AlarmTreeViewWidget(QWidget):
         self.tree_view.doubleClicked.connect(self.create_alarm_configuration_widget)
 
         self.context_menu = QMenu(self)
-        self.acknowledge_action = QAction('Acknowledge')
-        self.unacknowledge_action = QAction('Unacknowledge')
-        self.copy_action = QAction('Copy PV To Clipboard')
-        self.plot_action = QAction('Draw Plot')
-        self.enable_action = QAction('Enable')
-        self.disable_action = QAction('Disable')
-        self.guidance_menu = QMenu('Guidance')
+        self.acknowledge_action = QAction("Acknowledge")
+        self.unacknowledge_action = QAction("Unacknowledge")
+        self.copy_action = QAction("Copy PV To Clipboard")
+        self.plot_action = QAction("Draw Plot")
+        self.enable_action = QAction("Enable")
+        self.disable_action = QAction("Disable")
+        self.guidance_menu = QMenu("Guidance")
         self.display_actions = []
         self.guidance_objects = []
 
@@ -131,7 +131,7 @@ class AlarmTreeViewWidget(QWidget):
             self.context_menu.addAction(self.enable_action)
             self.context_menu.addAction(self.disable_action)
             self.context_menu.addMenu(self.guidance_menu)
-    
+
             # Make the entires from the config-page appear when alarm in tree is right-clicked
             indices = self.tree_view.selectedIndexes()
             alarm_item = self.treeModel.getItem(indices[0])
@@ -143,12 +143,12 @@ class AlarmTreeViewWidget(QWidget):
                 for index, guidance_item in enumerate(alarm_item.guidance):
                     has_guidance = True
                     guidance_count += 1
- 
-                    curr_title = guidance_item['title']
+
+                    curr_title = guidance_item["title"]
                     # sometimes people don't add titles to their guidance notes
                     if curr_title == "":
                         curr_title = "Guidance #" + str(guidance_count)
-                    curr_details = guidance_item['details']
+                    curr_details = guidance_item["details"]
 
                     title_menu = QMenu(curr_title)
                     self.detail_action = QAction(curr_details)

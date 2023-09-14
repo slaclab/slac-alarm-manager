@@ -5,9 +5,9 @@ curr_dir = Path(__file__).parent
 long_description = (curr_dir / "README.md").read_text()
 
 setup(
-    name='slac-alarm-manager',
-    version='1.2.2',
-    description='Python interface for managing alarms',
+    name="slac-alarm-manager",
+    version="1.2.2",
+    description="Python interface for managing alarms",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="SLAC National Accelerator Laboratory",

@@ -66,21 +66,24 @@ def test_update_tables(qtbot, main_window, tree_model, mock_kafka_producer):
     active_alarm.filtered = True
     active_alarm.alarm_filter = "ACTIVE:ALARM == 1"
 
-    main_window.update_table('TEST', 'ACTIVE:ALARM', '', AlarmSeverity.MAJOR, 'Disabled',
-                             None, '', AlarmSeverity.MAJOR, '') 
-    main_window.update_table('TEST', 'ACTIVE:ALARM', '', AlarmSeverity.MAJOR, 'Enabled',
-                             None, '', AlarmSeverity.MAJOR, '') 
-    
-    assert active_alarm.filtered == True
+    main_window.update_table(
+        "TEST", "ACTIVE:ALARM", "", AlarmSeverity.MAJOR, "Disabled", None, "", AlarmSeverity.MAJOR, ""
+    )
+    main_window.update_table(
+        "TEST", "ACTIVE:ALARM", "", AlarmSeverity.MAJOR, "Enabled", None, "", AlarmSeverity.MAJOR, ""
+    )
+
+    assert active_alarm.filtered is True
     assert active_alarm.alarm_filter == "ACTIVE:ALARM == 1"
-    
+
     active_alarm.filtered = False
     active_alarm.alarm_filter = ""
-        
+
     # Now send a "disabled" update for the active alarm. This means the user has disabled this
     # alarm and it should no longer be monitored.
-    main_window.update_table('TEST', 'ACTIVE:ALARM', '', AlarmSeverity.MAJOR, 'Disabled',
-                             None, '', AlarmSeverity.MAJOR, '') 
+    main_window.update_table(
+        "TEST", "ACTIVE:ALARM", "", AlarmSeverity.MAJOR, "Disabled", None, "", AlarmSeverity.MAJOR, ""
+    )
 
     assert len(main_window.active_alarm_tables["TEST"].alarmModel.alarm_items) == 0  # Remove as expected
     assert len(main_window.acknowledged_alarm_tables["TEST"].alarmModel.alarm_items) == 1  # Unaffected
