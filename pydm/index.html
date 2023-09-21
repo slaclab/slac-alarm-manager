@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.2.5">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.3.2">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.0e669242.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.30068a00.min.css">
       
       
 
@@ -418,7 +418,7 @@ to receive and display data.</p>
 will cause PyDM to automatically discover this data plugin and allow the user to build displays that include
 data from the alarm system.</p>
 <h2 id="what-are-summary-alarms">What Are Summary Alarms?</h2>
-<p>Since PyDM already includes built-in support for fetching and displaying the alarm status of individual PVs, the 
+<p>Since PyDM already includes built-in support for fetching and displaying the alarm status of individual PVs, the
 main benefit of this new plugin is for the display of summary alarms. A summary alarm is one which comprises a
 number of underlying PVs or (other summary alarms). As an example, let's take an alarm hierarchy that looks like this:</p>
 <p><img alt="Alarm Hierarchy" src="../img/demo-structure.png" /></p>
@@ -465,7 +465,7 @@ highest severity among its components.</p>
 identifying each summary alarm or PV being represented:</p>
 <p><img alt="Basic Display" src="../img/demo-display.png" /></p>
 <p>Next we'll connect each to a channel. The new <code>nalms://</code> protocol has been added as a way to communicate with the alarm
-system. Using this protocol is required for the summary alarms as there is no actual IOC backing any of them. But as 
+system. Using this protocol is required for the summary alarms as there is no actual IOC backing any of them. But as
 shown in this demo, using either regular channel access or <code>nalms://</code> is fine when dealing with individual PVs:</p>
 <p><img alt="nalms protocol" src="../img/nalms-protocol.gif" /></p>
 <h2 id="running-the-display">Running the Display</h2>
@@ -522,7 +522,7 @@ of a system. And it is also possible to have the same PV as part of multiple sum
     <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.dfff1995.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.78eede0e.min.js"></script>
+      <script src="../assets/javascripts/bundle.dff1b7c8.min.js"></script>
       
     
   </body>
