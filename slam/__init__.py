@@ -1,1 +1,1 @@
-from .main_window import AlarmHandlerMainWindow
+from .main_window import AlarmHandlerMainWindow  # noqa F401

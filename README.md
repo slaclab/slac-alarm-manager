@@ -3,7 +3,7 @@
 ## SLAC Alarm Manger
 
 A user interface for monitoring and managing alarms written in Python. It is a frontend display for [NALMS](https://github.com/slaclab/nalms) and
-requires a running NALMS deployment to interact with. Specifically it will consume messages from the kafka queue in order to put 
+requires a running NALMS deployment to interact with. Specifically it will consume messages from the kafka queue in order to put
 together the alarm tree hierarchy, and then continue to read updates to alarm severity in order to display them in the tree
 and table views.
 
@@ -39,4 +39,3 @@ a new commit is made to main.
 ## User Documentation
 
 https://slaclab.github.io/slac-alarm-manager/
-

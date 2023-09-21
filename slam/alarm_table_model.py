@@ -21,25 +21,41 @@ class AlarmItemsTableModel(QAbstractTableModel):
     def __init__(self, parent: Optional[QObject] = None):
         super(QAbstractTableModel, self).__init__(parent=parent)
         self.alarm_items = OrderedDict()  # Key (str) to data
-        self.column_names = ('PV', 'Latched Severity', 'Current Severity', 'Description', 'Time', 'Value',
-                             'Latched Status', 'Current Status')
-        self.column_to_attr = {0: 'name', 1: 'alarm_severity', 2: 'pv_severity', 3: 'description', 4: 'alarm_time',
-                               5: 'alarm_value', 6: 'alarm_status', 7: 'pv_status'}
+        self.column_names = (
+            "PV",
+            "Latched Severity",
+            "Current Severity",
+            "Description",
+            "Time",
+            "Value",
+            "Latched Status",
+            "Current Status",
+        )
+        self.column_to_attr = {
+            0: "name",
+            1: "alarm_severity",
+            2: "pv_severity",
+            3: "description",
+            4: "alarm_time",
+            5: "alarm_value",
+            6: "alarm_status",
+            7: "pv_status",
+        }
 
     def rowCount(self, parent) -> int:
-        """ Return the row count of the table """
+        """Return the row count of the table"""
         if parent is not None and parent.isValid():
             return 0
         return len(self.alarm_items)
 
     def columnCount(self, parent) -> int:
-        """ Return the column count of the table """
+        """Return the column count of the table"""
         if parent is not None and parent.isValid():
             return 0
         return len(self.column_names)
 
     def data(self, index: QModelIndex, role: int):
-        """ Return the data for the associated role. Currently only supporting DisplayRole and BackgroundRole. """
+        """Return the data for the associated role. Currently only supporting DisplayRole and BackgroundRole."""
         if not index.isValid():
             return QVariant()
 
@@ -52,28 +68,28 @@ class AlarmItemsTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return self.getData(column_name, alarm_item)
         elif role == Qt.TextColorRole:
-            if column_name == 'Latched Severity':
+            if column_name == "Latched Severity":
                 return alarm_item.display_color(alarm_item.alarm_severity)
-            if column_name == 'Current Severity':
+            if column_name == "Current Severity":
                 return alarm_item.display_color(alarm_item.pv_severity)
 
     def getData(self, column_name: str, alarm_item: AlarmItem):
-        """ Get the data from the input alarm item based on the column name """
-        if column_name == 'PV':
+        """Get the data from the input alarm item based on the column name"""
+        if column_name == "PV":
             return alarm_item.name
-        elif column_name == 'Latched Severity':
+        elif column_name == "Latched Severity":
             return alarm_item.alarm_severity.value
-        elif column_name == 'Latched Status':
+        elif column_name == "Latched Status":
             return alarm_item.alarm_status
-        elif column_name == 'Description':
+        elif column_name == "Description":
             return alarm_item.description
-        elif column_name == 'Time':
+        elif column_name == "Time":
             return str(alarm_item.alarm_time)
-        elif column_name == 'Value':
+        elif column_name == "Value":
             return alarm_item.alarm_value
-        elif column_name == 'Current Severity':
+        elif column_name == "Current Severity":
             return alarm_item.pv_severity.value
-        elif column_name == 'Current Status':
+        elif column_name == "Current Status":
             return alarm_item.pv_status
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -83,43 +99,67 @@ class AlarmItemsTableModel(QAbstractTableModel):
         return str(self.column_names[section])
 
     def append(self, alarm_item: AlarmItem) -> None:
-        """ Appends a row to this table with data as given by the input alarm item """
+        """Appends a row to this table with data as given by the input alarm item"""
         if alarm_item.alarm_severity == AlarmSeverity.OK:
             return  # Don't want to add unnecessary items to the table
         if alarm_item.name in self.alarm_items:
-            logger.warning(f'Attempting to append a row to the alarm table which is already there: {alarm_item.name}')
+            logger.warning(f"Attempting to append a row to the alarm table which is already there: {alarm_item.name}")
             return
         self.layoutAboutToBeChanged.emit()
         self.alarm_items[alarm_item.name] = alarm_item
         self.layoutChanged.emit()
 
     def remove_row(self, alarm_name: str):
-        """ Removes the row associated with the input name from this table """
+        """Removes the row associated with the input name from this table"""
         if alarm_name not in self.alarm_items:
             return
-        index_to_remove = list(self.alarm_items.keys()).index(alarm_name)
+        list(self.alarm_items.keys()).index(alarm_name)
         self.layoutAboutToBeChanged.emit()
         del self.alarm_items[alarm_name]
         self.layoutChanged.emit()
 
     def sort(self, col: int, order=Qt.AscendingOrder):
-        """ Sort the table by the input column """
+        """Sort the table by the input column"""
         self.layoutAboutToBeChanged.emit()
-        self.alarm_items = OrderedDict(sorted(self.alarm_items.items(),
-                                              key=lambda alarm_item: getattr(alarm_item[1], self.column_to_attr[col]),
-                                              reverse=order == Qt.DescendingOrder))
+        self.alarm_items = OrderedDict(
+            sorted(
+                self.alarm_items.items(),
+                key=lambda alarm_item: getattr(alarm_item[1], self.column_to_attr[col]),
+                reverse=order == Qt.DescendingOrder,
+            )
+        )
         self.layoutChanged.emit()
 
-    def update_row(self, name: str, path: str, severity: AlarmSeverity, status: str, time,
-                   value: str, pv_severity: AlarmSeverity, pv_status: str, description: str):
-        """ Update a row in the alarm table based on the input name. If that name does not yet exist, a row will
-            be created for it. If it does exist, update the values of the row accordingly. """
+    def update_row(
+        self,
+        name: str,
+        path: str,
+        severity: AlarmSeverity,
+        status: str,
+        time,
+        value: str,
+        pv_severity: AlarmSeverity,
+        pv_status: str,
+        description: str,
+    ):
+        """Update a row in the alarm table based on the input name. If that name does not yet exist, a row will
+        be created for it. If it does exist, update the values of the row accordingly."""
 
         if name not in self.alarm_items:
             # This item does not yet exist in the table, so create it and return
-            self.append(AlarmItem(name=name, path=path, alarm_severity=severity, alarm_status=status,
-                                  alarm_time=time, alarm_value=value, pv_severity=pv_severity,
-                                  pv_status=pv_status, description=description))
+            self.append(
+                AlarmItem(
+                    name=name,
+                    path=path,
+                    alarm_severity=severity,
+                    alarm_status=status,
+                    alarm_time=time,
+                    alarm_value=value,
+                    pv_severity=pv_severity,
+                    pv_status=pv_status,
+                    description=description,
+                )
+            )
             return
 
         # Otherwise update the row with the newly received data

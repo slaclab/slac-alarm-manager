@@ -16,18 +16,19 @@ class AlarmSeverity(enum.Enum):
     An enum for the values that an alarm severity can take on. Not inheriting from str so we can do alarm logic
     based comparisons rather than string ones.
     """
-    OK = 'OK'
-    MINOR_ACK = 'MINOR_ACK'
-    MAJOR_ACK = 'MAJOR_ACK'
-    INVALID_ACK = 'INVALID_ACK'
-    UNDEFINED_ACK = 'UNDEFINED_ACK'
-    MINOR = 'MINOR'
-    MAJOR = 'MAJOR'
-    INVALID = 'INVALID'
-    UNDEFINED = 'UNDEFINED'
+
+    OK = "OK"
+    MINOR_ACK = "MINOR_ACK"
+    MAJOR_ACK = "MAJOR_ACK"
+    INVALID_ACK = "INVALID_ACK"
+    UNDEFINED_ACK = "UNDEFINED_ACK"
+    MINOR = "MINOR"
+    MAJOR = "MAJOR"
+    INVALID = "INVALID"
+    UNDEFINED = "UNDEFINED"
 
     def __lt__(self, other):
-        """ The order in which they are defined is in order of increasing severity for display """
+        """The order in which they are defined is in order of increasing severity for display"""
         if self.__class__ is other.__class__:
             values = [e for e in AlarmSeverity]
             return values.index(self) < values.index(other)
@@ -78,25 +79,28 @@ class AlarmItem(QObject):
     alarm_filter : str, optional
         An expression that allows an alarm to enable based on a different PV
     """
-    def __init__(self,
-                 name: str,
-                 path: Optional[str] = None,
-                 alarm_severity: Optional[AlarmSeverity] = None,
-                 alarm_status: Optional[str] = None,
-                 alarm_time: Optional[datetime] = None,
-                 alarm_value: Optional[str] = None,
-                 pv_severity: Optional[AlarmSeverity] = None,
-                 pv_status: Optional[str] = None,
-                 description: Optional[str] = None,
-                 guidance: Optional[List[Dict]] = None,
-                 displays: Optional[List[Dict]] = None,
-                 commands: Optional[List[Dict]] = None,
-                 enabled: Optional[Union[bool, str]] = True,
-                 filtered: Optional[bool] = False,
-                 latching: Optional[bool] = False,
-                 annunciating: Optional[bool] = False,
-                 delay: Optional[int] = None,
-                 alarm_filter: Optional[str] = None):
+
+    def __init__(
+        self,
+        name: str,
+        path: Optional[str] = None,
+        alarm_severity: Optional[AlarmSeverity] = None,
+        alarm_status: Optional[str] = None,
+        alarm_time: Optional[datetime] = None,
+        alarm_value: Optional[str] = None,
+        pv_severity: Optional[AlarmSeverity] = None,
+        pv_status: Optional[str] = None,
+        description: Optional[str] = None,
+        guidance: Optional[List[Dict]] = None,
+        displays: Optional[List[Dict]] = None,
+        commands: Optional[List[Dict]] = None,
+        enabled: Optional[Union[bool, str]] = True,
+        filtered: Optional[bool] = False,
+        latching: Optional[bool] = False,
+        annunciating: Optional[bool] = False,
+        delay: Optional[int] = None,
+        alarm_filter: Optional[str] = None,
+    ):
         super().__init__()
         self.name = name
         self.path = path
@@ -128,32 +132,40 @@ class AlarmItem(QObject):
         self.alarm_filter = alarm_filter
 
     def is_leaf(self) -> bool:
-        """ Return whether or not this alarm is associated with a leaf node in its configured hierarchy """
+        """Return whether or not this alarm is associated with a leaf node in its configured hierarchy"""
         return len(self.child_items) == 0
 
     def is_enabled(self) -> bool:
-        """ A convenience method for checking the enabled state of the alarm """
+        """A convenience method for checking the enabled state of the alarm"""
         if self.filtered:
             return False
-        if type(self.enabled) is bool:
+        if isinstance(self.enabled, bool):
             return self.enabled
-        elif type(self.enabled) is str:
+        elif isinstance(self.enabled, str):
             if self.enabled:
                 return False  # A non-empty string means a bypass until date has been set, so it is disabled
             else:
                 return True
         else:
-            logger.error(f'Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}')
+            logger.error(f"Enabled status for alarm: {self.path} is set to a bad value: {self.enabled}")
 
     def is_acknowledged(self) -> bool:
-        """ A convenience method for returning whether or not this item has been acknolwedged """
-        return self.alarm_severity in (AlarmSeverity.MINOR_ACK, AlarmSeverity.MAJOR_ACK,
-                                       AlarmSeverity.INVALID_ACK, AlarmSeverity.UNDEFINED_ACK)
+        """A convenience method for returning whether or not this item has been acknolwedged"""
+        return self.alarm_severity in (
+            AlarmSeverity.MINOR_ACK,
+            AlarmSeverity.MAJOR_ACK,
+            AlarmSeverity.INVALID_ACK,
+            AlarmSeverity.UNDEFINED_ACK,
+        )
 
     def is_in_active_alarm_state(self) -> bool:
-        """ A convenience method for returning whether or not this item is actively in an alarm state """
-        return self.alarm_severity in (AlarmSeverity.MINOR, AlarmSeverity.MAJOR,
-                                       AlarmSeverity.INVALID, AlarmSeverity.UNDEFINED)
+        """A convenience method for returning whether or not this item is actively in an alarm state"""
+        return self.alarm_severity in (
+            AlarmSeverity.MINOR,
+            AlarmSeverity.MAJOR,
+            AlarmSeverity.INVALID,
+            AlarmSeverity.UNDEFINED,
+        )
 
     def display_color(self, severity) -> QBrush:
         """
@@ -186,41 +198,51 @@ class AlarmItem(QObject):
             return QBrush(Qt.darkMagenta)
 
     def append_child(self, item: AlarmItem) -> None:
-        """ Add the input item as a child node for this alarm item """
+        """Add the input item as a child node for this alarm item"""
         self.child_items.append(item)
 
     def assign_parent(self, parent: AlarmItem) -> None:
-        """ Sets the input item as the parent of this alarm item """
+        """Sets the input item as the parent of this alarm item"""
         self.parent_item = parent
 
     def child(self, row: int) -> AlarmItem:
-        """ Returns the child item at the input row, or None if nothing exists there """
+        """Returns the child item at the input row, or None if nothing exists there"""
         if row < 0 or row >= len(self.child_items):
             return None
         return self.child_items[row]
 
     def child_count(self) -> int:
-        """ Return the number of children this item has """
+        """Return the number of children this item has"""
         return len(self.child_items)
 
     def row(self) -> int:
-        """ Return the row of this item relative to its parent, or zero if it has no parent """
+        """Return the row of this item relative to its parent, or zero if it has no parent"""
         if self.parent_item:
             return self.parent_item.child_items.index(self)
         return 0
 
     def column_count(self) -> int:
-        """ Return the column count of this item """
+        """Return the column count of this item"""
         return 1
 
     def to_config_dict(self) -> Dict[str, any]:
-        """ Dump the current values of the alarm item into a dict that can be sent as a kafka alarm config message """
-        return {'description': self.description, 'guidance': self.guidance, 'displays': self.displays,
-                'commands': self.commands, 'enabled': self.enabled, 'latching': self.latching,
-                'annunciating' : self.annunciating, 'delta': self.delay, 'filter': self.alarm_filter}
+        """Dump the current values of the alarm item into a dict that can be sent as a kafka alarm config message"""
+        return {
+            "description": self.description,
+            "guidance": self.guidance,
+            "displays": self.displays,
+            "commands": self.commands,
+            "enabled": self.enabled,
+            "latching": self.latching,
+            "annunciating": self.annunciating,
+            "delta": self.delay,
+            "filter": self.alarm_filter,
+        }
 
     def __repr__(self) -> str:
-        return f'AlarmItem("{self.name}", {repr(self.path)}, {str(self.alarm_severity)}, {repr(self.alarm_status)}, '\
-               f'{repr(self.alarm_time)}, {repr(self.alarm_value)}, {str(self.pv_severity)}, {repr(self.pv_status)}, '\
-               f'{repr(self.description)}, {repr(self.guidance)}, {repr(self.displays)}, {repr(self.commands)}, '\
-               f'{self.enabled}, {self.filtered}, {self.latching}, {self.annunciating}, {self.delay}, {repr(self.alarm_filter)})'
+        return (
+            f'AlarmItem("{self.name}", {repr(self.path)}, {str(self.alarm_severity)}, {repr(self.alarm_status)}, '
+            f"{repr(self.alarm_time)}, {repr(self.alarm_value)}, {str(self.pv_severity)}, {repr(self.pv_status)}, "
+            f"{repr(self.description)}, {repr(self.guidance)}, {repr(self.displays)}, {repr(self.commands)}, "
+            f"{self.enabled}, {self.filtered}, {self.latching}, {self.annunciating}, {self.delay}, {repr(self.alarm_filter)})"  # noqa 501
+        )

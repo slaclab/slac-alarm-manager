@@ -12,16 +12,18 @@ from typing import Optional
 
 
 logger = logging.getLogger(__name__)
-kafka_logger = logging.getLogger('kafka')
-kafka_logger.setLevel('WARNING')  # Anything less results in too much noise
+kafka_logger = logging.getLogger("kafka")
+kafka_logger.setLevel("WARNING")  # Anything less results in too much noise
 
 
 class Connection(PyDMConnection):
     """
     A PyDMConnection for sending alarm severity signals to all listeners which have been registered with it.
     """
-    def __init__(self, channel: PyDMChannel, address: str, protocol: Optional[str] = None,
-                 parent: Optional[QObject] = None):
+
+    def __init__(
+        self, channel: PyDMChannel, address: str, protocol: Optional[str] = None, parent: Optional[QObject] = None
+    ):
         super().__init__(channel, address, protocol, parent)
         self.add_listener(channel)
         self.current_severity = AlarmSeverity.OK
@@ -62,27 +64,30 @@ class AlarmPlugin(PyDMPlugin):
     Manages the data flow between the kafka queue for alarm data and the PyDM display widgets. Currently this is
     read-only as no write actions can be taken from PyDM widgets for now.
     """
+
     protocol = "nalms"
     connection_class = Connection
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        kafka_topics = os.getenv('PYDM_KAFKA_ALARM_TOPICS')
-        kafka_bootstrap_servers = os.getenv('PYDM_KAFKA_BOOTSTRAP_SERVERS')
+        kafka_topics = os.getenv("PYDM_KAFKA_ALARM_TOPICS")
+        kafka_bootstrap_servers = os.getenv("PYDM_KAFKA_BOOTSTRAP_SERVERS")
         if not kafka_topics:
-            logger.debug('Could not initialize alarm data plugin, at least one topic must be specified in the '
-                         'PYDM_KAFKA_ALARM_TOPICS environment variable')
+            logger.debug(
+                "Could not initialize alarm data plugin, at least one topic must be specified in the "
+                "PYDM_KAFKA_ALARM_TOPICS environment variable"
+            )
             return
         if not kafka_bootstrap_servers:
-            logger.debug('Could not initialize alarm data plugin, kafka bootstrap server location must be '
-                         'specified in the PYDM_KAFKA_BOOTSTRAP_SERVERS environment variable')
+            logger.debug(
+                "Could not initialize alarm data plugin, kafka bootstrap server location must be "
+                "specified in the PYDM_KAFKA_BOOTSTRAP_SERVERS environment variable"
+            )
             return
 
         self.alarm_severities = dict()  # Mapping from alarm name to current alarm severity
-        self.kafka_topics = kafka_topics.split(',')
-        self.kafka_reader = KafkaReader(self.kafka_topics,
-                                        kafka_bootstrap_servers.split(','),
-                                        self.process_message)
+        self.kafka_topics = kafka_topics.split(",")
+        self.kafka_reader = KafkaReader(self.kafka_topics, kafka_bootstrap_servers.split(","), self.process_message)
         self.processing_thread = QThread()
         self.kafka_reader.moveToThread(self.processing_thread)
         self.processing_thread.started.connect(self.kafka_reader.run)
@@ -118,13 +123,13 @@ class AlarmPlugin(PyDMPlugin):
         message : ConsumerRecord
             A message received from the kafka queue indicating a new message for the topic we are listening to
         """
-        if message.key.startswith('state') and message.value is not None and 'severity' in message.value:
+        if message.key.startswith("state") and message.value is not None and "severity" in message.value:
             # Start from [6:] to skip over the "state:" part of the key.
             # An example key could look something like: state:/top-level-system/sub-system/sub-component/PV:NAME
             alarm_path = message.key[6:]
-            alarm_name = alarm_path.split('/')[-1]
+            alarm_name = alarm_path.split("/")[-1]
             if alarm_name not in self.kafka_topics:
-                current_severity = AlarmSeverity(message.value['severity'])
+                current_severity = AlarmSeverity(message.value["severity"])
                 self.alarm_severities[alarm_name] = current_severity
                 if alarm_name in self.connections:
                     self.connections[alarm_name].send_alarm_data(current_severity)

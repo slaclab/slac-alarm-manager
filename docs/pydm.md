@@ -10,7 +10,7 @@ data from the alarm system.
 
 ## What Are Summary Alarms?
 
-Since PyDM already includes built-in support for fetching and displaying the alarm status of individual PVs, the 
+Since PyDM already includes built-in support for fetching and displaying the alarm status of individual PVs, the
 main benefit of this new plugin is for the display of summary alarms. A summary alarm is one which comprises a
 number of underlying PVs or (other summary alarms). As an example, let's take an alarm hierarchy that looks like this:
 
@@ -67,7 +67,7 @@ identifying each summary alarm or PV being represented:
 ![Basic Display](img/demo-display.png)
 
 Next we'll connect each to a channel. The new `nalms://` protocol has been added as a way to communicate with the alarm
-system. Using this protocol is required for the summary alarms as there is no actual IOC backing any of them. But as 
+system. Using this protocol is required for the summary alarms as there is no actual IOC backing any of them. But as
 shown in this demo, using either regular channel access or `nalms://` is fine when dealing with individual PVs:
 
 ![nalms protocol](img/nalms-protocol.gif)
