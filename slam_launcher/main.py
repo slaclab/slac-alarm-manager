@@ -7,15 +7,18 @@ from slam import AlarmHandlerMainWindow, permissions
 
 
 def main():
-
     parser = argparse.ArgumentParser(description="SLAC Alarm Manager")
-    parser.add_argument('--topics', help='Comma separated list of kafka alarm topics to listen to')
-    parser.add_argument('--bootstrap-servers',
-                        default='localhost:9092',
-                        help='Comma separated list of urls for one or more kafka boostrap servers')
-    parser.add_argument('--user-permissions', default='admin', help='One of read-only, operator, admin')
-    parser.add_argument('--log', default='warning', help='Logging level. debug, info, warning, error, critical')
-    parser.add_argument('--annunciate', action='store_true', help='Enable beep from alarms that have annunciate setting enabled') # default=False
+    parser.add_argument("--topics", help="Comma separated list of kafka alarm topics to listen to")
+    parser.add_argument(
+        "--bootstrap-servers",
+        default="localhost:9092",
+        help="Comma separated list of urls for one or more kafka boostrap servers",
+    )
+    parser.add_argument("--user-permissions", default="admin", help="One of read-only, operator, admin")
+    parser.add_argument("--log", default="warning", help="Logging level. debug, info, warning, error, critical")
+    parser.add_argument(
+        "--annunciate", action="store_true", help="Enable beep from alarms that have annunciate setting enabled"
+    )  # default=False
 
     app_args = parser.parse_args()
 

@@ -54,8 +54,15 @@ class AlarmTableViewWidget(QWidget):
 
     plot_signal = Signal(str)
 
-    def __init__(self, tree_model: AlarmItemsTreeModel, kafka_producer: KafkaProducer,
-                 topic: str, table_type: AlarmTableType, plot_slot: Callable, annunciate: bool = False):
+    def __init__(
+        self,
+        tree_model: AlarmItemsTreeModel,
+        kafka_producer: KafkaProducer,
+        topic: str,
+        table_type: AlarmTableType,
+        plot_slot: Callable,
+        annunciate: bool = False,
+    ):
         super().__init__()
         self.resize(1035, 600)
 

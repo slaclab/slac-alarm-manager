@@ -180,8 +180,13 @@ class AlarmTreeViewWidget(QWidget):
     def create_alarm_configuration_widget(self, index: QModelIndex) -> None:
         """Create and display the alarm configuration widget for the alarm item with the input index"""
         alarm_item = self.treeModel.getItem(index)
-        alarm_config_window = AlarmConfigurationWidget(alarm_item=alarm_item, kafka_producer=self.kafka_producer,
-                                                       topic=self.topic, parent=self, annunciate=self.annunciate)
+        alarm_config_window = AlarmConfigurationWidget(
+            alarm_item=alarm_item,
+            kafka_producer=self.kafka_producer,
+            topic=self.topic,
+            parent=self,
+            annunciate=self.annunciate,
+        )
         alarm_config_window.show()
 
     def copy_to_clipboard(self) -> None:

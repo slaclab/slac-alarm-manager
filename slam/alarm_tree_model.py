@@ -165,10 +165,10 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 item_to_update.filtered = True
             elif item_to_update.filtered:
                 item_to_update.filtered = False
-            if (status != "OK" and status != "Disabled" ) and item_to_update.annunciating:
+            if (status != "OK" and status != "Disabled") and item_to_update.annunciating:
                 # prints bell character, cross platform way to generate "beep" noise,
                 # could be replaced with call to audio library for more sound options
-                print ('\a')
+                print("\a")
 
         self.layoutChanged.emit()
 

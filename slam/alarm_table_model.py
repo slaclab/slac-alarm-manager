@@ -147,9 +147,19 @@ class AlarmItemsTableModel(QAbstractTableModel):
 
         if name not in self.alarm_items:
             # This item does not yet exist in the table, so create it and return
-            self.append(AlarmItem(name=name, path=path, alarm_severity=severity, alarm_status=status,
-                                  alarm_time=time, alarm_value=value, pv_severity=pv_severity,
-                                  pv_status=pv_status, description=description))
+            self.append(
+                AlarmItem(
+                    name=name,
+                    path=path,
+                    alarm_severity=severity,
+                    alarm_status=status,
+                    alarm_time=time,
+                    alarm_value=value,
+                    pv_severity=pv_severity,
+                    pv_status=pv_status,
+                    description=description,
+                )
+            )
             return
 
         # Otherwise update the row with the newly received data

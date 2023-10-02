@@ -39,8 +39,14 @@ class AlarmConfigurationWidget(QDialog):
         The parent of this widget
     """
 
-    def __init__(self, alarm_item: AlarmItem, kafka_producer: KafkaProducer,
-                 topic: str, annunciate: bool = False, parent: Optional[QObject] = None,):
+    def __init__(
+        self,
+        alarm_item: AlarmItem,
+        kafka_producer: KafkaProducer,
+        topic: str,
+        annunciate: bool = False,
+        parent: Optional[QObject] = None,
+    ):
         super().__init__(parent=parent)
         self.alarm_item = alarm_item
         self.kafka_producer = kafka_producer
@@ -57,10 +63,10 @@ class AlarmConfigurationWidget(QDialog):
         self.cant_edit_label = QLabel("Warning: Cannot edit - requires alarm admin privileges")
         self.cant_edit_label.setStyleSheet("background-color: orange")
 
-        self.behavior_label = QLabel('Behavior:')
-        self.enabled_checkbox = QCheckBox('Enabled')
-        self.latch_checkbox = QCheckBox('Latched')
-        self.annunciate_checkbox = QCheckBox('Annunciate')
+        self.behavior_label = QLabel("Behavior:")
+        self.enabled_checkbox = QCheckBox("Enabled")
+        self.latch_checkbox = QCheckBox("Latched")
+        self.annunciate_checkbox = QCheckBox("Annunciate")
         self.annunciate_checkbox.setEnabled(annunciate)
 
         self.disable_date_label = QLabel("Disable Until:")

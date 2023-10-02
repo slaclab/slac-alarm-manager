@@ -3,6 +3,7 @@ from operator import attrgetter
 import sys
 from io import StringIO
 
+
 def test_clear(tree_model, alarm_item):
     """A quick check that clear is removing data as expected."""
     tree_model.nodes.append(alarm_item)
@@ -149,20 +150,34 @@ def test_remove_item(tree_model):
 
 
 def test_annunciation(tree_model):
-    """ Test making an update to an item that has already been placed in the alarm tree """
-    alarm_item = AlarmItem('TEST:PV', path='/path/to/TEST:PV', alarm_severity=AlarmSeverity.OK,
-                           alarm_status='OK', pv_severity=AlarmSeverity.OK, annunciating=True)
+    """Test making an update to an item that has already been placed in the alarm tree"""
+    alarm_item = AlarmItem(
+        "TEST:PV",
+        path="/path/to/TEST:PV",
+        alarm_severity=AlarmSeverity.OK,
+        alarm_status="OK",
+        pv_severity=AlarmSeverity.OK,
+        annunciating=True,
+    )
 
     tree_model.nodes.append(alarm_item)
-    tree_model.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
+    tree_model.added_paths["TEST:PV"] = ["/path/to/TEST:PV"]
 
     stdout_buffer = StringIO()
     # redirect stdout to buffer
     sys.stdout = stdout_buffer
 
-    tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'STATE_ALARM', None, 'FAULT',
-                           AlarmSeverity.MINOR, 'alarm_status')
-    
+    tree_model.update_item(
+        "TEST:PV",
+        "/path/to/TEST:PV",
+        AlarmSeverity.MINOR,
+        "STATE_ALARM",
+        None,
+        "FAULT",
+        AlarmSeverity.MINOR,
+        "alarm_status",
+    )
+
     # restore original stdout stream
     sys.stdout = sys.__stdout__
 
@@ -170,19 +185,28 @@ def test_annunciation(tree_model):
     assert captured_output == "\x07\n"
 
     # Verify the update applied successfully
-    assert tree_model.nodes[0].name == 'TEST:PV'
+    assert tree_model.nodes[0].name == "TEST:PV"
     assert tree_model.nodes[0].alarm_severity == AlarmSeverity.MINOR
-    assert tree_model.nodes[0].alarm_status == 'alarm' or tree_model.nodes[0].alarm_status == 'STATE_ALARM'
-    assert tree_model.nodes[0].alarm_value == 'FAULT'
+    assert tree_model.nodes[0].alarm_status == "alarm" or tree_model.nodes[0].alarm_status == "STATE_ALARM"
+    assert tree_model.nodes[0].alarm_value == "FAULT"
     assert tree_model.nodes[0].pv_severity == AlarmSeverity.MINOR
-    assert tree_model.nodes[0].pv_status == 'alarm_status'
+    assert tree_model.nodes[0].pv_status == "alarm_status"
 
     # Send a disable update message, verify the alarm gets marked filtered
-    tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'Disabled', None, 'FAULT',
-                           AlarmSeverity.MINOR, 'alarm_status')
+    tree_model.update_item(
+        "TEST:PV",
+        "/path/to/TEST:PV",
+        AlarmSeverity.MINOR,
+        "Disabled",
+        None,
+        "FAULT",
+        AlarmSeverity.MINOR,
+        "alarm_status",
+    )
     assert tree_model.nodes[0].filtered
 
     # And then send a message re-enabling the alarm and verify it is marked enabled again
-    tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'OK', None, 'FAULT',
-                           AlarmSeverity.MINOR, 'alarm_status')
+    tree_model.update_item(
+        "TEST:PV", "/path/to/TEST:PV", AlarmSeverity.MINOR, "OK", None, "FAULT", AlarmSeverity.MINOR, "alarm_status"
+    )
     assert not tree_model.nodes[0].filtered
