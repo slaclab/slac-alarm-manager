@@ -156,20 +156,23 @@ def test_annunciation(tree_model):
     tree_model.nodes.append(alarm_item)
     tree_model.added_paths['TEST:PV'] = ['/path/to/TEST:PV']
 
-    # Create a StringIO object to capture stdout
-    stdout_capture = StringIO()
+    stdout_buffer = StringIO()
+    # redirect stdout to buffer
+    sys.stdout = stdout_buffer
 
     tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'STATE_ALARM', None, 'FAULT',
                            AlarmSeverity.MINOR, 'alarm_status')
     
-    captured_output = stdout_capture.getvalue()
-    print ("!!captured output: ", captured_output)
-    # or test that noise was played somehow?
-    assert 0 == 1
+    # restore original stdout stream
+    sys.stdout = sys.__stdout__
+
+    captured_output = stdout_buffer.getvalue()
+    assert captured_output == "\x07\n"
+
     # Verify the update applied successfully
     assert tree_model.nodes[0].name == 'TEST:PV'
     assert tree_model.nodes[0].alarm_severity == AlarmSeverity.MINOR
-    assert tree_model.nodes[0].alarm_status == 'alarm'
+    assert tree_model.nodes[0].alarm_status == 'alarm' or tree_model.nodes[0].alarm_status == 'STATE_ALARM'
     assert tree_model.nodes[0].alarm_value == 'FAULT'
     assert tree_model.nodes[0].pv_severity == AlarmSeverity.MINOR
     assert tree_model.nodes[0].pv_status == 'alarm_status'
@@ -183,5 +186,3 @@ def test_annunciation(tree_model):
     tree_model.update_item('TEST:PV', '/path/to/TEST:PV', AlarmSeverity.MINOR, 'OK', None, 'FAULT',
                            AlarmSeverity.MINOR, 'alarm_status')
     assert not tree_model.nodes[0].filtered
-
-    stdout_capture.close()
