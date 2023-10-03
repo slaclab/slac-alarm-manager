@@ -50,7 +50,8 @@ class AlarmTreeViewWidget(QWidget):
 
         self.setFont(QFont("Arial", 12))
         self.layout = QVBoxLayout(self)
-        self.treeModel = AlarmItemsTreeModel(enable_all_topic)
+
+        self.treeModel = AlarmItemsTreeModel(annunciate, enable_all_topic)
         self.tree_view = QTreeView(self)
         self.tree_view.setProperty("showDropIndicator", False)
         self.tree_view.setDragDropOverwriteMode(False)

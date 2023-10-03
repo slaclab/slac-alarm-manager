@@ -18,7 +18,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         The parent of this model.
     """
 
-    def __init__(self, enable_all_topic: bool = False, parent: Optional[QObject] = None):
+    def __init__(self, annunciate: bool = False, enable_all_topic: bool = False, parent: Optional[QObject] = None):
         super().__init__(parent)
         self.root_item = AlarmItem("")
         self.nodes = []
@@ -27,6 +27,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         if self.enable_all_topic:
             self.nodes.insert(0, self.root_item)
         self.added_paths = dict()  # Mapping from PV name to all associated paths in the tree (will be just 1 for most)
+        self.annunciate = annunciate
 
     def clear(self) -> None:
         """Clear out all the nodes in this tree and set the root to an empty item"""
@@ -165,9 +166,12 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 item_to_update.filtered = True
             elif item_to_update.filtered:
                 item_to_update.filtered = False
-            if (status != "OK" and status != "Disabled") and item_to_update.annunciating:
+            # status for active alarm (status="STATE_ALARM") should be consistent across CRYO and LCLS,
+            # also ensure annunciate is enabled on application level (self.annunciate) and also for the current item.
+            if status == "STATE_ALARM" and (self.annunciate and item_to_update.annunciating):
                 # prints bell character, cross platform way to generate "beep" noise,
                 # could be replaced with call to audio library for more sound options
+                print ("Status: ", status, ", name: ", name)
                 print("\a")
 
         self.layoutChanged.emit()
