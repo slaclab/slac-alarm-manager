@@ -153,7 +153,7 @@ class AlarmConfigurationWidget(QDialog):
             self.behavior_layout.addWidget(self.latch_checkbox)
             self.annunciate_checkbox.setChecked(self.alarm_item.annunciating)
             if self.alarm_item.name == "LBLM:DOG:740:RDBK_OK_LTCH_B":
-                print ("LBLM:DOG:740:RDBK_OK_LTCH_B annunciating: ", self.alarm_item.annunciating) 
+                print("LBLM:DOG:740:RDBK_OK_LTCH_B annunciating: ", self.alarm_item.annunciating)
             self.behavior_layout.addWidget(self.annunciate_checkbox)
             self.layout.addLayout(self.behavior_layout)
             self.disable_layout = QHBoxLayout()
@@ -245,7 +245,7 @@ class AlarmConfigurationWidget(QDialog):
             if self.alarm_item.latching != self.latch_checkbox.isChecked():
                 values_to_send["latching"] = self.enabled_checkbox.isChecked()
             if self.alarm_item.annunciating != self.annunciate_checkbox.isChecked():
-                print ("!!Adduing new annunc valuie to vars-to-send: ",  self.annunciate_checkbox.isChecked())
+                print("!!Adduing new annunc valuie to vars-to-send: ", self.annunciate_checkbox.isChecked())
                 values_to_send["annunciating"] = self.annunciate_checkbox.isChecked()
             if self.delay_spinbox.value() != 0:
                 values_to_send["delay"] = self.delay_spinbox.value()

@@ -171,7 +171,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             if status == "STATE_ALARM" and (self.annunciate and item_to_update.annunciating):
                 # prints bell character, cross platform way to generate "beep" noise,
                 # could be replaced with call to audio library for more sound options
-                print ("Status: ", status, ", name: ", name)
+                print("Status: ", status, ", name: ", name)
                 print("\a")
 
         self.layoutChanged.emit()
