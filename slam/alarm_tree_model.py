@@ -157,7 +157,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         for alarm_path in self.added_paths[name]:
             item_to_update = self.nodes[self.getItemIndex(alarm_path)]
             item_to_update.alarm_severity = severity
-            item_to_update.alarm_status = status
+            item_to_update.alarm_status = st atus
             item_to_update.alarm_time = time
             item_to_update.alarm_value = value
             item_to_update.pv_severity = pv_severity
@@ -166,13 +166,11 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 item_to_update.filtered = True
             elif item_to_update.filtered:
                 item_to_update.filtered = False
-            #print ("alarm severity: ", severity)
             # status for active alarm (status="STATE_ALARM") should be consistent across CRYO and LCLS,
             # also ensure annunciate is enabled on application level (self.annunciate) and also for the current item.
             if item_to_update.is_in_active_alarm_state() and (self.annunciate and item_to_update.annunciating):
                 # prints bell character, cross platform way to generate "beep" noise,
                 # could be replaced with call to audio library for more sound options
-                #print("Status: ", status, ", name: ", name)
                 print("\a")
 
         self.layoutChanged.emit()
