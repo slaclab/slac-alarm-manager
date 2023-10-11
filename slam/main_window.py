@@ -60,6 +60,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         # A combo box for choosing which alarm tree/table to display
         self.alarm_select_combo_box = QComboBox(self)
         self.alarm_select_combo_box.setFixedSize(120, 30)
+        if len(topics) > 1:
+            self.alarm_select_combo_box.addItem("All")
         self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
         self.current_alarm_config = topics[0]
 
