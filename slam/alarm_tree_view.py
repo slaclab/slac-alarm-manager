@@ -31,7 +31,13 @@ class AlarmTreeViewWidget(QWidget):
 
     plot_signal = Signal(str)
 
-    def __init__(self, kafka_producer: KafkaProducer, topic: str, plot_slot: Callable, enable_all_topic: bool = False,):
+    def __init__(
+        self,
+        kafka_producer: KafkaProducer,
+        topic: str,
+        plot_slot: Callable,
+        enable_all_topic: bool = False,
+    ):
         super().__init__()
 
         self.kafka_producer = kafka_producer
@@ -247,10 +253,12 @@ class AlarmTreeViewWidget(QWidget):
                     if enabled is not None and enabled != alarm.is_enabled():
                         # Changes to enabled status go to the regular topic
 
-                        # empty topic string means this is the 'All' topic tree-vew and doesn't have a valid kafka topic,
+                        # empty topic string means this is 'All' topic tree-vew and doesn't have a valid kafka topic,
                         # so grab the destination topic from the alarm's path.
                         if self.topic == "":
-                            self.kafka_producer.send(alarm_path.split('/')[1], key=f"config:{alarm_path}", value=values_to_send)
+                            self.kafka_producer.send(
+                                alarm_path.split("/")[1], key=f"config:{alarm_path}", value=values_to_send
+                            )
                         else:
                             self.kafka_producer.send(self.topic, key=f"config:{alarm_path}", value=values_to_send)
                     if acknowledged is not None and acknowledged != alarm.is_acknowledged():
