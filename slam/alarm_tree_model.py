@@ -208,7 +208,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             parent_path = "/".join(path_as_list[0:-1])
 
             # If the node has no parent, it must be the root-node of a topic's tree,
-            # if multiple topic root-nodes then make then child of an dummy overall root-node
+            # if we have multiple topic root-nodes then make them children of a dummy root-node
             if parent_path == "":
                 logger.debug(f"Setting root of alarm tree to: {item_path}")
                 if self.enable_all_topic:
