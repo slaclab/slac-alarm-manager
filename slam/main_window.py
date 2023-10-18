@@ -12,6 +12,7 @@ from .alarm_table_view import AlarmTableType, AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
 from .kafka_reader import KafkaReader
+from .alarm_item import AlarmItem
 
 logger = logging.getLogger(__name__)
 
@@ -60,14 +61,29 @@ class AlarmHandlerMainWindow(QMainWindow):
         # A combo box for choosing which alarm tree/table to display
         self.alarm_select_combo_box = QComboBox(self)
         self.alarm_select_combo_box.setFixedSize(120, 30)
-        if len(topics) > 1:
-            self.alarm_select_combo_box.addItem("All")
+
         self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
         self.current_alarm_config = topics[0]
 
         self.alarm_trees = dict()
+        self.all_alarms_tree = AlarmTreeViewWidget(self.kafka_producer, "", self.plot_pv)
+        self.all_alarms_tree.topics = topics
+        self.alarm_trees['All'] = self.all_alarms_tree
+
         self.active_alarm_tables = dict()
+        self.all_active_alarms_table = AlarmTableViewWidget(
+            self.all_alarms_tree.treeModel, self.kafka_producer, "", AlarmTableType.ACTIVE, self.plot_pv
+            )
+        self.all_active_alarms_table.topics = topics
+        self.active_alarm_tables['All'] = self.all_active_alarms_table
+        
         self.acknowledged_alarm_tables = dict()
+        self.all_acknowledged_alarms_table = AlarmTableViewWidget(
+            self.all_alarms_tree.treeModel, self.kafka_producer, "", AlarmTableType.ACKNOWLEDGED, self.plot_pv
+            )
+        self.all_acknowledged_alarms_table.topics = topics
+        self.acknowledged_alarm_tables['All'] = self.all_acknowledged_alarms_table
+
         self.last_received_update_time = {}  # Mapping from alarm config name to last kafka message received for it
 
         # Create a separate tree and table widget for each alarm configuration we are monitoring
@@ -95,6 +111,8 @@ class AlarmHandlerMainWindow(QMainWindow):
                 .alarmView.horizontalHeader()
                 .resizeSection(logicalIndex, newSize)
             )
+        if len(topics) > 1:
+            self.alarm_select_combo_box.addItem("All")
 
         self.alarm_update_signal.connect(self.update_tree)
         self.alarm_update_signal.connect(self.update_table)
@@ -123,9 +141,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         # The active and acknowledged alarm tables will appear in their own right-hand vertical split
         self.vertical_splitter = QSplitter(self)
         self.vertical_splitter.setOrientation(Qt.Orientation.Vertical)
-        self.vertical_splitter.addWidget(self.active_alarm_tables[topics[0]])
+        self.vertical_splitter.addWidget(self.active_alarm_tables[topics[1]])
         self.vertical_splitter.addWidget(self.acknowledged_alarm_tables[topics[0]])
-
         self.horizontal_splitter.addWidget(self.alarm_trees[topics[0]])
         self.horizontal_splitter.addWidget(self.vertical_splitter)
 
@@ -151,6 +168,7 @@ class AlarmHandlerMainWindow(QMainWindow):
             The name associated with the tree to update
         """
         self.alarm_trees[alarm_config_name].treeModel.update_item(*args)
+        self.alarm_trees['All'].treeModel.update_item(*args)
 
     def update_table(
         self,
@@ -167,9 +185,22 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         A slot for updating an alarm table
         """
+        '''
+        print ("Alarm config name: ", alarm_config_name)
+        if alarm_config_name == "LCLS":
+            self.active_alarm_tables[alarm_config_name].alarmModel.append(AlarmItem("NOLAN"))
+            self.active_alarm_tables['LCLS'].alarmModel.append(self.active_alarm_tables['CRYO'].alarmModel.alarm_items.items()[1])
+            #print (self.active_alarm_tables['CRYO'].alarmModel.alarm_items.items())
+            #for _, currAlarmItem in self.active_alarm_tables['CRYO'].alarmModel.alarm_items.items():
+                #print ("Appending curr alarm item: ", currAlarmItem)
+                #self.active_alarm_tables['LCLS'].alarmModel.append(currAlarmItem)
+        '''
         if status == "Disabled":
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+
+            self.active_alarm_tables['All'].alarmModel.remove_row(name)
+            self.acknowledged_alarm_tables['All'].alarmModel.remove_row(name)
         elif severity in (
             AlarmSeverity.INVALID_ACK,
             AlarmSeverity.MAJOR_ACK,
@@ -180,13 +211,26 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.update_row(
                 name, path, severity, status, time, value, pv_severity, pv_status, self.descriptions.get(path, "")
             )
+
+            self.active_alarm_tables['All'].alarmModel.remove_row(name)
+            self.acknowledged_alarm_tables['All'].alarmModel.update_row(
+                name, path, severity, status, time, value, pv_severity, pv_status, self.descriptions.get(path, "")
+            )
         elif severity == AlarmSeverity.OK:
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+
+            self.active_alarm_tables['All'].alarmModel.remove_row(name)
+            self.acknowledged_alarm_tables['All'].alarmModel.remove_row(name)
         else:
             if name in self.acknowledged_alarm_tables[alarm_config_name].alarmModel.alarm_items:
                 self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
+                
+                self.acknowledged_alarm_tables['All'].alarmModel.remove_row(name)
             self.active_alarm_tables[alarm_config_name].alarmModel.update_row(
+                name, path, severity, status, time, value, pv_severity, pv_status, self.descriptions.get(path, "")
+            )
+            self.active_alarm_tables['All'].alarmModel.update_row(
                 name, path, severity, status, time, value, pv_severity, pv_status, self.descriptions.get(path, "")
             )
 
@@ -199,11 +243,24 @@ class AlarmHandlerMainWindow(QMainWindow):
         alarm_config_name : str
             The name associated with the tree and table to be displayed
         """
-        if alarm_config_name not in self.alarm_trees:
+        alarm_tree_to_swap = None
+        active_alarm_table_to_swap = None
+        ack_alarm_table_to_swap = None
+        
+        if alarm_config_name not in self.alarm_trees and alarm_config_name != "All":
             return
-        self.horizontal_splitter.replaceWidget(0, self.alarm_trees[alarm_config_name])
-        self.vertical_splitter.replaceWidget(0, self.active_alarm_tables[alarm_config_name])
-        self.vertical_splitter.replaceWidget(1, self.acknowledged_alarm_tables[alarm_config_name])
+        elif alarm_config_name == "All":
+            alarm_tree_to_swap = self.all_alarms_tree
+            active_alarm_table_to_swap = self.all_active_alarms_table
+            ack_alarm_table_to_swap = self.all_acknowledged_alarms_table
+        else: 
+            alarm_tree_to_swap = self.alarm_trees[alarm_config_name]
+            active_alarm_table_to_swap = self.active_alarm_tables[alarm_config_name]
+            ack_alarm_table_to_swap = self.acknowledged_alarm_tables[alarm_config_name]
+        
+        self.horizontal_splitter.replaceWidget(0, alarm_tree_to_swap)
+        self.vertical_splitter.replaceWidget(0, active_alarm_table_to_swap)
+        self.vertical_splitter.replaceWidget(1, ack_alarm_table_to_swap)
         self.current_alarm_config = alarm_config_name
 
     def process_message(self, message: ConsumerRecord):
@@ -220,25 +277,36 @@ class AlarmHandlerMainWindow(QMainWindow):
         if key.startswith("config"):  # [7:] because config:
             logger.debug(f"Processing CONFIG message with key: {message.key} and values: {message.value}")
             alarm_config_name = key.split("/")[1]
+            #print ("!! alarm config name: ", alarm_config_name)
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
+                #print ("XX@#@: ", message.key[7:])
                 self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
+                self.alarm_trees['All'].treeModel.update_model(message.key[7:], values)
                 if "description" in values:
                     self.descriptions[message.key[7:]] = values.get("description")
             else:  # A null message indicates this item should be removed from the tree
                 self.alarm_trees[alarm_config_name].treeModel.remove_item(message.key[7:])
                 self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split("/")[-1])
                 self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split("/")[-1])
+
+                self.alarm_trees['All'].treeModel.remove_item(message.key[7:])
+                self.active_alarm_tables['All'].alarmModel.remove_row(message.key[7:].split("/")[-1])
+                self.acknowledged_alarm_tables['All'].alarmModel.remove_row(message.key[7:].split("/")[-1])
         elif key.startswith("command"):
             pass  # Nothing for us to do
         elif key.startswith("state"):
             pv = message.key.split("/")[-1]
             alarm_config_name = key.split("/")[1]
             self.last_received_update_time[alarm_config_name] = datetime.now()
+            self.last_received_update_time['All'] = datetime.now()
             logger.debug(f"Processing STATE message with key: {message.key} and values: {message.value}")
             if values is None:
                 self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split("/")[-1])
                 self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split("/")[-1])
+
+                self.active_alarm_tables['All'].alarmModel.remove_row(message.key[6:].split("/")[-1])
+                self.acknowledged_alarm_tables['All'].alarmModel.remove_row(message.key[6:].split("/")[-1])
                 return
             if len(values) <= 2:
                 return  # This is the heartbeat message which doesn't get recorded

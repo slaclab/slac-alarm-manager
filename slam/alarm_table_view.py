@@ -68,6 +68,7 @@ class AlarmTableViewWidget(QWidget):
         self.tree_model = tree_model  # We still need the tree hierarchy when dealing with acks at non leaf nodes
         self.kafka_producer = kafka_producer
         self.topic = topic
+        self.topics = [topic]
         self.table_type = table_type
         self.plot_slot = plot_slot
         self.plot_signal.connect(self.plot_slot)
