@@ -141,7 +141,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         # The active and acknowledged alarm tables will appear in their own right-hand vertical split
         self.vertical_splitter = QSplitter(self)
         self.vertical_splitter.setOrientation(Qt.Orientation.Vertical)
-        self.vertical_splitter.addWidget(self.active_alarm_tables[topics[1]])
+        self.vertical_splitter.addWidget(self.active_alarm_tables[topics[0]])
         self.vertical_splitter.addWidget(self.acknowledged_alarm_tables[topics[0]])
         self.horizontal_splitter.addWidget(self.alarm_trees[topics[0]])
         self.horizontal_splitter.addWidget(self.vertical_splitter)
@@ -185,16 +185,6 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         A slot for updating an alarm table
         """
-        '''
-        print ("Alarm config name: ", alarm_config_name)
-        if alarm_config_name == "LCLS":
-            self.active_alarm_tables[alarm_config_name].alarmModel.append(AlarmItem("NOLAN"))
-            self.active_alarm_tables['LCLS'].alarmModel.append(self.active_alarm_tables['CRYO'].alarmModel.alarm_items.items()[1])
-            #print (self.active_alarm_tables['CRYO'].alarmModel.alarm_items.items())
-            #for _, currAlarmItem in self.active_alarm_tables['CRYO'].alarmModel.alarm_items.items():
-                #print ("Appending curr alarm item: ", currAlarmItem)
-                #self.active_alarm_tables['LCLS'].alarmModel.append(currAlarmItem)
-        '''
         if status == "Disabled":
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
@@ -277,10 +267,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         if key.startswith("config"):  # [7:] because config:
             logger.debug(f"Processing CONFIG message with key: {message.key} and values: {message.value}")
             alarm_config_name = key.split("/")[1]
-            #print ("!! alarm config name: ", alarm_config_name)
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
-                #print ("XX@#@: ", message.key[7:])
                 self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
                 self.alarm_trees['All'].treeModel.update_model(message.key[7:], values)
                 if "description" in values:

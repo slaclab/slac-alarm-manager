@@ -247,7 +247,6 @@ class AlarmTreeViewWidget(QWidget):
                     values_to_send = self.create_config_values_for_action(alarm, enabled, acknowledged)
                     if enabled is not None and enabled != alarm.is_enabled():
                         # Changes to enabled status go to the regular topic
-                        print ("Sending to kafka: ", self.topic, f"config:{alarm_path}", values_to_send)
                         if self.topic == "":
                             for currTopic in self.topics:
                                 self.kafka_producer.send(currTopic, key=f"config:{alarm_path}", value=values_to_send)
