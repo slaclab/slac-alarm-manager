@@ -23,6 +23,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         self.root_item = AlarmItem("")
         self.nodes = []
         self.enable_all_topic = enable_all_topic
+        # when we have multiple topics to display, make each topic-tree's root a child of a dummy root
         if self.enable_all_topic:
             self.nodes.insert(0, self.root_item)
         self.added_paths = dict()  # Mapping from PV name to all associated paths in the tree (will be just 1 for most)
