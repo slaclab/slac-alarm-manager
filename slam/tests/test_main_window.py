@@ -121,7 +121,7 @@ def test_all_topic(qtbot, main_window, tree_model, mock_kafka_producer):
     # Test that topic-selection combo box has option for 'All'
     comboBox = all_topic_main_window.alarm_select_combo_box
     comboBoxOptions = [comboBox.itemText(i) for i in range(comboBox.count())]
-    assert 'All' in comboBoxOptions
+    assert "All" in comboBoxOptions
 
     # Send table updates to populate the topics with some alarms.
     # We expect the 'All' topic will get updated with these as well as the specified topic.
@@ -141,7 +141,7 @@ def test_all_topic(qtbot, main_window, tree_model, mock_kafka_producer):
     # Expect 'All' topic to have all alarms across the 2 topics: 3 active and 1 acknowledged
     assert len(all_topic_main_window.active_alarm_tables["TOPIC_1"].alarmModel.alarm_items) == 2
     assert len(all_topic_main_window.acknowledged_alarm_tables["TOPIC_1"].alarmModel.alarm_items) == 0
-    
+
     assert len(all_topic_main_window.active_alarm_tables["TOPIC_2"].alarmModel.alarm_items) == 1
     assert len(all_topic_main_window.acknowledged_alarm_tables["TOPIC_2"].alarmModel.alarm_items) == 1
 
@@ -154,7 +154,7 @@ def test_all_topic(qtbot, main_window, tree_model, mock_kafka_producer):
     )
     assert len(all_topic_main_window.active_alarm_tables["All"].alarmModel.alarm_items) == 2
     assert len(all_topic_main_window.acknowledged_alarm_tables["All"].alarmModel.alarm_items) == 2
-    
+
 
 def test_check_server_status(qtbot, main_window):
     """Verify that the disconnected alarm server banner shows and hides as expected"""
