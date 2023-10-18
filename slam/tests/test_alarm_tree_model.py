@@ -151,7 +151,7 @@ def test_remove_item(tree_model):
 
 def test_annunciation(tree_model):
     """Test making an update to an item that has already been placed in the alarm tree"""
-    
+
     tree_model.annunciate = True
     alarm_item = AlarmItem(
         "TEST:PV",

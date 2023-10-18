@@ -168,13 +168,11 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 item_to_update.filtered = False
             # status for active alarm (status="STATE_ALARM") should be consistent across CRYO and LCLS,
             # also ensure annunciate is enabled on application level (self.annunciate) and also for the current item.
-            #print ("!!checking if should annunciate: ", item_to_update)
-            #print ("!!item_to_update.is_in_active_alarm_state(): ", item_to_update.is_in_active_alarm_state(), ", self.annunciate: ", self.annunciate)
             if item_to_update.is_in_active_alarm_state() and (self.annunciate and item_to_update.annunciating):
                 # prints bell character, cross platform way to generate "beep" noise,
                 # could be replaced with call to audio library for more sound options
                 print("\a")
-                #print("!!annunciate for alarm: ", item_to_update)
+                # print("!!annunciate for alarm: ", item_to_update)
 
         self.layoutChanged.emit()
 
