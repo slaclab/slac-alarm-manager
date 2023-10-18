@@ -18,11 +18,13 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         The parent of this model.
     """
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(self, enable_all_topic: bool = False, parent: Optional[QObject] = None):
         super().__init__(parent)
         self.root_item = AlarmItem("")
-        self.has_multiple_topics = False
         self.nodes = []
+        self.enable_all_topic = enable_all_topic
+        if self.enable_all_topic:
+            self.nodes.insert(0, self.root_item) 
         self.added_paths = dict()  # Mapping from PV name to all associated paths in the tree (will be just 1 for most)
 
     def clear(self) -> None:
@@ -209,15 +211,13 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             # if multiple topic root-nodes then make then child of an dummy overall root-node
             if parent_path == "":
                 logger.debug(f"Setting root of alarm tree to: {item_path}")
-                if not self.has_multiple_topics:
-                    self.has_multiple_topics = True
-                    self.root_item = alarm_item
-                else:
-                    self.nodes.insert(0, self.root_item)
+                print(f"Setting root of alarm tree to: {item_path}")
+                if self.enable_all_topic:
                     alarm_item.assign_parent(self.root_item)
-                    self.nodes[0].append_child(alarm_item)
+                    self.nodes[0].append_child(alarm_item) # when 'All' topic enabled, nodes[0] is root of topic trees
+                else:
+                    self.root_item = alarm_item
                 return
-            
 
             parent_item_index = self.getItemIndex(parent_path)
             if parent_item_index == -1:

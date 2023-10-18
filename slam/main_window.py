@@ -69,7 +69,7 @@ class AlarmHandlerMainWindow(QMainWindow):
 
         self.alarm_trees = dict()
         if self.enable_all_topic:
-            self.all_alarms_tree = AlarmTreeViewWidget(self.kafka_producer, "", self.plot_pv)
+            self.all_alarms_tree = AlarmTreeViewWidget(self.kafka_producer, "", self.plot_pv, True)
             self.alarm_trees['All'] = self.all_alarms_tree
 
         self.active_alarm_tables = dict()
@@ -93,7 +93,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         for topic in topics:
             self.last_received_update_time[topic] = datetime.now()
             self.alarm_select_combo_box.addItem(topic)
-            self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv)
+            self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv, False)
             self.active_alarm_tables[topic] = AlarmTableViewWidget(
                 self.alarm_trees[topic].treeModel, self.kafka_producer, topic, AlarmTableType.ACTIVE, self.plot_pv
             )
@@ -282,6 +282,7 @@ class AlarmHandlerMainWindow(QMainWindow):
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
                 self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
+                # the 'All' tree gets updated by all topics
                 if self.enable_all_topic:
                     self.alarm_trees['All'].treeModel.update_model(message.key[7:], values)
                 if "description" in values:
