@@ -12,7 +12,6 @@ from .alarm_table_view import AlarmTableType, AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
 from .kafka_reader import KafkaReader
-from .alarm_item import AlarmItem
 
 logger = logging.getLogger(__name__)
 
@@ -65,14 +64,12 @@ class AlarmHandlerMainWindow(QMainWindow):
         # A combo box for choosing which alarm tree/table to display
         self.alarm_select_combo_box = QComboBox(self)
         self.alarm_select_combo_box.setFixedSize(120, 30)
-
         self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
         self.current_alarm_config = topics[0]
 
         self.alarm_trees = dict()
         if self.enable_all_topic:
             self.all_alarms_tree = AlarmTreeViewWidget(self.kafka_producer, "", self.plot_pv)
-            self.all_alarms_tree.topics = topics
             self.alarm_trees['All'] = self.all_alarms_tree
 
         self.active_alarm_tables = dict()
@@ -81,7 +78,6 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.all_active_alarms_table = AlarmTableViewWidget(
                 self.all_alarms_tree.treeModel, self.kafka_producer, "", AlarmTableType.ACTIVE, self.plot_pv
             )
-            self.all_active_alarms_table.topics = topics
             self.active_alarm_tables['All'] = self.all_active_alarms_table
         
         self.acknowledged_alarm_tables = dict()
@@ -89,7 +85,6 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.all_acknowledged_alarms_table = AlarmTableViewWidget(
                 self.all_alarms_tree.treeModel, self.kafka_producer, "", AlarmTableType.ACKNOWLEDGED, self.plot_pv
             )
-            self.all_acknowledged_alarms_table.topics = topics
             self.acknowledged_alarm_tables['All'] = self.all_acknowledged_alarms_table
 
         self.last_received_update_time = {}  # Mapping from alarm config name to last kafka message received for it

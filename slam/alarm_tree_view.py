@@ -36,7 +36,6 @@ class AlarmTreeViewWidget(QWidget):
 
         self.kafka_producer = kafka_producer
         self.topic = topic
-        self.topics = [topic]
         self.plot_slot = plot_slot
         self.plot_signal.connect(self.plot_slot)
         self.clipboard = QApplication.clipboard()
@@ -247,9 +246,11 @@ class AlarmTreeViewWidget(QWidget):
                     values_to_send = self.create_config_values_for_action(alarm, enabled, acknowledged)
                     if enabled is not None and enabled != alarm.is_enabled():
                         # Changes to enabled status go to the regular topic
+
+                        # empty topic string means this is the 'All' topic tree-vew and doesn't have a valid kafka topic,
+                        # so grab the destination topic from the alarm's path.
                         if self.topic == "":
-                            for currTopic in self.topics:
-                                self.kafka_producer.send(currTopic, key=f"config:{alarm_path}", value=values_to_send)
+                            self.kafka_producer.send(alarm_path.split('/')[1], key=f"config:{alarm_path}", value=values_to_send)
                         else:
                             self.kafka_producer.send(self.topic, key=f"config:{alarm_path}", value=values_to_send)
                     if acknowledged is not None and acknowledged != alarm.is_acknowledged():
