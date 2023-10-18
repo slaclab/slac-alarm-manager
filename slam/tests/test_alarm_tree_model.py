@@ -151,6 +151,8 @@ def test_remove_item(tree_model):
 
 def test_annunciation(tree_model):
     """Test making an update to an item that has already been placed in the alarm tree"""
+    
+    tree_model.annunciate = True
     alarm_item = AlarmItem(
         "TEST:PV",
         path="/path/to/TEST:PV",
@@ -159,10 +161,12 @@ def test_annunciation(tree_model):
         pv_severity=AlarmSeverity.OK,
         annunciating=True,
     )
-
     tree_model.nodes.append(alarm_item)
     tree_model.added_paths["TEST:PV"] = ["/path/to/TEST:PV"]
 
+    # To verify beep we check that bell character was printed to stdout,
+    # which when printed to stdout makes beep sound.
+    # Could replace with audio library if more sound options are wanted.
     stdout_buffer = StringIO()
     # redirect stdout to buffer
     sys.stdout = stdout_buffer
@@ -182,6 +186,7 @@ def test_annunciation(tree_model):
     sys.stdout = sys.__stdout__
 
     captured_output = stdout_buffer.getvalue()
+    # checking for bell character
     assert captured_output == "\x07\n"
 
     # Verify the update applied successfully
