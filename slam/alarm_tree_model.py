@@ -157,7 +157,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         for alarm_path in self.added_paths[name]:
             item_to_update = self.nodes[self.getItemIndex(alarm_path)]
             item_to_update.alarm_severity = severity
-            item_to_update.alarm_status = st atus
+            item_to_update.alarm_status = status
             item_to_update.alarm_time = time
             item_to_update.alarm_value = value
             item_to_update.pv_severity = pv_severity

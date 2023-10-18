@@ -152,7 +152,6 @@ class AlarmConfigurationWidget(QDialog):
             self.latch_checkbox.setChecked(self.alarm_item.latching)
             self.behavior_layout.addWidget(self.latch_checkbox)
             self.annunciate_checkbox.setChecked(self.alarm_item.annunciating)
-            if self.alarm_item.name == "LBLM:DOG:740:RDBK_OK_LTCH_B":
             self.behavior_layout.addWidget(self.annunciate_checkbox)
             self.layout.addLayout(self.behavior_layout)
             self.disable_layout = QHBoxLayout()
