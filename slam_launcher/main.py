@@ -23,15 +23,15 @@ def main():
 
     permissions.set_user_permission(permissions.UserPermission(app_args.user_permissions))
 
+    topics = app_args.topics.split(",")
+    kafka_boostrap_servers = app_args.bootstrap_servers.split(",")
+    
     if not app_args.topics:
         print ("No topics provided in cmdline args (specify with '--topics' flag)\nQuitting application...")
         sys.exit(1)
     if not kafka_boostrap_servers:
         print ("No bootstrap-servers provided in cmdline args (specify with '--bootstrap-servers' flag)\nQuitting application...")
         sys.exit(1)
-
-    topics = app_args.topics.split(",")
-    kafka_boostrap_servers = app_args.bootstrap_servers.split(",")
 
     app = QApplication([])
     main_window = AlarmHandlerMainWindow(topics, kafka_boostrap_servers)
