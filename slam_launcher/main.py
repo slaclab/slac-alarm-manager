@@ -25,12 +25,14 @@ def main():
 
     topics = app_args.topics.split(",")
     kafka_boostrap_servers = app_args.bootstrap_servers.split(",")
-    
+
     if not app_args.topics:
-        print ("No topics provided in cmdline args (specify with '--topics' flag)\nQuitting application...")
+        print("No topics provided in cmdline args (specify with '--topics' flag)")
+        print("Quitting application...")
         sys.exit(1)
     if not kafka_boostrap_servers:
-        print ("No bootstrap-servers provided in cmdline args (specify with '--bootstrap-servers' flag)\nQuitting application...")
+        print("No bootstrap-servers provided in cmdline args (specify with '--bootstrap-servers' flag)")
+        print("Quitting application...")
         sys.exit(1)
 
     app = QApplication([])
