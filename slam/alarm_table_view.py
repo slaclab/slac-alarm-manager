@@ -2,6 +2,7 @@ import enum
 import getpass
 import socket
 from functools import partial
+from epics import cainfo, PV
 from kafka.producer import KafkaProducer
 from qtpy.QtCore import QEvent, QModelIndex, QSortFilterProxyModel, Qt, Signal
 from qtpy.QtGui import QCursor
@@ -165,8 +166,30 @@ class AlarmTableViewWidget(QWidget):
         else:
             self.alarm_count_label.setText(f"Acknowledged Alarms: {len(self.alarmModel.alarm_items)}")
 
+    def getThresholdValues(self, alarm_item_path) -> List[str]:
+        
+        result = []
+        result.append(cainfo(alarm_item_path))
+ 
+        pv = PV(alarm_item_path)
+        print ("!!pv: ", pv)
+        '''
+        thresholds = ["LOW", "LOLO", "HIGH", "HIHI"]
+        for currThreshold in thresholds:
+            currPVName = alarm_item_path + "." + currThreshold
+            val = caget(currPVName)
+            result.append(val)
+        '''
+        return result
+
     def alarm_context_menu_event(self, ev: QEvent) -> None:
         """Display the right-click context menu for items in the active alarms table"""
+        indices = self.get_selected_indices()
+        if len(indices) > 0:
+            alarm_item = list(self.alarmModel.alarm_items.items())[indices[0].row()][1]
+        #print ("!!alarm_item path: ", alarm_item.name)
+        vals = self.getThresholdValues(alarm_item.name)
+        #print ("!!!vals: ", vals)
         self.alarm_context_menu.popup(QCursor.pos())
 
     def get_selected_indices(self) -> List[QModelIndex]:

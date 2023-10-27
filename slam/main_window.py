@@ -209,6 +209,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         A slot for updating an alarm table
         """
+        #print ('!!! path: ', path, ",n ame: ", name)
         if status == "Disabled":
             self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
             self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(name)
