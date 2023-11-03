@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from datetime import datetime
 from kafka.consumer.fetcher import ConsumerRecord
 from kafka import KafkaProducer
@@ -34,11 +35,18 @@ class AlarmHandlerMainWindow(QMainWindow):
     def __init__(self, topics: List[str], bootstrap_servers: List[str]):
         super().__init__()
 
-        self.kafka_producer = KafkaProducer(
-            bootstrap_servers=bootstrap_servers,
-            value_serializer=lambda x: json.dumps(x).encode("utf-8"),
-            key_serializer=lambda x: x.encode("utf-8"),
-        )
+        self.kafka_producer = None
+        try:
+            self.kafka_producer = KafkaProducer(
+                bootstrap_servers=bootstrap_servers,
+                value_serializer=lambda x: json.dumps(x).encode("utf-8"),
+                key_serializer=lambda x: x.encode("utf-8"),
+            )
+        except Exception as e:
+            print(f"\nError initializing KafkaProducer: {str(e)}. Please check bootstrap-servers IPs are correct.")
+            print("Quitting application...")
+            sys.exit(1)
+
         self.topics = topics
         self.descriptions = dict()  # Map from alarm path to description
 
