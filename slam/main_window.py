@@ -64,7 +64,6 @@ class AlarmHandlerMainWindow(QMainWindow):
         # A combo box for choosing which alarm tree/table to display
         self.alarm_select_combo_box = QComboBox(self)
         self.alarm_select_combo_box.setFixedSize(120, 30)
-        self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
         self.current_alarm_config = topics[0]
 
         self.alarm_trees = dict()
@@ -88,6 +87,10 @@ class AlarmHandlerMainWindow(QMainWindow):
             self.acknowledged_alarm_tables["All"] = self.all_acknowledged_alarms_table
 
         self.last_received_update_time = {}  # Mapping from alarm config name to last kafka message received for it
+
+        # 'All' option should be top option of combo box
+        if self.enable_all_topic:
+            self.alarm_select_combo_box.addItem("All")
 
         # Create a separate tree and table widget for each alarm configuration we are monitoring
         for topic in topics:
@@ -114,8 +117,9 @@ class AlarmHandlerMainWindow(QMainWindow):
                 .alarmView.horizontalHeader()
                 .resizeSection(logicalIndex, newSize)
             )
-        if self.enable_all_topic:
-            self.alarm_select_combo_box.addItem("All")
+
+        # connect this after adding all items to combo box
+        self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
 
         self.alarm_update_signal.connect(self.update_tree)
         self.alarm_update_signal.connect(self.update_table)
@@ -144,9 +148,15 @@ class AlarmHandlerMainWindow(QMainWindow):
         # The active and acknowledged alarm tables will appear in their own right-hand vertical split
         self.vertical_splitter = QSplitter(self)
         self.vertical_splitter.setOrientation(Qt.Orientation.Vertical)
-        self.vertical_splitter.addWidget(self.active_alarm_tables[topics[0]])
-        self.vertical_splitter.addWidget(self.acknowledged_alarm_tables[topics[0]])
-        self.horizontal_splitter.addWidget(self.alarm_trees[topics[0]])
+        if self.enable_all_topic:
+            self.vertical_splitter.addWidget(self.active_alarm_tables["All"])
+            self.vertical_splitter.addWidget(self.acknowledged_alarm_tables["All"])
+            self.horizontal_splitter.addWidget(self.alarm_trees["All"])
+        else:
+            self.vertical_splitter.addWidget(self.active_alarm_tables[topics[0]])
+            self.vertical_splitter.addWidget(self.acknowledged_alarm_tables[topics[0]])
+            self.horizontal_splitter.addWidget(self.alarm_trees[topics[0]])
+
         self.horizontal_splitter.addWidget(self.vertical_splitter)
 
         # Adjust the relative sizes between widgets
