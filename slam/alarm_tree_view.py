@@ -258,7 +258,6 @@ class AlarmTreeViewWidget(QWidget):
                         curr_topic = self.topic
                         if curr_topic == "":
                             curr_topic = alarm_path.split("/")[1]
-                        print("Updating for topic: ", self.topic)
                         self.kafka_producer.send(curr_topic, key=f"config:{alarm_path}", value=values_to_send)
                     if acknowledged is not None and acknowledged != alarm.is_acknowledged():
                         # Changes to acknowledgement status go to the command topic.
