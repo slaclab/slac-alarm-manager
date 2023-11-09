@@ -253,16 +253,19 @@ class AlarmTreeViewWidget(QWidget):
                     if enabled is not None and enabled != alarm.is_enabled():
                         # Changes to enabled status go to the regular topic
 
-                        # empty topic string means this is 'All' topic tree-vew and doesn't have a valid kafka topic,
+                        # "" topic string means this is 'All' topic tree-vew and doesn't its own valid kafka topic,
                         # so grab the destination topic from the alarm's path.
-                        if self.topic == "":
-                            self.kafka_producer.send(
-                                alarm_path.split("/")[1], key=f"config:{alarm_path}", value=values_to_send
-                            )
-                        else:
-                            self.kafka_producer.send(self.topic, key=f"config:{alarm_path}", value=values_to_send)
+                        curr_topic = self.topic
+                        if curr_topic == "":
+                            curr_topic = alarm_path.split("/")[1]
+                        print("Updating for topic: ", self.topic)
+                        self.kafka_producer.send(curr_topic, key=f"config:{alarm_path}", value=values_to_send)
                     if acknowledged is not None and acknowledged != alarm.is_acknowledged():
-                        # Changes to acknowledgement status go to the command topic
+                        # Changes to acknowledgement status go to the command topic.
+                        # Similar to the enabled-status above, grab the destination topic from the alarm's path.
+                        curr_topic = self.topic
+                        if curr_topic == "":
+                            curr_topic = alarm_path.split("/")[1]
                         self.kafka_producer.send(
-                            self.topic + "Command", key=f"command:{alarm_path}", value=values_to_send
+                            curr_topic + "Command", key=f"command:{alarm_path}", value=values_to_send
                         )
