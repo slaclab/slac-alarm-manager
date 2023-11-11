@@ -31,7 +31,13 @@ class AlarmTreeViewWidget(QWidget):
 
     plot_signal = Signal(str)
 
-    def __init__(self, kafka_producer: KafkaProducer, topic: str, plot_slot: Callable):
+    def __init__(
+        self,
+        kafka_producer: KafkaProducer,
+        topic: str,
+        plot_slot: Callable,
+        enable_all_topic: bool = False,
+    ):
         super().__init__()
 
         self.kafka_producer = kafka_producer
@@ -42,7 +48,7 @@ class AlarmTreeViewWidget(QWidget):
 
         self.setFont(QFont("Arial", 12))
         self.layout = QVBoxLayout(self)
-        self.treeModel = AlarmItemsTreeModel()
+        self.treeModel = AlarmItemsTreeModel(enable_all_topic)
         self.tree_view = QTreeView(self)
         self.tree_view.setProperty("showDropIndicator", False)
         self.tree_view.setDragDropOverwriteMode(False)
@@ -246,9 +252,19 @@ class AlarmTreeViewWidget(QWidget):
                     values_to_send = self.create_config_values_for_action(alarm, enabled, acknowledged)
                     if enabled is not None and enabled != alarm.is_enabled():
                         # Changes to enabled status go to the regular topic
-                        self.kafka_producer.send(self.topic, key=f"config:{alarm_path}", value=values_to_send)
+
+                        # "" topic string means this is 'All' topic tree-vew and doesn't its own valid kafka topic,
+                        # so grab the destination topic from the alarm's path.
+                        curr_topic = self.topic
+                        if curr_topic == "":
+                            curr_topic = alarm_path.split("/")[1]
+                        self.kafka_producer.send(curr_topic, key=f"config:{alarm_path}", value=values_to_send)
                     if acknowledged is not None and acknowledged != alarm.is_acknowledged():
-                        # Changes to acknowledgement status go to the command topic
+                        # Changes to acknowledgement status go to the command topic.
+                        # Similar to the enabled-status above, grab the destination topic from the alarm's path.
+                        curr_topic = self.topic
+                        if curr_topic == "":
+                            curr_topic = alarm_path.split("/")[1]
                         self.kafka_producer.send(
-                            self.topic + "Command", key=f"command:{alarm_path}", value=values_to_send
+                            curr_topic + "Command", key=f"command:{alarm_path}", value=values_to_send
                         )

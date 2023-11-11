@@ -207,13 +207,22 @@ class AlarmTableViewWidget(QWidget):
                 username = getpass.getuser()
                 hostname = socket.gethostname()
                 if alarm_item.name not in self.tree_model.added_paths:
-                    # Alarm is no longer valid, send a None value to delete it from kafka
-                    self.kafka_producer.send(self.topic, key=f"state:{alarm_item.path}", value=None)
+                    # Alarm is no longer valid, send a None value to delete it from kafka.
+                    # Empty topic string means this is 'All' topic tree-vew and doesn't have a valid kafka topic,
+                    # so grab the destination topic from the alarm's path.
+                    curr_topic = self.topic
+                    if curr_topic == "":
+                        curr_topic = self.tree_model.added_paths[alarm_item.name][0].split("/")[1]
+                    self.kafka_producer.send(curr_topic, key=f"state:{alarm_item.path}", value=None)
                 else:
                     command_to_send = "acknowledge" if acknowledged else "unacknowledge"
                     for alarm_path in self.tree_model.added_paths[alarm_item.name]:
+                        # Similar to not-valid state above, grab the destination topic from the alarm's path.
+                        curr_topic = self.topic
+                        if curr_topic == "":
+                            curr_topic = alarm_path.split("/")[1]
                         self.kafka_producer.send(
-                            self.topic + "Command",
+                            curr_topic + "Command",
                             key=f"command:{alarm_path}",
                             value={"user": username, "host": hostname, "command": command_to_send},
                         )

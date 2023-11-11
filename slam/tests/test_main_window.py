@@ -112,6 +112,50 @@ def test_update_tables(qtbot, main_window, tree_model, mock_kafka_producer):
     assert len(main_window.acknowledged_alarm_tables["TEST"].alarmModel.alarm_items) == 0
 
 
+def test_all_topic(qtbot, main_window, tree_model, mock_kafka_producer):
+    """Test that the 'All' topic menu-option appears and tables contain all other topic's data"""
+
+    all_topic_main_window = AlarmHandlerMainWindow(["TOPIC_1", "TOPIC_2"], ["localhost:9092"])
+    qtbot.addWidget(all_topic_main_window)
+
+    # Test that topic-selection combo box has option for 'All'
+    comboBox = all_topic_main_window.alarm_select_combo_box
+    comboBoxOptions = [comboBox.itemText(i) for i in range(comboBox.count())]
+    assert "All" in comboBoxOptions
+
+    # Send table updates to populate the topics with some alarms.
+    # We expect the 'All' topic will get updated with these as well as the specified topic.
+    all_topic_main_window.update_table(
+        "TOPIC_1", "ACTIVE:ALARM_1", "", AlarmSeverity.MAJOR, "Enabled", None, "", AlarmSeverity.MAJOR, ""
+    )
+    all_topic_main_window.update_table(
+        "TOPIC_1", "ACTIVE:ALARM_2", "", AlarmSeverity.MAJOR, "Enabled", None, "", AlarmSeverity.MAJOR, ""
+    )
+    all_topic_main_window.update_table(
+        "TOPIC_2", "ACTIVE:ALARM_3", "", AlarmSeverity.MAJOR, "Enabled", None, "", AlarmSeverity.MAJOR, ""
+    )
+    all_topic_main_window.update_table(
+        "TOPIC_2", "ACK:ALARM", "", AlarmSeverity.MAJOR_ACK, "Enabled", None, "", AlarmSeverity.MAJOR, ""
+    )
+
+    # Expect 'All' topic to have all alarms across the 2 topics: 3 active and 1 acknowledged
+    assert len(all_topic_main_window.active_alarm_tables["TOPIC_1"].alarmModel.alarm_items) == 2
+    assert len(all_topic_main_window.acknowledged_alarm_tables["TOPIC_1"].alarmModel.alarm_items) == 0
+
+    assert len(all_topic_main_window.active_alarm_tables["TOPIC_2"].alarmModel.alarm_items) == 1
+    assert len(all_topic_main_window.acknowledged_alarm_tables["TOPIC_2"].alarmModel.alarm_items) == 1
+
+    assert len(all_topic_main_window.active_alarm_tables["All"].alarmModel.alarm_items) == 3
+    assert len(all_topic_main_window.acknowledged_alarm_tables["All"].alarmModel.alarm_items) == 1
+
+    # Now confirm that an updating alarm in 'TOPIC_2' also updates it in 'All'
+    all_topic_main_window.update_table(
+        "TOPIC_2", "ACTIVE:ALARM_3", "", AlarmSeverity.MAJOR_ACK, "Enabled", None, "", AlarmSeverity.MAJOR, ""
+    )
+    assert len(all_topic_main_window.active_alarm_tables["All"].alarmModel.alarm_items) == 2
+    assert len(all_topic_main_window.acknowledged_alarm_tables["All"].alarmModel.alarm_items) == 2
+
+
 def test_check_server_status(qtbot, main_window):
     """Verify that the disconnected alarm server banner shows and hides as expected"""
     # When the application first starts up and has a fresh update, there should be no warning banner visible
