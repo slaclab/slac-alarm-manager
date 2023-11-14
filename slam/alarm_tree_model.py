@@ -168,7 +168,8 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 item_to_update.filtered = False
             # also ensure annunciate is enabled on application level (self.annunciate) and also for the current item.
             if item_to_update.is_in_active_alarm_state() and (self.annunciate and item_to_update.annunciating):
-                # prints bell character, cross platform way to generate "beep" noise,
+                # prints bell character, cross platform way to generate "beep" noise
+                # (assuming the user has the bell-sound option enabled for their terminal),
                 # could be replaced with call to audio library for more sound options
                 print("\a")
 
