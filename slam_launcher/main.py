@@ -15,7 +15,7 @@ def main():
         default="localhost:9092",
         help="Comma separated list of urls for one or more kafka boostrap servers",
     )
-    parser.add_argument("--user-permissions", default="admin", help="One of read-only, operator, admin")
+    parser.add_argument("-u", "--user-permissions", default="admin", help="One of read-only, operator, admin")
     parser.add_argument("-l", "--log", default="warning", help="Logging level. debug, info, warning, error, critical")
     parser.add_argument(
         "-a", "--annunciate", action="store_true", help="Enable beep from alarms that have annunciate setting enabled"
