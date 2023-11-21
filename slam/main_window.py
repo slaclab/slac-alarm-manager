@@ -32,7 +32,7 @@ class AlarmHandlerMainWindow(QMainWindow):
 
     alarm_update_signal = Signal(str, str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
 
-    def __init__(self, topics: List[str], bootstrap_servers: List[str]):
+    def __init__(self, topics: List[str], bootstrap_servers: List[str], annunciate: bool = False):
         super().__init__()
 
         self.kafka_producer = None
@@ -104,12 +104,23 @@ class AlarmHandlerMainWindow(QMainWindow):
         for topic in topics:
             self.last_received_update_time[topic] = datetime.now()
             self.alarm_select_combo_box.addItem(topic)
-            self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv, False)
+
+            self.alarm_trees[topic] = AlarmTreeViewWidget(self.kafka_producer, topic, self.plot_pv, False, annunciate)
             self.active_alarm_tables[topic] = AlarmTableViewWidget(
-                self.alarm_trees[topic].treeModel, self.kafka_producer, topic, AlarmTableType.ACTIVE, self.plot_pv
+                self.alarm_trees[topic].treeModel,
+                self.kafka_producer,
+                topic,
+                AlarmTableType.ACTIVE,
+                self.plot_pv,
+                annunciate,
             )
             self.acknowledged_alarm_tables[topic] = AlarmTableViewWidget(
-                self.alarm_trees[topic].treeModel, self.kafka_producer, topic, AlarmTableType.ACKNOWLEDGED, self.plot_pv
+                self.alarm_trees[topic].treeModel,
+                self.kafka_producer,
+                topic,
+                AlarmTableType.ACKNOWLEDGED,
+                self.plot_pv,
+                annunciate,
             )
 
             # Sync the column widths in the active and acknowledged tables, resizing a column will effect both tables.

@@ -40,7 +40,12 @@ class AlarmConfigurationWidget(QDialog):
     """
 
     def __init__(
-        self, alarm_item: AlarmItem, kafka_producer: KafkaProducer, topic: str, parent: Optional[QObject] = None
+        self,
+        alarm_item: AlarmItem,
+        kafka_producer: KafkaProducer,
+        topic: str,
+        annunciate: bool = False,
+        parent: Optional[QObject] = None,
     ):
         super().__init__(parent=parent)
         self.alarm_item = alarm_item
@@ -60,10 +65,10 @@ class AlarmConfigurationWidget(QDialog):
 
         self.behavior_label = QLabel("Behavior:")
         self.enabled_checkbox = QCheckBox("Enabled")
-        self.enabled_checkbox.clicked.connect(self.update_enabled_checkbox_pre_disabled_value)
-
         self.latch_checkbox = QCheckBox("Latched")
-        self.annunciate_checkbox = QCheckBox("Annunciate")
+        annunciate_checkbox_text = "Annunciate" if annunciate else "Annunciate (disabled)"
+        self.annunciate_checkbox = QCheckBox(annunciate_checkbox_text)
+        self.annunciate_checkbox.setEnabled(annunciate)
 
         self.disable_date_label = QLabel("Disable Until:")
         self.minimum_datetime = QDateTime.currentDateTime().addDays(-1)

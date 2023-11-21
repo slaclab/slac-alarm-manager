@@ -37,6 +37,7 @@ class AlarmTreeViewWidget(QWidget):
         topic: str,
         plot_slot: Callable,
         enable_all_topic: bool = False,
+        annunciate: bool = False,
     ):
         super().__init__()
 
@@ -45,10 +46,12 @@ class AlarmTreeViewWidget(QWidget):
         self.plot_slot = plot_slot
         self.plot_signal.connect(self.plot_slot)
         self.clipboard = QApplication.clipboard()
+        self.annunciate = annunciate
 
         self.setFont(QFont("Arial", 12))
         self.layout = QVBoxLayout(self)
-        self.treeModel = AlarmItemsTreeModel(enable_all_topic)
+
+        self.treeModel = AlarmItemsTreeModel(annunciate, enable_all_topic)
         self.tree_view = QTreeView(self)
         self.tree_view.setProperty("showDropIndicator", False)
         self.tree_view.setDragDropOverwriteMode(False)
@@ -179,7 +182,11 @@ class AlarmTreeViewWidget(QWidget):
         """Create and display the alarm configuration widget for the alarm item with the input index"""
         alarm_item = self.treeModel.getItem(index)
         alarm_config_window = AlarmConfigurationWidget(
-            alarm_item=alarm_item, kafka_producer=self.kafka_producer, topic=self.topic, parent=self
+            alarm_item=alarm_item,
+            kafka_producer=self.kafka_producer,
+            topic=self.topic,
+            parent=self,
+            annunciate=self.annunciate,
         )
         alarm_config_window.show()
 

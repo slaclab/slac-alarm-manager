@@ -61,6 +61,7 @@ class AlarmTableViewWidget(QWidget):
         topic: str,
         table_type: AlarmTableType,
         plot_slot: Callable,
+        annunciate: bool = False,
     ):
         super().__init__()
         self.resize(1035, 600)

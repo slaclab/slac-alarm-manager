@@ -27,14 +27,17 @@ def test_create_and_show(qtbot, alarm_item, mock_kafka_producer):
 def test_save_configuration(qtbot, alarm_item, mock_kafka_producer, enabled, latching, annunciating):
     """Verify that the information saved in the configuration widget is sent to the kafka cluster correctly"""
     alarm_config_widget = AlarmConfigurationWidget(
-        alarm_item=alarm_item, kafka_producer=mock_kafka_producer, topic="TEST"
+        alarm_item=alarm_item, kafka_producer=mock_kafka_producer, topic="TEST", annunciate=annunciating
     )
     qtbot.addWidget(alarm_config_widget)
 
     # Simulate the user typing in several suggestions for how to handle this particular alarm
     alarm_config_widget.enabled_checkbox.setChecked(enabled)
     alarm_config_widget.latch_checkbox.setChecked(latching)
-    alarm_config_widget.annunciate_checkbox.setChecked(annunciating)
+    if annunciating:
+        alarm_config_widget.annunciate_checkbox.setChecked(True)
+    else:
+        assert alarm_config_widget.annunciate_checkbox.isEnabled() is False
 
     alarm_config_widget.guidance_table.cellWidget(0, 0).setText("Call")
     alarm_config_widget.guidance_table.cellWidget(0, 1).setText("Somebody")

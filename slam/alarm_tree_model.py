@@ -18,7 +18,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         The parent of this model.
     """
 
-    def __init__(self, enable_all_topic: bool = False, parent: Optional[QObject] = None):
+    def __init__(self, annunciate: bool = False, enable_all_topic: bool = False, parent: Optional[QObject] = None):
         super().__init__(parent)
         self.root_item = AlarmItem("")
         self.nodes = []
@@ -27,6 +27,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         if self.enable_all_topic:
             self.nodes.insert(0, self.root_item)
         self.added_paths = dict()  # Mapping from PV name to all associated paths in the tree (will be just 1 for most)
+        self.annunciate = annunciate
 
     def clear(self) -> None:
         """Clear out all the nodes in this tree and set the root to an empty item"""
@@ -165,6 +166,13 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 item_to_update.filtered = True
             elif item_to_update.filtered:
                 item_to_update.filtered = False
+            # also ensure annunciate is enabled on application level (self.annunciate) and also for the current item.
+            if item_to_update.is_in_active_alarm_state() and (self.annunciate and item_to_update.annunciating):
+                # prints bell character, cross platform way to generate "beep" noise
+                # (assuming the user has the bell-sound option enabled for their terminal),
+                # could be replaced with call to audio library for more sound options
+                print("\a")
+
         self.layoutChanged.emit()
 
     def update_model(self, item_path: str, values: dict) -> None:

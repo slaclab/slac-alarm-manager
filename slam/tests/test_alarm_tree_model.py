@@ -1,5 +1,7 @@
 from ..alarm_item import AlarmItem, AlarmSeverity
 from operator import attrgetter
+import sys
+from io import StringIO
 
 
 def test_clear(tree_model, alarm_item):
@@ -145,3 +147,45 @@ def test_remove_item(tree_model):
 
     assert len(tree_model.nodes) == 0
     assert len(tree_model.added_paths) == 0
+
+
+def test_annunciation(tree_model):
+    """Test that a beep noise is made when an alarm-item enters an active alarm state"""
+
+    tree_model.annunciate = True
+    alarm_item = AlarmItem(
+        "TEST:PV",
+        path="/path/to/TEST:PV",
+        alarm_severity=AlarmSeverity.OK,
+        alarm_status="OK",
+        pv_severity=AlarmSeverity.OK,
+        annunciating=True,
+    )
+    tree_model.nodes.append(alarm_item)
+    tree_model.added_paths["TEST:PV"] = ["/path/to/TEST:PV"]
+
+    # To verify the beep happened we check that bell character was printed to stdout,
+    # which when printed to stdout makes beep sound
+    # (assuming the user has the bell-sound option enabled for their terminal).
+    # Could later replace with audio library if more sound options are wanted.
+    stdout_buffer = StringIO()
+    # redirect stdout to buffer
+    sys.stdout = stdout_buffer
+
+    tree_model.update_item(
+        "TEST:PV",
+        "/path/to/TEST:PV",
+        AlarmSeverity.MINOR,
+        "STATE_ALARM",
+        None,
+        "FAULT",
+        AlarmSeverity.MINOR,
+        "alarm_status",
+    )
+
+    # restore original stdout stream
+    sys.stdout = sys.__stdout__
+
+    captured_output = stdout_buffer.getvalue()
+    # checking for bell character
+    assert captured_output == "\x07\n"
