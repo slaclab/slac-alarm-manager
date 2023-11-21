@@ -155,6 +155,9 @@ class AlarmTableViewWidget(QWidget):
         # This follows how the "Draw Plot" option handles multiple selected items.
         indices = self.get_selected_indices()
         alarm_item = None
+        info = None
+        hihi = high = low = lolo = "None"
+
         if len(indices) > 0:
             index = indices[0]
             alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
@@ -165,12 +168,10 @@ class AlarmTableViewWidget(QWidget):
         if not alarm_item.is_leaf():
             return
 
-        info = None
-        hihi = high = low = lolo = "None"
-
         # Avoid calling 'cainfo' on undefined alarm since causes the call to stall for a bit.
         # Also we don't want thresholds from an undefined alarm anyway.
         if alarm_item.is_undefined_or_invalid():
+            # Don't display any of the threshold-display actions if alarm-item undefined
             self.display_thresholds_menu.clear()
             return
 

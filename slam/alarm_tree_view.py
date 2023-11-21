@@ -91,17 +91,17 @@ class AlarmTreeViewWidget(QWidget):
         indices = self.tree_view.selectedIndexes()
         index = indices[0]
         alarm_item = self.treeModel.getItem(index)
+        info = None
+        hihi = high = low = lolo = "None"
 
         # If not a leaf its an nvalid 'cainfo' call which could stall things for a while.
         if not alarm_item.is_leaf():
             return
 
-        info = None
-        hihi = high = low = lolo = "None"
-
         # Avoid calling 'cainfo' on undefined alarm since causes the call to stall for a bit.
         # Also we don't want thresholds from an undefined alarm anyway.
         if alarm_item.is_undefined_or_invalid():
+            # Don't display any of the threshold-display actions if alarm-item undefined
             self.display_threshholds_menu.clear()
             return
 
@@ -148,9 +148,6 @@ class AlarmTreeViewWidget(QWidget):
     def tree_menu(self, pos: QPoint) -> None:
         """Creates and displays the context menu to be displayed upon right clicking on an alarm item"""
         indices = self.tree_view.selectedIndexes()
-        index = indices[0]
-        self.treeModel.getItem(index).name
-
         if len(indices) > 0:
             index = indices[0]
             alarm_item = self.treeModel.getItem(index)
@@ -172,7 +169,6 @@ class AlarmTreeViewWidget(QWidget):
                     self.context_menu.addAction(self.unacknowledge_action)
                 self.context_menu.addAction(self.copy_action)
                 self.context_menu.addAction(self.plot_action)
-
             else:  # Parent Node
                 leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
                 add_acknowledge_action = False
