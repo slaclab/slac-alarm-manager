@@ -150,14 +150,14 @@ class AlarmTableViewWidget(QWidget):
         self.alarmModel.layoutChanged.connect(self.update_counter_label)
 
     def handleThresholdDisplay(self):
-        # If multiple alarm-items selected, just display thresholds for 1st item.
-        # (or don't display anything if 1st item is undefined/invalid).
-        # This follows how the "Draw Plot" option handles multiple selected items.
         indices = self.get_selected_indices()
         alarm_item = None
         info = None
         hihi = high = low = lolo = "None"
 
+        # If multiple alarm-items selected, just display thresholds for 1st item.
+        # (or don't display anything if 1st item is undefined/invalid).
+        # This follows how the "Draw Plot" option handles multiple selected items.
         if len(indices) > 0:
             index = indices[0]
             alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
