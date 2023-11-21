@@ -1,5 +1,6 @@
 import getpass
 import socket
+import re
 from functools import partial
 from kafka.producer import KafkaProducer
 from pydm.display import load_file
@@ -11,9 +12,8 @@ from .alarm_configuration_widget import AlarmConfigurationWidget
 from .alarm_item import AlarmItem, AlarmSeverity
 from .alarm_tree_model import AlarmItemsTreeModel
 from .permissions import UserAction, can_take_action
-from epics import cainfo, PV, caget
-from typing import List
-import re
+from epics import cainfo
+
 
 class AlarmTreeViewWidget(QWidget):
     """
@@ -95,16 +95,16 @@ class AlarmTreeViewWidget(QWidget):
         info = None
         hihi = high = low = lolo = "None"
 
-        # Avoid calling "cainfo" on undefined alarm since causes the call to stall for a bit.
+        # Avoid calling 'cainfo' on undefined alarm since causes the call to stall for a bit.
         # Also we don't want thresholds from an undefined alarm anyway.
         if alarm_item.is_undefined_or_invalid():
             self.display_threshholds_menu.clear()
             return
 
-        info = cainfo(alarm_item.name, False) # False arg is so call returns string
-        if info != None:
+        info = cainfo(alarm_item.name, False)  # False arg is so call returns string
+        if info is not None:
             """
-            "cainfo" just returns string, so need regex to extract values,
+            'cainfo' just returns a string so need regex to extract values,
             the following is example of values in the string:
 
              upper_alarm_limit   = 130.0
@@ -113,15 +113,15 @@ class AlarmTreeViewWidget(QWidget):
              lower_warning_limit = 90.0
 
             """
-            upper_alarm_limit_pattern = re.compile(r'upper_alarm_limit\s*=\s*([\d.]+)')
-            lower_alarm_limit_pattern = re.compile(r'lower_alarm_limit\s*=\s*([\d.]+)')
-            upper_warning_limit_pattern = re.compile(r'upper_warning_limit\s*=\s*([\d.]+)')
-            lower_warning_limit_pattern = re.compile(r'lower_warning_limit\s*=\s*([\d.]+)')
+            upper_alarm_limit_pattern = re.compile(r"upper_alarm_limit\s*=\s*([\d.]+)")
+            lower_alarm_limit_pattern = re.compile(r"lower_alarm_limit\s*=\s*([\d.]+)")
+            upper_warning_limit_pattern = re.compile(r"upper_warning_limit\s*=\s*([\d.]+)")
+            lower_warning_limit_pattern = re.compile(r"lower_warning_limit\s*=\s*([\d.]+)")
 
             hihi_search_result = upper_alarm_limit_pattern.search(info)
-            # threshold values are not always set, just display "None" if so 
+            # threshold values are not always set, just display "None" if so
             hihi = hihi_search_result.group(1) if hihi_search_result else "None"
-            
+
             high_search_result = lower_alarm_limit_pattern.search(info)
             high = high_search_result.group(1) if high_search_result else "None"
 
@@ -131,7 +131,6 @@ class AlarmTreeViewWidget(QWidget):
             lolo_search_result = lower_warning_limit_pattern.search(info)
             lolo = lolo_search_result.group(1) if lolo_search_result else "None"
 
-
         self.hihi_action = QAction("HIHI: " + hihi)
         self.high_action = QAction("HIGH: " + high)
         self.low_action = QAction("LOW: " + low)
@@ -140,12 +139,12 @@ class AlarmTreeViewWidget(QWidget):
         self.display_threshholds_menu.addAction(self.high_action)
         self.display_threshholds_menu.addAction(self.low_action)
         self.display_threshholds_menu.addAction(self.lolo_action)
-    
+
     def tree_menu(self, pos: QPoint) -> None:
         """Creates and displays the context menu to be displayed upon right clicking on an alarm item"""
         indices = self.tree_view.selectedIndexes()
         index = indices[0]
-        name = self.treeModel.getItem(index).name
+        self.treeModel.getItem(index).name
 
         if len(indices) > 0:
             index = indices[0]

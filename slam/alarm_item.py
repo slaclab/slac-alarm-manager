@@ -162,15 +162,15 @@ class AlarmItem(QObject):
         """
         A convenience method for returning whether or not this item is undefiend or invalid.
         (Basically returns if the alarm-item is colored some shade of purple)
-        This function is useful to check before calling some PyEpics calls like "cainfo",
-        which takes long time to return when called on undefined/invalid alarms. 
+        This function is useful to check before using some PyEpics calls like "cainfo",
+        which takes long time to return when called on undefined/invalid alarms.
         """
         return self.alarm_severity in (
             AlarmSeverity.UNDEFINED,
             AlarmSeverity.UNDEFINED_ACK,
             AlarmSeverity.INVALID,
             AlarmSeverity.INVALID_ACK,
-        ) 
+        )
 
     def is_in_active_alarm_state(self) -> bool:
         """A convenience method for returning whether or not this item is actively in an alarm state"""
@@ -180,7 +180,6 @@ class AlarmItem(QObject):
             AlarmSeverity.INVALID,
             AlarmSeverity.UNDEFINED,
         )
-
 
     def display_color(self, severity) -> QBrush:
         """
