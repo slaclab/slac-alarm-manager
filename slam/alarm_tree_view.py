@@ -92,6 +92,10 @@ class AlarmTreeViewWidget(QWidget):
         index = indices[0]
         alarm_item = self.treeModel.getItem(index)
 
+        # If not a leaf its an nvalid 'cainfo' call which could stall things for a while.
+        if not alarm_item.is_leaf():
+            return
+
         info = None
         hihi = high = low = lolo = "None"
 
@@ -131,6 +135,7 @@ class AlarmTreeViewWidget(QWidget):
             lolo_search_result = lower_warning_limit_pattern.search(info)
             lolo = lolo_search_result.group(1) if lolo_search_result else "None"
 
+        # we display threshold values as 4 items in a drop-down menu
         self.hihi_action = QAction("HIHI: " + hihi)
         self.high_action = QAction("HIGH: " + high)
         self.low_action = QAction("LOW: " + low)

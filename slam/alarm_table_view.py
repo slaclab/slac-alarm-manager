@@ -150,11 +150,20 @@ class AlarmTableViewWidget(QWidget):
         self.alarmModel.layoutChanged.connect(self.update_counter_label)
 
     def handleThresholdDisplay(self):
+        # If multiple alarm-items selected, just display thresholds for 1st item.
+        # (or don't display anything if 1st item is undefined/invalid).
+        # This follows how the "Draw Plot" option handles multiple selected items.
         indices = self.get_selected_indices()
-        indices[0]
         alarm_item = None
         if len(indices) > 0:
-            alarm_item = list(self.alarmModel.alarm_items.items())[indices[0].row()][1]
+            index = indices[0]
+            alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
+        else:
+            return
+
+        # If not a leaf its an nvalid 'cainfo' call which could stall things for a while.
+        if not alarm_item.is_leaf():
+            return
 
         info = None
         hihi = high = low = lolo = "None"
@@ -166,7 +175,6 @@ class AlarmTableViewWidget(QWidget):
             return
 
         info = cainfo(alarm_item.name, False)  # False arg is so call returns string
-        print(info)
 
         if info is not None:
             """
@@ -197,6 +205,7 @@ class AlarmTableViewWidget(QWidget):
             lolo_search_result = lower_warning_limit_pattern.search(info)
             lolo = lolo_search_result.group(1) if lolo_search_result else "None"
 
+        # we display threshold values as 4 items in a drop-down menu
         self.hihi_action = QAction("HIHI: " + hihi)
         self.high_action = QAction("HIGH: " + high)
         self.low_action = QAction("LOW: " + low)
@@ -229,9 +238,6 @@ class AlarmTableViewWidget(QWidget):
 
     def alarm_context_menu_event(self, ev: QEvent) -> None:
         """Display the right-click context menu for items in the active alarms table"""
-        indices = self.get_selected_indices()
-        if len(indices) > 0:
-            list(self.alarmModel.alarm_items.items())[indices[0].row()][1]
         self.alarm_context_menu.popup(QCursor.pos())
 
     def get_selected_indices(self) -> List[QModelIndex]:
