@@ -11,7 +11,9 @@ from .alarm_configuration_widget import AlarmConfigurationWidget
 from .alarm_item import AlarmItem, AlarmSeverity
 from .alarm_tree_model import AlarmItemsTreeModel
 from .permissions import UserAction, can_take_action
-
+from epics import cainfo, PV, caget
+from typing import List
+import re
 
 class AlarmTreeViewWidget(QWidget):
     """
@@ -70,6 +72,7 @@ class AlarmTreeViewWidget(QWidget):
         self.enable_action = QAction("Enable")
         self.disable_action = QAction("Disable")
         self.guidance_menu = QMenu("Guidance")
+        self.display_threshholds_menu = QMenu("Display Alarm Thresholds")
         self.display_actions = []
         self.guidance_objects = []
 
@@ -84,9 +87,66 @@ class AlarmTreeViewWidget(QWidget):
 
         self.layout.addWidget(self.tree_view)
 
+    def handleThresholdDisplay(self):
+        indices = self.tree_view.selectedIndexes()
+        index = indices[0]
+        alarm_item = self.treeModel.getItem(index)
+
+        info = None
+        hihi = high = low = lolo = "None"
+
+        # Avoid calling "cainfo" on undefined alarm since causes the call to stall for a bit.
+        # Also we don't want thresholds from an undefined alarm anyway.
+        if alarm_item.is_undefined_or_invalid():
+            self.display_threshholds_menu.clear()
+            return
+
+        info = cainfo(alarm_item.name, False) # False arg is so call returns string
+        if info != None:
+            """
+            "cainfo" just returns string, so need regex to extract values,
+            the following is example of values in the string:
+
+             upper_alarm_limit   = 130.0
+             lower_alarm_limit   = 90.0
+             upper_warning_limit = 125.0
+             lower_warning_limit = 90.0
+
+            """
+            upper_alarm_limit_pattern = re.compile(r'upper_alarm_limit\s*=\s*([\d.]+)')
+            lower_alarm_limit_pattern = re.compile(r'lower_alarm_limit\s*=\s*([\d.]+)')
+            upper_warning_limit_pattern = re.compile(r'upper_warning_limit\s*=\s*([\d.]+)')
+            lower_warning_limit_pattern = re.compile(r'lower_warning_limit\s*=\s*([\d.]+)')
+
+            hihi_search_result = upper_alarm_limit_pattern.search(info)
+            # threshold values are not always set, just display "None" if so 
+            hihi = hihi_search_result.group(1) if hihi_search_result else "None"
+            
+            high_search_result = lower_alarm_limit_pattern.search(info)
+            high = high_search_result.group(1) if high_search_result else "None"
+
+            low_search_result = upper_warning_limit_pattern.search(info)
+            low = low_search_result.group(1) if low_search_result else "None"
+
+            lolo_search_result = lower_warning_limit_pattern.search(info)
+            lolo = lolo_search_result.group(1) if lolo_search_result else "None"
+
+
+        self.hihi_action = QAction("HIHI: " + hihi)
+        self.high_action = QAction("HIGH: " + high)
+        self.low_action = QAction("LOW: " + low)
+        self.lolo_action = QAction("LOLO: " + lolo)
+        self.display_threshholds_menu.addAction(self.hihi_action)
+        self.display_threshholds_menu.addAction(self.high_action)
+        self.display_threshholds_menu.addAction(self.low_action)
+        self.display_threshholds_menu.addAction(self.lolo_action)
+    
     def tree_menu(self, pos: QPoint) -> None:
         """Creates and displays the context menu to be displayed upon right clicking on an alarm item"""
         indices = self.tree_view.selectedIndexes()
+        index = indices[0]
+        name = self.treeModel.getItem(index).name
+
         if len(indices) > 0:
             index = indices[0]
             alarm_item = self.treeModel.getItem(index)
@@ -108,6 +168,7 @@ class AlarmTreeViewWidget(QWidget):
                     self.context_menu.addAction(self.unacknowledge_action)
                 self.context_menu.addAction(self.copy_action)
                 self.context_menu.addAction(self.plot_action)
+
             else:  # Parent Node
                 leaf_nodes = self.treeModel.get_all_leaf_nodes(alarm_item)
                 add_acknowledge_action = False
@@ -137,6 +198,8 @@ class AlarmTreeViewWidget(QWidget):
             self.context_menu.addAction(self.enable_action)
             self.context_menu.addAction(self.disable_action)
             self.context_menu.addMenu(self.guidance_menu)
+            self.context_menu.addMenu(self.display_threshholds_menu)
+            self.display_threshholds_menu.aboutToShow.connect(self.handleThresholdDisplay)
 
             # Make the entires from the config-page appear when alarm in tree is right-clicked
             indices = self.tree_view.selectedIndexes()
