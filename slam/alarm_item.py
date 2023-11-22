@@ -130,6 +130,7 @@ class AlarmItem(QObject):
         self.annunciating = annunciating
         self.delay = delay
         self.alarm_filter = alarm_filter
+        self.pv_object = None
 
     def is_leaf(self) -> bool:
         """Return whether or not this alarm is associated with a leaf node in its configured hierarchy"""

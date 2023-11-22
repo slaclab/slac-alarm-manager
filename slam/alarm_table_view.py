@@ -1,7 +1,6 @@
 import enum
 import getpass
 import socket
-import re
 from functools import partial
 from kafka.producer import KafkaProducer
 from qtpy.QtCore import QEvent, QModelIndex, QSortFilterProxyModel, Qt, Signal
@@ -20,11 +19,12 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from epics import cainfo
+from epics import PV
 from typing import Callable, List
 from .alarm_table_model import AlarmItemsTableModel
 from .alarm_tree_model import AlarmItemsTreeModel
 from .permissions import UserAction, can_take_action
+from math import isnan
 
 
 class AlarmTableType(str, enum.Enum):
@@ -152,8 +152,7 @@ class AlarmTableViewWidget(QWidget):
     def handleThresholdDisplay(self):
         indices = self.get_selected_indices()
         alarm_item = None
-        info = None
-        hihi = high = low = lolo = "None"
+        hihi = high = low = lolo = -1
 
         # If multiple alarm-items selected, just display thresholds for 1st item.
         # (or don't display anything if 1st item is undefined/invalid).
@@ -164,8 +163,10 @@ class AlarmTableViewWidget(QWidget):
         else:
             return
 
-        # If not a leaf its an nvalid 'cainfo' call which could stall things for a while.
+        # If not a leaf its an invalid 'cainfo' call which could stall things for a while.
         if not alarm_item.is_leaf():
+            # Don't display any of the threshold-display actions if selected non-leaf
+            self.display_thresholds_menu.clear()
             return
 
         # Avoid calling 'cainfo' on undefined alarm since causes the call to stall for a bit.
@@ -175,42 +176,36 @@ class AlarmTableViewWidget(QWidget):
             self.display_thresholds_menu.clear()
             return
 
-        info = cainfo(alarm_item.name, False)  # False arg is so call returns string
+        if alarm_item.pv_object is None:
+            alarm_item.pv_object = PV(alarm_item.name)
+            # Update the values only when user requests them in right-click menu
+            alarm_item.pv_object.clear_auto_monitor()
 
-        if info is not None:
-            """
-            'cainfo' just returns a string, so need regex to extract values,
-            the following is example of values in the string:
+        alarm_item_metadata = alarm_item.pv_object.get_ctrlvars()
+        print(alarm_item_metadata)
 
-             upper_alarm_limit   = 130.0
-             lower_alarm_limit   = 90.0
-             upper_warning_limit = 125.0
-             lower_warning_limit = 90.0
+        # Getting data can fail for some PV's, good metadata will always have a key for all 4 limits (nan if not set),
+        # in this case don't display any threshold sub-menus
+        if (
+            alarm_item_metadata is not None
+            and len(alarm_item_metadata) > 0
+            and "upper_alarm_limit" not in alarm_item_metadata
+        ):
+            self.display_thresholds_menu.clear()
+            return
 
-            """
-            upper_alarm_limit_pattern = re.compile(r"upper_alarm_limit\s*=\s*([\d.]+)")
-            lower_alarm_limit_pattern = re.compile(r"lower_alarm_limit\s*=\s*([\d.]+)")
-            upper_warning_limit_pattern = re.compile(r"upper_warning_limit\s*=\s*([\d.]+)")
-            lower_warning_limit_pattern = re.compile(r"lower_warning_limit\s*=\s*([\d.]+)")
-
-            hihi_search_result = upper_alarm_limit_pattern.search(info)
-            # threshold values are not always set
-            hihi = hihi_search_result.group(1) if hihi_search_result else "None"
-
-            high_search_result = lower_alarm_limit_pattern.search(info)
-            high = high_search_result.group(1) if high_search_result else "None"
-
-            low_search_result = upper_warning_limit_pattern.search(info)
-            low = low_search_result.group(1) if low_search_result else "None"
-
-            lolo_search_result = lower_warning_limit_pattern.search(info)
-            lolo = lolo_search_result.group(1) if lolo_search_result else "None"
+        # threshold values are not always set, just display "None" if so
+        # upper_alarm_limit here is same as calling caget for pv's '.HIHI'
+        hihi = alarm_item_metadata["upper_alarm_limit"]
+        lolo = alarm_item_metadata["lower_alarm_limit"]
+        high = alarm_item_metadata["upper_warning_limit"]
+        low = alarm_item_metadata["lower_warning_limit"]
 
         # we display threshold values as 4 items in a drop-down menu
-        self.hihi_action = QAction("HIHI: " + hihi)
-        self.high_action = QAction("HIGH: " + high)
-        self.low_action = QAction("LOW: " + low)
-        self.lolo_action = QAction("LOLO: " + lolo)
+        self.hihi_action = QAction("HIHI: " + str(hihi)) if not isnan(hihi) else QAction("HIHI: Not set")
+        self.high_action = QAction("HIGH: " + str(high)) if not isnan(high) else QAction("HIGH: Not set")
+        self.low_action = QAction("LOW: " + str(low)) if not isnan(low) else QAction("LOW: Not set")
+        self.lolo_action = QAction("LOLO: " + str(lolo)) if not isnan(lolo) else QAction("LOLO: Not set")
         self.display_thresholds_menu.addAction(self.hihi_action)
         self.display_thresholds_menu.addAction(self.high_action)
         self.display_thresholds_menu.addAction(self.low_action)

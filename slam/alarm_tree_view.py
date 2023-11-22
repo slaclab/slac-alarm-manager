@@ -1,6 +1,5 @@
 import getpass
 import socket
-import re
 from functools import partial
 from kafka.producer import KafkaProducer
 from pydm.display import load_file
@@ -12,7 +11,8 @@ from .alarm_configuration_widget import AlarmConfigurationWidget
 from .alarm_item import AlarmItem, AlarmSeverity
 from .alarm_tree_model import AlarmItemsTreeModel
 from .permissions import UserAction, can_take_action
-from epics import cainfo
+from math import isnan
+from epics import PV
 
 
 class AlarmTreeViewWidget(QWidget):
@@ -72,7 +72,7 @@ class AlarmTreeViewWidget(QWidget):
         self.enable_action = QAction("Enable")
         self.disable_action = QAction("Disable")
         self.guidance_menu = QMenu("Guidance")
-        self.display_threshholds_menu = QMenu("Display Alarm Thresholds")
+        self.display_thresholds_menu = QMenu("Display Alarm Thresholds")
         self.display_actions = []
         self.guidance_objects = []
 
@@ -91,59 +91,54 @@ class AlarmTreeViewWidget(QWidget):
         indices = self.tree_view.selectedIndexes()
         index = indices[0]
         alarm_item = self.treeModel.getItem(index)
-        info = None
-        hihi = high = low = lolo = "None"
+        hihi = high = low = lolo = -1
 
-        # If not a leaf its an nvalid 'cainfo' call which could stall things for a while.
+        # If not a leaf its an invalid 'cainfo' call which could stall things for a while.
         if not alarm_item.is_leaf():
+            # Don't display any of the threshold-display actions if selected non-leaf
+            self.display_thresholds_menu.clear()
             return
 
         # Avoid calling 'cainfo' on undefined alarm since causes the call to stall for a bit.
         # Also we don't want thresholds from an undefined alarm anyway.
         if alarm_item.is_undefined_or_invalid():
             # Don't display any of the threshold-display actions if alarm-item undefined
-            self.display_threshholds_menu.clear()
+            self.display_thresholds_menu.clear()
             return
 
-        info = cainfo(alarm_item.name, False)  # False arg is so call returns string
-        if info is not None:
-            """
-            'cainfo' just returns a string so need regex to extract values,
-            the following is example of values in the string:
+        if alarm_item.pv_object is None:
+            alarm_item.pv_object = PV(alarm_item.name)
+            # Update the values only when user requests them in right-click menu
+            alarm_item.pv_object.clear_auto_monitor()
 
-             upper_alarm_limit   = 130.0
-             lower_alarm_limit   = 90.0
-             upper_warning_limit = 125.0
-             lower_warning_limit = 90.0
+        alarm_item_metadata = alarm_item.pv_object.get_ctrlvars()
 
-            """
-            upper_alarm_limit_pattern = re.compile(r"upper_alarm_limit\s*=\s*([\d.]+)")
-            lower_alarm_limit_pattern = re.compile(r"lower_alarm_limit\s*=\s*([\d.]+)")
-            upper_warning_limit_pattern = re.compile(r"upper_warning_limit\s*=\s*([\d.]+)")
-            lower_warning_limit_pattern = re.compile(r"lower_warning_limit\s*=\s*([\d.]+)")
+        # Getting data can fail for some PV's, good metadata will always have a key for all 4 limits (nan if not set),
+        # in this case don't display any threshold sub-menus
+        if (
+            alarm_item_metadata is not None
+            and len(alarm_item_metadata) > 0
+            and "upper_alarm_limit" not in alarm_item_metadata
+        ):
+            self.display_thresholds_menu.clear()
+            return
 
-            hihi_search_result = upper_alarm_limit_pattern.search(info)
-            # threshold values are not always set, just display "None" if so
-            hihi = hihi_search_result.group(1) if hihi_search_result else "None"
-
-            high_search_result = lower_alarm_limit_pattern.search(info)
-            high = high_search_result.group(1) if high_search_result else "None"
-
-            low_search_result = upper_warning_limit_pattern.search(info)
-            low = low_search_result.group(1) if low_search_result else "None"
-
-            lolo_search_result = lower_warning_limit_pattern.search(info)
-            lolo = lolo_search_result.group(1) if lolo_search_result else "None"
+        # threshold values are not always set, just display "None" if so
+        # upper_alarm_limit here is same as calling caget for pv's '.HIHI'
+        hihi = alarm_item_metadata["upper_alarm_limit"]
+        lolo = alarm_item_metadata["lower_alarm_limit"]
+        high = alarm_item_metadata["upper_warning_limit"]
+        low = alarm_item_metadata["lower_warning_limit"]
 
         # we display threshold values as 4 items in a drop-down menu
-        self.hihi_action = QAction("HIHI: " + hihi)
-        self.high_action = QAction("HIGH: " + high)
-        self.low_action = QAction("LOW: " + low)
-        self.lolo_action = QAction("LOLO: " + lolo)
-        self.display_threshholds_menu.addAction(self.hihi_action)
-        self.display_threshholds_menu.addAction(self.high_action)
-        self.display_threshholds_menu.addAction(self.low_action)
-        self.display_threshholds_menu.addAction(self.lolo_action)
+        self.hihi_action = QAction("HIHI: " + str(hihi)) if not isnan(hihi) else QAction("HIHI: Not set")
+        self.high_action = QAction("HIGH: " + str(high)) if not isnan(high) else QAction("HIGH: Not set")
+        self.low_action = QAction("LOW: " + str(low)) if not isnan(low) else QAction("LOW: Not set")
+        self.lolo_action = QAction("LOLO: " + str(lolo)) if not isnan(lolo) else QAction("LOLO: Not set")
+        self.display_thresholds_menu.addAction(self.hihi_action)
+        self.display_thresholds_menu.addAction(self.high_action)
+        self.display_thresholds_menu.addAction(self.low_action)
+        self.display_thresholds_menu.addAction(self.lolo_action)
 
     def tree_menu(self, pos: QPoint) -> None:
         """Creates and displays the context menu to be displayed upon right clicking on an alarm item"""
@@ -198,8 +193,8 @@ class AlarmTreeViewWidget(QWidget):
             self.context_menu.addAction(self.enable_action)
             self.context_menu.addAction(self.disable_action)
             self.context_menu.addMenu(self.guidance_menu)
-            self.context_menu.addMenu(self.display_threshholds_menu)
-            self.display_threshholds_menu.aboutToShow.connect(self.handleThresholdDisplay)
+            self.context_menu.addMenu(self.display_thresholds_menu)
+            self.display_thresholds_menu.aboutToShow.connect(self.handleThresholdDisplay)
 
             # Make the entires from the config-page appear when alarm in tree is right-clicked
             indices = self.tree_view.selectedIndexes()
