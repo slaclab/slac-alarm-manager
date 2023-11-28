@@ -182,7 +182,6 @@ class AlarmTableViewWidget(QWidget):
             alarm_item.pv_object.clear_auto_monitor()
 
         alarm_item_metadata = alarm_item.pv_object.get_ctrlvars()
-        print(alarm_item_metadata)
 
         # Getting data can fail for some PV's, good metadata will always have a key for all 4 limits (nan if not set),
         # in this case don't display any threshold sub-menus
