@@ -17,6 +17,7 @@ from epics import PV
 
 logger = logging.getLogger(__name__)
 
+
 class AlarmTreeViewWidget(QWidget):
     """
     The TreeViewWidget is a collection of everything needed to display and interact with the alarm tree.
@@ -107,7 +108,7 @@ class AlarmTreeViewWidget(QWidget):
             # Don't display any of the threshold-display actions if alarm-item undefined
             self.display_thresholds_menu.clear()
             return
-        
+
         # Make pv_object if first time item's threshold is requested
         if alarm_item.pv_object is None:
             # Update the values only when user requests them in right-click menu
