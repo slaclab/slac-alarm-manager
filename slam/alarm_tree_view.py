@@ -1,5 +1,6 @@
 import getpass
 import socket
+import logging
 from functools import partial
 from kafka.producer import KafkaProducer
 from pydm.display import load_file
@@ -14,6 +15,7 @@ from .permissions import UserAction, can_take_action
 from math import isnan
 from epics import PV
 
+logger = logging.getLogger(__name__)
 
 class AlarmTreeViewWidget(QWidget):
     """
@@ -105,21 +107,22 @@ class AlarmTreeViewWidget(QWidget):
             # Don't display any of the threshold-display actions if alarm-item undefined
             self.display_thresholds_menu.clear()
             return
-
+        
+        # Make pv_object if first time item's threshold is requested
         if alarm_item.pv_object is None:
-            alarm_item.pv_object = PV(alarm_item.name)
             # Update the values only when user requests them in right-click menu
-            alarm_item.pv_object.clear_auto_monitor()
+            alarm_item.pv_object = PV(alarm_item.name, auto_monitor=False)
 
         alarm_item_metadata = alarm_item.pv_object.get_ctrlvars()
 
         # Getting data can fail for some PV's, good metadata will always have a key for all 4 limits (nan if not set),
         # in this case don't display any threshold sub-menus
-        if (
-            alarm_item_metadata is not None
-            and len(alarm_item_metadata) > 0
-            and "upper_alarm_limit" not in alarm_item_metadata
-        ):
+        if alarm_item_metadata is None:
+            logger.debug(f"Can't connect to PV: {alarm_item.name}")
+            self.display_thresholds_menu.clear()
+            return
+        elif len(alarm_item_metadata) > 0 and "upper_alarm_limit" not in alarm_item_metadata:
+            logger.debug(f"No threshold data for PV: {alarm_item.name}")
             self.display_thresholds_menu.clear()
             return
 
