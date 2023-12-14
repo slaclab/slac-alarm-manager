@@ -113,6 +113,12 @@ class AlarmTreeViewWidget(QWidget):
             # Update the values only when user requests them in right-click menu
             alarm_item.pv_object = PV(alarm_item.name, auto_monitor=False)
 
+        # Do a get call we can quickly timeout, so if PV not-connected don't
+        # need to wait for slower get_ctrlvars() call.
+        # 0.1 is small arbitrary value, can be made larger if timing-out for
+        # actually connected PVs.
+        if alarm_item.pv_object.get(timeout=0.1) is None:
+            return
         alarm_item_metadata = alarm_item.pv_object.get_ctrlvars()
 
         # Getting data can fail for some PV's, good metadata will always have a key for all 4 limits (nan if not set),
