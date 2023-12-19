@@ -233,6 +233,8 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                 parent_item_index = self.getItemIndex(parent_path)
             alarm_item.assign_parent(self.nodes[parent_item_index])
             self.nodes[parent_item_index].append_child(alarm_item)
+            # Sort nodes in alphabetical order
+            self.nodes[parent_item_index].child_items.sort(key=lambda x: x.name)
             self.endInsertRows()
 
         else:  # Otherwise it is an update to an existing item
