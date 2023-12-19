@@ -130,6 +130,7 @@ class AlarmItem(QObject):
         self.annunciating = annunciating
         self.delay = delay
         self.alarm_filter = alarm_filter
+        self.pv_object = None
 
     def is_leaf(self) -> bool:
         """Return whether or not this alarm is associated with a leaf node in its configured hierarchy"""
@@ -156,6 +157,20 @@ class AlarmItem(QObject):
             AlarmSeverity.MAJOR_ACK,
             AlarmSeverity.INVALID_ACK,
             AlarmSeverity.UNDEFINED_ACK,
+        )
+
+    def is_undefined_or_invalid(self) -> bool:
+        """
+        A convenience method for returning whether or not this item is undefiend or invalid.
+        (Basically returns if the alarm-item is colored some shade of purple)
+        This function is useful to check before using some PyEpics calls like "cainfo",
+        which takes long time to return when called on undefined/invalid alarms.
+        """
+        return self.alarm_severity in (
+            AlarmSeverity.UNDEFINED,
+            AlarmSeverity.UNDEFINED_ACK,
+            AlarmSeverity.INVALID,
+            AlarmSeverity.INVALID_ACK,
         )
 
     def is_in_active_alarm_state(self) -> bool:

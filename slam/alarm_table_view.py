@@ -19,10 +19,12 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from epics import PV
 from typing import Callable, List
 from .alarm_table_model import AlarmItemsTableModel
 from .alarm_tree_model import AlarmItemsTreeModel
 from .permissions import UserAction, can_take_action
+from math import isnan
 
 
 class AlarmTableType(str, enum.Enum):
@@ -108,6 +110,7 @@ class AlarmTableViewWidget(QWidget):
         self.unacknowledge_action = QAction("Unacknowledge")
         self.copy_action = QAction("Copy PV To Clipboard")
         self.plot_action = QAction("Draw Plot")
+        self.display_thresholds_menu = QMenu("Display Alarm Thresholds")
         self.acknowledge_action.triggered.connect(partial(self.send_acknowledge_action, True))
         self.unacknowledge_action.triggered.connect(partial(self.send_acknowledge_action, False))
         self.plot_action.triggered.connect(self.plot_pv)
@@ -120,6 +123,8 @@ class AlarmTableViewWidget(QWidget):
 
         self.alarm_context_menu.addAction(self.copy_action)
         self.alarm_context_menu.addAction(self.plot_action)
+        self.alarm_context_menu.addMenu(self.display_thresholds_menu)
+        self.display_thresholds_menu.aboutToShow.connect(self.handleThresholdDisplay)
 
         self.alarmView.contextMenuEvent = self.alarm_context_menu_event
 
@@ -144,6 +149,67 @@ class AlarmTableViewWidget(QWidget):
         self.layout.addWidget(self.alarmView)
 
         self.alarmModel.layoutChanged.connect(self.update_counter_label)
+
+    def handleThresholdDisplay(self):
+        indices = self.get_selected_indices()
+        alarm_item = None
+        hihi = high = low = lolo = -1
+
+        # If multiple alarm-items selected, just display thresholds for 1st item.
+        # (or don't display anything if 1st item is undefined/invalid).
+        # This follows how the "Draw Plot" option handles multiple selected items.
+        if len(indices) > 0:
+            index = indices[0]
+            alarm_item = list(self.alarmModel.alarm_items.items())[index.row()][1]
+        else:
+            return
+
+        # If not a leaf its an invalid 'cainfo' call which could stall things for a while.
+        if not alarm_item.is_leaf():
+            # Don't display any of the threshold-display actions if selected non-leaf
+            self.display_thresholds_menu.clear()
+            return
+
+        # Avoid calling 'cainfo' on undefined alarm since causes the call to stall for a bit.
+        # Also we don't want thresholds from an undefined alarm anyway.
+        if alarm_item.is_undefined_or_invalid():
+            # Don't display any of the threshold-display actions if alarm-item undefined
+            self.display_thresholds_menu.clear()
+            return
+
+        if alarm_item.pv_object is None:
+            alarm_item.pv_object = PV(alarm_item.name)
+            # Update the values only when user requests them in right-click menu
+            alarm_item.pv_object.clear_auto_monitor()
+
+        alarm_item_metadata = alarm_item.pv_object.get_ctrlvars()
+
+        # Getting data can fail for some PV's, good metadata will always have a key for all 4 limits (nan if not set),
+        # in this case don't display any threshold sub-menus
+        if (
+            alarm_item_metadata is not None
+            and len(alarm_item_metadata) > 0
+            and "upper_alarm_limit" not in alarm_item_metadata
+        ):
+            self.display_thresholds_menu.clear()
+            return
+
+        # threshold values are not always set, just display "None" if so
+        # upper_alarm_limit here is same as calling caget for pv's '.HIHI'
+        hihi = alarm_item_metadata["upper_alarm_limit"]
+        lolo = alarm_item_metadata["lower_alarm_limit"]
+        high = alarm_item_metadata["upper_warning_limit"]
+        low = alarm_item_metadata["lower_warning_limit"]
+
+        # we display threshold values as 4 items in a drop-down menu
+        self.hihi_action = QAction("HIHI: " + str(hihi)) if not isnan(hihi) else QAction("HIHI: Not set")
+        self.high_action = QAction("HIGH: " + str(high)) if not isnan(high) else QAction("HIGH: Not set")
+        self.low_action = QAction("LOW: " + str(low)) if not isnan(low) else QAction("LOW: Not set")
+        self.lolo_action = QAction("LOLO: " + str(lolo)) if not isnan(lolo) else QAction("LOLO: Not set")
+        self.display_thresholds_menu.addAction(self.hihi_action)
+        self.display_thresholds_menu.addAction(self.high_action)
+        self.display_thresholds_menu.addAction(self.low_action)
+        self.display_thresholds_menu.addAction(self.lolo_action)
 
     def filter_table(self) -> None:
         """Filter the table based on the text typed into the filter bar"""
