@@ -6,7 +6,7 @@ long_description = (curr_dir / "README.md").read_text()
 
 setup(
     name="slac-alarm-manager",
-    version="1.2.2",
+    version="1.3.0",
     description="Python interface for managing alarms",
     long_description=long_description,
     long_description_content_type="text/markdown",
