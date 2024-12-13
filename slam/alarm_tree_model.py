@@ -1,6 +1,4 @@
-from operator import attrgetter
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
-from qtpy.QtGui import QBrush
 from typing import List, Optional
 from .alarm_item import AlarmItem, AlarmSeverity
 import logging
@@ -61,7 +59,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
                     return (
                         alarm_item.name
                         + f"{bypass_indicator} - {alarm_item.alarm_severity.value}/{alarm_item.alarm_status}"
-                     )
+                    )
                 else:
                     return f"{alarm_item.name}{bypass_indicator}"
             return alarm_item.name + bypass_indicator

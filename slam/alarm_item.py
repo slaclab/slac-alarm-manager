@@ -81,10 +81,28 @@ class AlarmItem(QObject):
     """
 
     __slots__ = (
-        "name", "path", "child_items", "parent_item", "alarm_severity", "alarm_status",
-        "alarm_time", "alarm_value", "pv_severity", "pv_status", "description",
-        "guidance", "displays", "commands", "enabled", "filtered", "latching",
-        "annunciating", "delay", "alarm_filter", "pv_object", "bypass_count",
+        "name",
+        "path",
+        "child_items",
+        "parent_item",
+        "alarm_severity",
+        "alarm_status",
+        "alarm_time",
+        "alarm_value",
+        "pv_severity",
+        "pv_status",
+        "description",
+        "guidance",
+        "displays",
+        "commands",
+        "enabled",
+        "filtered",
+        "latching",
+        "annunciating",
+        "delay",
+        "alarm_filter",
+        "pv_object",
+        "bypass_count",
     )
 
     def __init__(
