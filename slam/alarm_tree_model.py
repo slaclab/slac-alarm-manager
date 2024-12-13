@@ -22,6 +22,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         super().__init__(parent)
         self.root_item = AlarmItem("")
         self.nodes = []
+        self.path_to_index = {}  # Map from the alarm path to the index into the tree
         self.enable_all_topic = enable_all_topic
         # when we have multiple topics to display, make each topic-tree's root a child of a dummy root
         if self.enable_all_topic:
@@ -50,31 +51,22 @@ class AlarmItemsTreeModel(QAbstractItemModel):
 
         alarm_item = self.getItem(index)
         if role == Qt.DisplayRole:
-            bypass_indicator = ""
-            if not alarm_item.is_leaf():
-                # Set an indication there is a bypassed alarm somewhere underneath this top level summary
-                all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
-                for node in all_leaf_nodes:
-                    if not node.is_enabled():
-                        bypass_indicator = " *"
-                        break
             if not alarm_item.is_enabled():
                 return alarm_item.name + " * (disabled)"
+            bypass_indicator = ""
+            if not alarm_item.is_leaf() and alarm_item.bypass_count > 0:
+                bypass_indicator = " *"
             elif alarm_item.alarm_severity != AlarmSeverity.OK:
-                return (
-                    alarm_item.name
-                    + f"{bypass_indicator} - {alarm_item.alarm_severity.value}/{alarm_item.alarm_status}"
-                )
+                if alarm_item.is_leaf():
+                    return (
+                        alarm_item.name
+                        + f"{bypass_indicator} - {alarm_item.alarm_severity.value}/{alarm_item.alarm_status}"
+                     )
+                else:
+                    return f"{alarm_item.name}{bypass_indicator}"
             return alarm_item.name + bypass_indicator
         elif role == Qt.TextColorRole:
-            if alarm_item.is_leaf():
-                return alarm_item.display_color(alarm_item.alarm_severity)
-            else:
-                all_leaf_nodes = self.get_all_leaf_nodes(alarm_item)
-                highest_severity_alarm = max(all_leaf_nodes, key=attrgetter("alarm_severity"))
-                if not highest_severity_alarm.is_enabled():
-                    return QBrush(Qt.darkGreen)
-                return highest_severity_alarm.display_color(highest_severity_alarm.alarm_severity)
+            return alarm_item.display_color(alarm_item.alarm_severity)
 
     def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
         """Create an index for the input row and column based on the parent item."""
@@ -133,10 +125,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
 
     def getItemIndex(self, path: str) -> int:
         """Returns the list index of the item based on its path, or -1 if no item exists at that path"""
-        for index, alarm_item in enumerate(self.nodes):
-            if path == alarm_item.path:
-                return index
-        return -1
+        return self.path_to_index.get(path, -1)
 
     def update_item(
         self,
@@ -164,10 +153,19 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             item_to_update.pv_status = pv_status
             if status == "Disabled":
                 item_to_update.filtered = True
+                parent_item = item_to_update.parent_item
+                while parent_item is not None:
+                    parent_item.bypass_count += 1
+                    parent_item = parent_item.parent_item
             elif item_to_update.filtered:
+                parent_item = item_to_update.parent_item
+                while parent_item is not None:
+                    parent_item.bypass_count -= 1
+                    parent_item = parent_item.parent_item
                 item_to_update.filtered = False
+
             # also ensure annunciate is enabled on application level (self.annunciate) and also for the current item.
-            if item_to_update.is_in_active_alarm_state() and (self.annunciate and item_to_update.annunciating):
+            if self.annunciate and item_to_update.annunciating and item_to_update.is_in_active_alarm_state():
                 # prints bell character, cross platform way to generate "beep" noise
                 # (assuming the user has the bell-sound option enabled for their terminal),
                 # could be replaced with call to audio library for more sound options
@@ -209,6 +207,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
 
             path_as_list = item_path.split("/")
             self.nodes.append(alarm_item)
+            self.path_to_index[item_path] = len(self.nodes) - 1
 
             if item_name not in self.added_paths:
                 self.added_paths[item_name] = []
@@ -263,6 +262,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         item_name = item_path.split("/")[-1]
         self.beginRemoveRows(QModelIndex(), item_index, item_index)
         self.added_paths[item_name].remove(item_path)
+        del self.path_to_index[item_path]
         del self.nodes[item_index]
         self.endRemoveRows()
 

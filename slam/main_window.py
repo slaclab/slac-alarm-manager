@@ -30,7 +30,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         A list containing one or more urls for kafka bootstrap servers
     """
 
-    alarm_update_signal = Signal(str, str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
+    alarm_tree_update_signal = Signal(str, str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
+    alarm_table_update_signal = Signal(str, str, str, AlarmSeverity, str, datetime, str, AlarmSeverity, str)
 
     def __init__(self, topics: List[str], bootstrap_servers: List[str], annunciate: bool = False):
         super().__init__()
@@ -140,8 +141,8 @@ class AlarmHandlerMainWindow(QMainWindow):
         # connect this after adding all items to combo box
         self.alarm_select_combo_box.currentTextChanged.connect(self.change_display)
 
-        self.alarm_update_signal.connect(self.update_tree)
-        self.alarm_update_signal.connect(self.update_table)
+        self.alarm_tree_update_signal.connect(self.update_tree)
+        self.alarm_table_update_signal.connect(self.update_table)
 
         self.server_status_timer = QTimer()  # Periodically checks to ensure connection to the alarm server is active
         self.server_status_timer.timeout.connect(self.check_server_status)
@@ -341,22 +342,32 @@ class AlarmHandlerMainWindow(QMainWindow):
                     self.active_alarm_tables["All"].alarmModel.remove_row(message.key[6:].split("/")[-1])
                     self.acknowledged_alarm_tables["All"].alarmModel.remove_row(message.key[6:].split("/")[-1])
                 return
-            if len(values) <= 2:
-                return  # This is the heartbeat message which doesn't get recorded
-            time = ""
+            time = datetime.now()
             if "time" in values:
                 time = datetime.fromtimestamp(values["time"]["seconds"])
-            self.alarm_update_signal.emit(
+            self.alarm_tree_update_signal.emit(
                 alarm_config_name,
                 pv,
                 message.key[6:],
                 AlarmSeverity(values["severity"]),
-                values["message"],
+                values.get("message", ""),
                 time,
-                values["value"],
-                AlarmSeverity(values["current_severity"]),
-                values["current_message"],
+                values.get("value", ""),
+                AlarmSeverity(values.get("current_severity", values["severity"])),
+                values.get("current_message", ""),
             )
+            if len(values) > 2:  # Only add PVs to the table, branches in the tree will have fewer than 2 values sent
+                self.alarm_table_update_signal.emit(
+                    alarm_config_name,
+                    pv,
+                    message.key[6:],
+                    AlarmSeverity(values["severity"]),
+                    values.get("message", ""),
+                    time,
+                    values.get("value", ""),
+                    AlarmSeverity(values.get("current_severity", values["severity"])),
+                    values.get("current_message", ""),
+                )
 
     def check_server_status(self):
         """Ensure that our client is still receiving alarm updates, display a warning if not"""
