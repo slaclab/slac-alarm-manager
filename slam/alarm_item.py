@@ -80,6 +80,31 @@ class AlarmItem(QObject):
         An expression that allows an alarm to enable based on a different PV
     """
 
+    __slots__ = (
+        "name",
+        "path",
+        "child_items",
+        "parent_item",
+        "alarm_severity",
+        "alarm_status",
+        "alarm_time",
+        "alarm_value",
+        "pv_severity",
+        "pv_status",
+        "description",
+        "guidance",
+        "displays",
+        "commands",
+        "enabled",
+        "filtered",
+        "latching",
+        "annunciating",
+        "delay",
+        "alarm_filter",
+        "pv_object",
+        "bypass_count",
+    )
+
     def __init__(
         self,
         name: str,
@@ -131,6 +156,7 @@ class AlarmItem(QObject):
         self.delay = delay
         self.alarm_filter = alarm_filter
         self.pv_object = None
+        self.bypass_count = 0
 
     def is_leaf(self) -> bool:
         """Return whether or not this alarm is associated with a leaf node in its configured hierarchy"""

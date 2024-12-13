@@ -132,19 +132,27 @@ def test_remove_item(tree_model):
     # This should not do anything except log an error
     tree_model.remove_item("/does/not/exist")
 
-    # Now add an item to actually be removed
+    # Now add items to actually be removed
     alarm_item = AlarmItem("TEST:PV", "/to/be/removed/TEST:PV", AlarmSeverity.OK)
     alarm_item_two = AlarmItem("OTHER:PV", "/other/pv/OTHER:PV", AlarmSeverity.OK)
+    alarm_item_three = AlarmItem("FINAL:PV", "/final/pv/FINAL:PV", AlarmSeverity.OK)
     tree_model.nodes.append(alarm_item)
     tree_model.nodes.append(alarm_item_two)
+    tree_model.nodes.append(alarm_item_three)
     tree_model.added_paths["TEST:PV"] = ["/to/be/removed/TEST:PV"]
     tree_model.added_paths["OTHER:PV"] = ["/other/pv/OTHER:PV"]
+    tree_model.added_paths["FINAL:PV"] = ["/final/pv/OTHER:PV"]
+    tree_model.path_to_index["/to/be/removed/TEST:PV"] = 0
+    tree_model.path_to_index["/other/pv/OTHER:PV"] = 1
+    tree_model.path_to_index["/final/pv/FINAL:PV"] = 2
 
-    assert len(tree_model.nodes) == 2
+    assert len(tree_model.nodes) == 3
 
     tree_model.remove_item("/to/be/removed/TEST:PV")
-    tree_model.remove_item("/other/pv/OTHER:PV")
+    assert len(tree_model.nodes) == 2
 
+    tree_model.remove_item("/other/pv/OTHER:PV")
+    # Once there is only one node left, it is a counted as a complete deletion, so the final one is cleaned up
     assert len(tree_model.nodes) == 0
     assert len(tree_model.added_paths) == 0
 
