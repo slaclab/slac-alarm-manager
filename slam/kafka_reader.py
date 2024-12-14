@@ -29,7 +29,7 @@ class KafkaReader(QObject):
             auto_offset_reset="earliest",
             enable_auto_commit=False,
             key_deserializer=lambda x: x.decode("utf-8"),
-            value_deserializer=self.value_decode
+            value_deserializer=self.value_decode,
         )
 
         super(KafkaReader, self).__init__()

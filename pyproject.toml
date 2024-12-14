@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slac-alarm-manager"
+description = "Python interface for managing alarms"
+readme = "README.md"
+authors = [ {name = "SLAC National Accelerator Laboratory"} ]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3"
+]
+requires-python = ">=3.9"
+dependencies = [
+    "kafka-python",
+    "pydm",
+    "PyQt5",
+    "qtpy"
+]
+dynamic = ["version"]
+
+[project.scripts]
+slam = "slam_launcher.main:main"
+
+[project.entry-points."pydm.data_plugin"]
+pydm_alarm_plugin = "pydm_alarm_plugin.alarm_plugin:AlarmPlugin"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-qt",
+    "pytest-cov",
+    "pre-commit"
+]
+docs = [
+    "mkdocs",
+    "mkdocs-material"
+]
+
+[project.urls]
+Homepage = "https://github.com/slaclab/slac-alarm-manager"
+Documentation = "https://slaclab.github.io/slac-alarm-manager/"
+
+[project.license]
+file = "LICENSE.md"
+
+[tool.setuptools_scm]
+version_file = "slam/_version.py"
+
+[tool.setuptools.packages.find]
+include = ["slam", "slam_launcher", "pydm_alarm_plugin"]
+namespaces = false
