@@ -14,7 +14,7 @@ application running, each user will receive any commands run by each other user.
 
 ## Requirements
 
-* Python 3.6+
+* Python 3.9+
 * pydm
 * kafka-python
 * qtpy
