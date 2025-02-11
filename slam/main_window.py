@@ -295,15 +295,15 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.current_alarm_config = alarm_config_name
 
     def get_pv(self, key: str):
-        if '=' in key:
+        if "=" in key:
             # formula
-            return '=' + key.split('=')[-1]
-        elif '://' in key:
+            return "=" + key.split("=")[-1]
+        elif "://" in key:
             # explicit protocol
-            return key.split('://')[-2].split('/')[-1] + '://' + key.split('://')[-1]
+            return key.split("://")[-2].split("/")[-1] + "://" + key.split("://")[-1]
         else:
             # default ca
-            return key.split('/')[-1]
+            return key.split("/")[-1]
 
     def process_message(self, message: ConsumerRecord):
         """
@@ -316,7 +316,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         key = message.key
         values = message.value
-        pv = get_pv(key)
+        pv = self.get_pv(key)
         if key.startswith("config"):  # [7:] because config:
             logger.debug(f"Processing CONFIG message with key: {key} and values: {values}")
             alarm_config_name = key.split("/")[1]
