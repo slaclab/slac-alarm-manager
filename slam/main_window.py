@@ -8,7 +8,7 @@ from pydm.widgets import PyDMArchiverTimePlot
 from qtpy.QtCore import Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import QAction, QApplication, QComboBox, QLabel, QMainWindow, QSplitter, QVBoxLayout, QWidget
 from typing import List, Optional
-from .alarm_item import AlarmSeverity
+from .alarm_item import AlarmSeverity, get_item_name
 from .alarm_table_view import AlarmTableType, AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
@@ -294,17 +294,6 @@ class AlarmHandlerMainWindow(QMainWindow):
         self.vertical_splitter.replaceWidget(1, ack_alarm_table_to_swap)
         self.current_alarm_config = alarm_config_name
 
-    def get_pv(self, key: str):
-        if "=" in key:
-            # formula
-            return "=" + key.split("=")[-1]
-        elif "://" in key:
-            # explicit protocol
-            return key.split("://")[-2].split("/")[-1] + "://" + key.split("://")[-1]
-        else:
-            # default ca
-            return key.split("/")[-1]
-
     def process_message(self, message: ConsumerRecord):
         """
         Process a message received from kafka and update the display widgets accordingly
@@ -316,7 +305,7 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         key = message.key
         values = message.value
-        pv = self.get_pv(key)
+        pv = get_item_name(key)
         if key.startswith("config"):  # [7:] because config:
             logger.debug(f"Processing CONFIG message with key: {key} and values: {values}")
             alarm_config_name = key.split("/")[1]
