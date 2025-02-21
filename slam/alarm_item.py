@@ -15,14 +15,14 @@ def get_item_name(item_path: str):
     Takes in the absolute path to an item and returns just the name,
     including the protocol if present
     """
-    if "=" in item_path:
-        # formula
-        return "=" + item_path.split("=")[-1]
-    elif ":\\/\\/" in item_path:
+    if ":\\/\\/" in item_path:
         # explicit protocol
         path_protocol, pv = item_path.split(":\\/\\/", 1)
         protocol = path_protocol.split("/")[-1]
         return protocol + "://" + pv
+    elif "=" in item_path:
+        # formula
+        return "=" + item_path.split("=")[-1]
     else:
         # default ca or tree branch
         return item_path.split("/")[-1]
