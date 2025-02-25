@@ -203,7 +203,11 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         ):  # This means this is a brand new item we are adding
             self.beginInsertRows(QModelIndex(), len(self.nodes), len(self.nodes))
 
-            path_as_list = item_path.split("=", 1)[0].split(":\\/\\/", 1)[0].split("/")
+            if ":\\/\\/" in item_path:
+                path_as_list = item_path.split(":\\/\\/", 1)[0]
+            else:
+                path_as_list = item_path.split("=", 1)[0]
+            path_as_list = path_as_list.split("/")
             self.nodes.append(alarm_item)
             self.path_to_index[item_path] = len(self.nodes) - 1
 
