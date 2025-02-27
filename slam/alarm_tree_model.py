@@ -1,6 +1,6 @@
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from typing import List, Optional
-from .alarm_item import AlarmItem, AlarmSeverity
+from .alarm_item import AlarmItem, AlarmSeverity, get_item_name
 import logging
 
 logger = logging.getLogger(__name__)
@@ -182,7 +182,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         values : dict
             All of the values associated with the alarm to add or update
         """
-        item_name = item_path.split("/")[-1]
+        item_name = get_item_name(item_path)
         alarm_item = AlarmItem(
             name=item_name,
             path=item_path,
@@ -203,7 +203,11 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         ):  # This means this is a brand new item we are adding
             self.beginInsertRows(QModelIndex(), len(self.nodes), len(self.nodes))
 
-            path_as_list = item_path.split("/")
+            if ":\\/\\/" in item_path:
+                path_as_list = item_path.split(":\\/\\/", 1)[0]
+            else:
+                path_as_list = item_path.split("=", 1)[0]
+            path_as_list = path_as_list.split("/")
             self.nodes.append(alarm_item)
             self.path_to_index[item_path] = len(self.nodes) - 1
 
@@ -257,7 +261,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
             logger.debug(f"Attempting to remove item not in the tree: {item_path}")
             return
 
-        item_name = item_path.split("/")[-1]
+        item_name = get_item_name(item_path)
         self.beginRemoveRows(QModelIndex(), item_index, item_index)
         self.added_paths[item_name].remove(item_path)
         del self.path_to_index[item_path]

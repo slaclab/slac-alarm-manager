@@ -8,7 +8,7 @@ from pydm.widgets import PyDMArchiverTimePlot
 from qtpy.QtCore import Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import QAction, QApplication, QComboBox, QLabel, QMainWindow, QSplitter, QVBoxLayout, QWidget
 from typing import List, Optional
-from .alarm_item import AlarmSeverity
+from .alarm_item import AlarmSeverity, get_item_name
 from .alarm_table_view import AlarmTableType, AlarmTableViewWidget
 from .alarm_tree_view import AlarmTreeViewWidget
 from .archive_search import ArchiveSearchWidget
@@ -305,50 +305,52 @@ class AlarmHandlerMainWindow(QMainWindow):
         """
         key = message.key
         values = message.value
+        pv = get_item_name(key)
         if key.startswith("config"):  # [7:] because config:
-            logger.debug(f"Processing CONFIG message with key: {message.key} and values: {message.value}")
+            logger.debug(f"Processing CONFIG message with key: {key} and values: {values}")
             alarm_config_name = key.split("/")[1]
+            path = message.key[7:]
             if values is not None:
                 # Start from 7: to read past the 'config:' part of the key
-                self.alarm_trees[alarm_config_name].treeModel.update_model(message.key[7:], values)
+                self.alarm_trees[alarm_config_name].treeModel.update_model(path, values)
                 # the 'All' tree gets updated by all topics
                 if self.enable_all_topic:
-                    self.alarm_trees["All"].treeModel.update_model(message.key[7:], values)
+                    self.alarm_trees["All"].treeModel.update_model(path, values)
                 if "description" in values:
-                    self.descriptions[message.key[7:]] = values.get("description")
+                    self.descriptions[path] = values.get("description")
             else:  # A null message indicates this item should be removed from the tree
-                self.alarm_trees[alarm_config_name].treeModel.remove_item(message.key[7:])
-                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split("/")[-1])
-                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[7:].split("/")[-1])
+                self.alarm_trees[alarm_config_name].treeModel.remove_item(path)
+                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(pv)
+                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(pv)
 
                 if self.enable_all_topic:
-                    self.alarm_trees["All"].treeModel.remove_item(message.key[7:])
-                    self.active_alarm_tables["All"].alarmModel.remove_row(message.key[7:].split("/")[-1])
-                    self.acknowledged_alarm_tables["All"].alarmModel.remove_row(message.key[7:].split("/")[-1])
+                    self.alarm_trees["All"].treeModel.remove_item(path)
+                    self.active_alarm_tables["All"].alarmModel.remove_row(pv)
+                    self.acknowledged_alarm_tables["All"].alarmModel.remove_row(pv)
         elif key.startswith("command"):
             pass  # Nothing for us to do
         elif key.startswith("state"):
-            pv = message.key.split("/")[-1]
             alarm_config_name = key.split("/")[1]
             self.last_received_update_time[alarm_config_name] = datetime.now()
             if self.enable_all_topic:
                 self.last_received_update_time["All"] = datetime.now()
-            logger.debug(f"Processing STATE message with key: {message.key} and values: {message.value}")
+            logger.debug(f"Processing STATE message with key: {key} and values: {values}")
             if values is None:
-                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split("/")[-1])
-                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(message.key[6:].split("/")[-1])
+                self.active_alarm_tables[alarm_config_name].alarmModel.remove_row(pv)
+                self.acknowledged_alarm_tables[alarm_config_name].alarmModel.remove_row(pv)
 
                 if self.enable_all_topic:
-                    self.active_alarm_tables["All"].alarmModel.remove_row(message.key[6:].split("/")[-1])
-                    self.acknowledged_alarm_tables["All"].alarmModel.remove_row(message.key[6:].split("/")[-1])
+                    self.active_alarm_tables["All"].alarmModel.remove_row(pv)
+                    self.acknowledged_alarm_tables["All"].alarmModel.remove_row(pv)
                 return
             time = datetime.now()
             if "time" in values:
                 time = datetime.fromtimestamp(values["time"]["seconds"])
+            path = message.key[6:]
             self.alarm_tree_update_signal.emit(
                 alarm_config_name,
                 pv,
-                message.key[6:],
+                path,
                 AlarmSeverity(values["severity"]),
                 values.get("message", ""),
                 time,
@@ -360,7 +362,7 @@ class AlarmHandlerMainWindow(QMainWindow):
                 self.alarm_table_update_signal.emit(
                     alarm_config_name,
                     pv,
-                    message.key[6:],
+                    path,
                     AlarmSeverity(values["severity"]),
                     values.get("message", ""),
                     time,
