@@ -32,6 +32,7 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         """Clear out all the nodes in this tree and set the root to an empty item"""
         self.nodes.clear()
         self.added_paths.clear()
+        self.path_to_index.clear()
         self.root_item = AlarmItem("")
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
@@ -267,6 +268,8 @@ class AlarmItemsTreeModel(QAbstractItemModel):
         del self.path_to_index[item_path]
         del self.nodes[item_index]
         self.endRemoveRows()
+
+        self.path_to_index = {node.path: idx for idx, node in enumerate(self.nodes)}
 
         if len(self.nodes) == 1:
             # All nodes should be removed at this point, as it is a complete replacement
