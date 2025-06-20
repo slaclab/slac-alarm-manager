@@ -9,3 +9,9 @@ __pycache__/
 *#
 .#*
 #*
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+slam/_version.py
