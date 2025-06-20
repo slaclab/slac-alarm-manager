@@ -8,18 +8,12 @@ on:
 jobs:
   deploy:
     if: ${{ github.repository == 'slaclab/slac-alarm-manager' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: [3.9]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }}
-          miniforge-variant: Miniforge3
-          channels: conda-forge
+          python-version: "3.12"
           activate-environment: slam-docs
           environment-file: doc-environment.yml
 
