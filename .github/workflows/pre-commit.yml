@@ -7,8 +7,4 @@ on:
 
 jobs:
   pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-    - uses: pre-commit/action@v3.0.0
+    uses: slaclab/swapps-ci-helpers/.github/workflows/python-pre-commit.yml@afaac9fd67e0b31c887a48c19d9a6b219ea72a8f

@@ -34,17 +34,18 @@ dev = [
     "pytest-cov",
     "pre-commit"
 ]
-docs = [
-    "mkdocs",
-    "mkdocs-material"
-]
-
 [project.urls]
 Homepage = "https://github.com/slaclab/slac-alarm-manager"
 Documentation = "https://slaclab.github.io/slac-alarm-manager/"
 
 [project.license]
 file = "LICENSE.md"
+
+[dependency-groups]
+docs = [
+    "mkdocs",
+    "mkdocs-material"
+]
 
 [tool.setuptools_scm]
 version_file = "slam/_version.py"

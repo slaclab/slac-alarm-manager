@@ -1,29 +1,25 @@
-name: Publish Documentation
+name: Build & Deploy Documentation
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "mkdocs.yml"
+      - "docs/**"
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  docs:
     if: ${{ github.repository == 'slaclab/slac-alarm-manager' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: "3.12"
-          activate-environment: slam-docs
-          environment-file: doc-environment.yml
-
-      - name: Build Docs
-        shell: bash -l {0}
-        run: |
-          mkdocs build
-
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site/
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: slaclab/swapps-ci-helpers/.github/workflows/docs.yml@afaac9fd67e0b31c887a48c19d9a6b219ea72a8f
+    with:
+      docs-group: "docs"
+      docs-tool: "mkdocs"
